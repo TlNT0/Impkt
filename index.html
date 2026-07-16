@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Impkt Band — Combat Sports Wearable Technology</title>
+  <meta name="description" content="Precision wearable technology for combat sports athletes and elite gyms.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+
+    /* ── RESET ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:         #C41E3A;
+      --black:       #000000;
+      --white:       #FFFFFF;
+      --grey:        #6B6B6B;
+      --grey-light:  #A0A0A0;
+      --rule:        #EBEBEB;
+      --bg-section:  #F5F5F7;
+      --bg-product:  #F8F8F8;
+      --font:        'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --ease:        cubic-bezier(0.16, 1, 0.3, 1);
+      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* ── REACTIVE BACKGROUND GLOW ──────────────────────────── */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        700px circle at var(--gx, 50%) var(--gy, 50%),
+        rgba(196, 30, 58, 0.055),
+        transparent 70%
+      );
+      opacity: 0;
+      transition: opacity 0.6s;
+    }
+    .bg-glow.active { opacity: 1; }
+
+    @media (hover: none) { .bg-glow { display: none; } }
+
+    /* ── MOBILE NAV OVERLAY ─────────────────────────────────── */
+    .mobile-nav {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--black);
+      display: flex; flex-direction: column;
+      justify-content: center; padding: 0 40px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s var(--ease);
+    }
+    .mobile-nav.open { opacity: 1; pointer-events: all; }
+
+    .mobile-nav-links { list-style: none; }
+    .mobile-nav-links li { overflow: hidden; }
+    .mobile-nav-links a {
+      display: block;
+      font-size: clamp(40px, 10vw, 64px);
+      font-weight: 900; letter-spacing: -0.035em;
+      text-transform: uppercase; line-height: 1.08;
+      color: var(--white); text-decoration: none;
+      padding: 10px 0;
+      opacity: 0; transform: translateY(28px);
+      transition: color 0.2s, opacity 0.5s var(--ease), transform 0.5s var(--ease);
+    }
+    .mobile-nav-links a:hover { color: var(--red); }
+    .mobile-nav.open .mobile-nav-links li:nth-child(1) a { opacity: 1; transform: translateY(0); transition-delay: 0.06s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(2) a { opacity: 1; transform: translateY(0); transition-delay: 0.12s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(3) a { opacity: 1; transform: translateY(0); transition-delay: 0.18s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(4) a { opacity: 1; transform: translateY(0); transition-delay: 0.24s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(5) a { opacity: 1; transform: translateY(0); transition-delay: 0.30s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(6) a { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
+    .mobile-nav-foot {
+      margin-top: 52px;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: #444;
+    }
+
+    /* ── NAV ────────────────────────────────────────────────── */
+    @keyframes nav-in {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100; height: 72px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 56px;
+      border-bottom: 1px solid transparent;
+      transition: background 0.5s var(--ease), backdrop-filter 0.5s, border-color 0.4s var(--ease);
+      opacity: 0;
+      animation: nav-in 0.7s var(--ease) 0.15s forwards;
+    }
+    nav.frosted {
+      background: rgba(255,255,255,0.86);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-color: var(--rule);
+    }
+
+    .nav-logo {
+      font-size: 13px; font-weight: 800;
+      letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--black); text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 40px; list-style: none; }
+    .nav-links a {
+      font-size: 12px; font-weight: 500;
+      letter-spacing: 0.06em; color: var(--black);
+      text-decoration: none; opacity: 1;
+      padding-bottom: 2px;
+      border-bottom: 1.5px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .nav-links a:hover { border-color: rgba(0,0,0,0.3); }
+    .nav-links a.active { border-color: var(--black); }
+    .nav-cta {
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.1em; color: var(--red);
+      text-decoration: none;
+    }
+    .hamburger {
+      display: none; flex-direction: column;
+      gap: 5px; padding: 8px; background: none; border: none;
+    }
+    .hamburger span {
+      display: block; width: 22px; height: 1.5px;
+      background: var(--black);
+      transition: all 0.35s var(--ease);
+      transform-origin: center;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    /* ── REVEAL: SLIDE UP ───────────────────────────────────── */
+    .ru { display: block; overflow: hidden; }
+    .ru-i {
+      display: block; transform: translateY(110%);
+      transition: transform 1s var(--ease);
+    }
+    .ru.visible .ru-i { transform: translateY(0); }
+
+    /* ── REVEAL: FADE UP ────────────────────────────────────── */
+    .rf {
+      opacity: 0; transform: translateY(22px);
+      transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+    }
+    .rf.visible { opacity: 1; transform: translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ru-i   { transform: none; transition: none; }
+      .rf     { opacity: 1; transform: none; transition: none; }
+      .c-dot, .c-ring { display: none; }
+      body    { cursor: auto; }
+      *       { animation-duration: 0.01ms !important; }
+    }
+
+    /* ── BUTTONS ────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center;
+      padding: 15px 38px;
+      font-size: 11px; font-family: var(--font);
+      font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; text-decoration: none;
+      border: none; will-change: transform;
+      transition: background 0.3s, color 0.3s, border-color 0.3s,
+                  transform 0.5s var(--ease);
+    }
+    .btn-black { background: var(--black); color: var(--white); }
+    .btn-black:hover { background: var(--red); }
+    .btn-outline {
+      background: transparent; color: var(--red);
+      border: 1.5px solid var(--red);
+    }
+    .btn-outline:hover { background: var(--red); color: var(--white); }
+    .btn-red { background: var(--red); color: var(--white); }
+    .btn-red:hover { background: #a31430; }
+
+    /* ── HERO ───────────────────────────────────────────────── */
+    .hero {
+      min-height: 100svh;
+      display: flex; flex-direction: column;
+      justify-content: center;
+      padding: 0 56px 80px; padding-top: 150px;
+      position: relative; overflow: hidden;
+    }
+    .hero-inner { position: relative; z-index: 2; }
+
+    .hero-eyebrow {
+      display: block; overflow: hidden;
+      margin-bottom: 44px;
+    }
+    .hero-eyebrow-inner {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.32em; text-transform: uppercase;
+      color: var(--grey-light);
+      transform: translateY(110%);
+      transition: transform 0.9s var(--ease) 0s;
+    }
+    .hero-eyebrow.visible .hero-eyebrow-inner { transform: translateY(0); }
+
+    .hero-headline {
+      font-size: clamp(64px, 11vw, 148px);
+      font-weight: 900; letter-spacing: -0.045em;
+      line-height: 0.93; text-transform: uppercase;
+    }
+    .hero-line-1 .ru-i  { transition-delay: 0.08s; }
+    .hero-line-2 .ru-i  { transition-delay: 0.22s; color: var(--red); }
+
+    /* Animated draw line */
+    .hero-line-svg-wrap {
+      height: 4px; margin-top: 6px; overflow: hidden;
+    }
+    .hero-line-svg {
+      display: block; width: 100%; height: 4px;
+    }
+    #line-path {
+      stroke-dasharray: 1000;
+      stroke-dashoffset: 1000;
+    }
+    #line-path.drawn {
+      animation: draw-line 1.8s var(--ease-smooth) 0.85s forwards;
+    }
+    @keyframes draw-line {
+      to { stroke-dashoffset: 0; }
+    }
+
+    .hero-sub {
+      margin-top: 44px;
+      font-size: 15px; font-weight: 400;
+      color: var(--grey); line-height: 1.7;
+      max-width: 360px; letter-spacing: 0.005em;
+    }
+    .hero-actions { margin-top: 52px; }
+
+    /* ── PRODUCT SECTION ────────────────────────────────────── */
+    .product-section {
+      padding: 148px 56px;
+      background: var(--bg-product);
+      position: relative; overflow: hidden;
+    }
+    /* Faint red warmth — gives glass blur something to read against */
+    .product-section::before, .product-section::after {
+      content: ''; position: absolute;
+      border-radius: 50%; pointer-events: none;
+    }
+    .product-section::before {
+      width: 600px; height: 600px;
+      top: -100px; right: 10%;
+      background: radial-gradient(circle, rgba(196,30,58,0.05) 0%, transparent 65%);
+    }
+    .product-section::after {
+      width: 400px; height: 400px;
+      bottom: -80px; left: 5%;
+      background: radial-gradient(circle, rgba(196,30,58,0.035) 0%, transparent 65%);
+    }
+
+    .section-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.34em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 24px;
+      display: block;
+    }
+
+    .product-headline {
+      font-size: clamp(40px, 5.5vw, 72px);
+      font-weight: 900; letter-spacing: -0.04em;
+      line-height: 1; margin-bottom: 72px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px; position: relative; z-index: 1;
+    }
+
+    .glass-card {
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border: 1px solid rgba(220,220,220,0.6);
+      border-top: 2px solid var(--red);
+      padding: 52px 44px;
+      box-shadow: 0 2px 16px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.04);
+      transition:
+        transform 0.65s var(--ease),
+        box-shadow 0.65s var(--ease),
+        background 0.5s,
+        backdrop-filter 0.5s;
+      will-change: transform;
+      position: relative; overflow: hidden;
+    }
+    .glass-card::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.4) 0%, transparent 60%);
+      pointer-events: none; opacity: 0;
+      transition: opacity 0.5s;
+    }
+    .glass-card:hover {
+      transform: translateY(-14px);
+      background: rgba(255,255,255,0.96);
+      backdrop-filter: blur(28px);
+      -webkit-backdrop-filter: blur(28px);
+      box-shadow: 0 32px 72px rgba(0,0,0,0.11), 0 8px 24px rgba(0,0,0,0.06);
+    }
+    .glass-card:hover::after { opacity: 1; }
+
+    .card-stat {
+      font-size: clamp(28px, 3vw, 44px);
+      font-weight: 900; letter-spacing: -0.04em;
+      line-height: 1; margin-bottom: 14px;
+    }
+    .card-kicker {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 20px;
+    }
+    .card-desc {
+      font-size: 14px; font-weight: 400;
+      color: var(--grey); line-height: 1.7;
+    }
+
+    /* ── GYMS SECTION ───────────────────────────────────────── */
+    .gyms-section {
+      padding: 148px 56px;
+      background: var(--bg-section);
+    }
+    .gyms-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 96px; align-items: start;
+    }
+
+    .gyms-headline {
+      font-size: clamp(32px, 4.5vw, 58px);
+      font-weight: 800; letter-spacing: -0.035em;
+      line-height: 1.05;
+    }
+    .gyms-sub {
+      margin-top: 20px;
+      font-size: 14px; color: var(--grey);
+      line-height: 1.72; max-width: 340px;
+    }
+    .gyms-cta { margin-top: 44px; }
+
+    .features-list { list-style: none; }
+    .feature-item {
+      display: flex; align-items: center; gap: 18px;
+      padding: 22px 0; border-bottom: 1px solid #DEDEDE;
+      opacity: 0; transform: translateX(18px);
+      transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+    }
+    .feature-item:first-child { border-top: 1px solid #DEDEDE; }
+    .feature-item.visible { opacity: 1; transform: translateX(0); }
+
+    .chk {
+      flex-shrink: 0; width: 22px; height: 22px;
+    }
+    .chk-path {
+      stroke-dasharray: 28; stroke-dashoffset: 28;
+      transition: stroke-dashoffset 0.55s var(--ease) 0.1s;
+    }
+    .feature-item.visible .chk-path { stroke-dashoffset: 0; }
+
+    .feature-txt {
+      font-size: 15px; font-weight: 500;
+      letter-spacing: -0.01em;
+    }
+
+    /* ── STATS SECTION ──────────────────────────────────────── */
+    .stats-section {
+      padding: 120px 56px;
+      background: var(--white);
+    }
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .stat-cell {
+      padding: 44px 40px 44px 40px;
+      border-left: 1px solid var(--rule);
+      position: relative;
+    }
+    .stat-cell:first-child { border-left: none; padding-left: 0; }
+
+    .stat-pip {
+      display: block; width: 5px; height: 5px;
+      background: var(--red); border-radius: 50%;
+      transform: scale(0);
+      transition: transform 0.55s var(--ease);
+    }
+    .stat-cell.visible .stat-pip { transform: scale(1); }
+
+    .stat-num {
+      display: block; margin-top: 20px;
+      font-size: clamp(40px, 5vw, 64px);
+      font-weight: 900; letter-spacing: -0.05em;
+      line-height: 1;
+    }
+    .stat-sup {
+      font-size: 0.52em; vertical-align: super;
+      color: var(--red); font-weight: 900;
+      margin-left: 1px;
+    }
+    .stat-lbl {
+      display: block; margin-top: 12px;
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--grey-light);
+    }
+
+    /* ── FOUNDERS SECTION ───────────────────────────────────── */
+    .founders-section {
+      padding: 148px 56px;
+      background: var(--white);
+      border-top: 1px solid var(--rule);
+    }
+    .founders-headline {
+      font-size: clamp(40px, 5.5vw, 72px);
+      font-weight: 900; letter-spacing: -0.04em;
+      margin-bottom: 64px; line-height: 1;
+    }
+    .founders-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px; max-width: 840px;
+    }
+    .founder-card {
+      padding: 52px 44px;
+      background: #FAFAFA;
+      border-left: 2px solid var(--red);
+      transition: transform 0.6s var(--ease), box-shadow 0.6s var(--ease);
+      will-change: transform;
+    }
+    .founder-card:hover {
+      transform: translateY(-6px);
+      box-shadow: 0 20px 48px rgba(0,0,0,0.07);
+    }
+    .founder-name {
+      font-size: 18px; font-weight: 800;
+      letter-spacing: -0.02em; text-transform: uppercase;
+    }
+    .founder-role {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--red); margin-top: 10px;
+    }
+    .founder-bio {
+      font-size: 14px; font-weight: 400;
+      color: var(--grey); margin-top: 22px; line-height: 1.72;
+    }
+
+    /* ── WAITLIST SECTION ───────────────────────────────────── */
+    .waitlist-section {
+      padding: 160px 56px;
+      background: var(--black); text-align: center;
+    }
+    .waitlist-headline {
+      font-size: clamp(80px, 14vw, 160px);
+      font-weight: 900; letter-spacing: -0.055em;
+      line-height: 0.86; text-transform: uppercase;
+      color: var(--white);
+    }
+    .waitlist-sub {
+      margin: 32px auto 0;
+      font-size: 15px; font-weight: 400;
+      color: #777; line-height: 1.72;
+      max-width: 400px;
+    }
+    .waitlist-form {
+      display: flex; max-width: 460px;
+      margin: 52px auto 0;
+    }
+    .waitlist-input {
+      flex: 1; min-width: 0;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-right: none;
+      padding: 18px 20px;
+      font-size: 13px; font-family: var(--font);
+      color: var(--white); letter-spacing: 0.02em;
+      outline: none;
+      transition: border-color 0.25s;
+    }
+    .waitlist-input::placeholder { color: rgba(255,255,255,0.28); }
+    .waitlist-input:focus  { border-color: rgba(255,255,255,0.45); }
+    .waitlist-btn {
+      flex-shrink: 0;
+      background: var(--red); border: none;
+      padding: 18px 32px;
+      font-size: 10px; font-family: var(--font);
+      font-weight: 700; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--white);
+      transition: background 0.25s, opacity 0.25s;
+      white-space: nowrap;
+    }
+    .waitlist-btn:hover:not(:disabled) { background: #a31430; }
+    .waitlist-btn:disabled { opacity: 0.45; }
+    .waitlist-confirm {
+      display: none; margin-top: 24px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      background: var(--white);
+      border-top: 2px solid var(--red);
+    }
+    .footer-inner {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 24px 56px;
+    }
+    .footer-logo {
+      font-size: 12px; font-weight: 800;
+      letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--black); text-decoration: none;
+    }
+    .footer-links { display: flex; gap: 32px; list-style: none; }
+    .footer-links a {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.05em; color: #999;
+      text-decoration: none;
+      transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--black); }
+    .footer-copy {
+      font-size: 11px; color: #999;
+      letter-spacing: 0.06em;
+    }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 960px) {
+      nav { padding: 0 28px; }
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+
+      .hero               { padding: 0 28px 64px; padding-top: 110px; }
+      .product-section    { padding: 96px 28px; }
+      .cards-grid         { grid-template-columns: 1fr; gap: 16px; }
+      .gyms-section       { padding: 96px 28px; }
+      .gyms-grid          { grid-template-columns: 1fr; gap: 56px; }
+      .stats-section      { padding: 88px 28px; }
+      .stats-grid         { grid-template-columns: repeat(2, 1fr); }
+      .stat-cell          { border-left: none; border-top: 1px solid var(--rule); }
+      .stat-cell:nth-child(1), .stat-cell:nth-child(2) { border-top: none; }
+      .stat-cell:nth-child(2) { padding-left: 28px; }
+      .founders-section   { padding: 96px 28px; }
+      .founders-grid      { grid-template-columns: 1fr; max-width: 100%; }
+      .waitlist-section   { padding: 112px 28px; }
+      footer              { }
+      .footer-inner       { flex-direction: column; gap: 20px; padding: 24px 28px; text-align: center; }
+      .footer-links       { flex-wrap: wrap; justify-content: center; gap: 18px; }
+    }
+
+    @media (max-width: 560px) {
+      .waitlist-form      { flex-direction: column; }
+      .waitlist-input     { border-right: 1px solid rgba(255,255,255,0.18); border-bottom: none; }
+      .stats-grid         { grid-template-columns: 1fr; }
+      .stat-cell:nth-child(2) { border-top: 1px solid var(--rule); padding-left: 0; }
+      .stat-cell:nth-child(3),
+      .stat-cell:nth-child(4) { border-top: 1px solid var(--rule); }
+    }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <!-- Reactive background glow -->
+  <div class="bg-glow" id="bg-glow" aria-hidden="true"></div>
+
+  <!-- Mobile nav overlay -->
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true" role="dialog" aria-label="Navigation">
+    <ul class="mobile-nav-links">
+      <li><a href="product.html"      class="mnl">Product</a></li>
+      <li><a href="ambassadors.html"  class="mnl">Advisors</a></li>
+      <li><a href="#gyms"             class="mnl">Gyms</a></li>
+      <li><a href="#founders"         class="mnl">Team</a></li>
+      <li><a href="#waitlist"         class="mnl">Waitlist</a></li>
+    </ul>
+    <p class="mobile-nav-foot">Impkt Band · 2026</p>
+  </div>
+
+  <!-- Nav -->
+  <nav id="nav">
+    <a href="#" class="nav-logo">IMPKT</a>
+    <ul class="nav-links" aria-label="Primary navigation">
+      <li><a href="index.html" class="active">Home</a></li>
+      <li><a href="product.html">Product</a></li>
+      <li><a href="ambassadors.html">Advisors</a></li>
+      <li><a href="#gyms">Gyms</a></li>
+      <li><a href="#founders">Team</a></li>
+    </ul>
+    <a href="#waitlist" class="nav-cta">Request Access</a>
+    <button class="hamburger" id="hamburger"
+      aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ── HERO ──────────────────────────────────────────────── -->
+  <section class="hero" aria-label="Hero">
+    <div class="hero-inner" id="hero-inner">
+
+      <div class="hero-eyebrow" id="hero-eyebrow">
+        <span class="hero-eyebrow-inner">Combat Sports Technology</span>
+      </div>
+
+      <h1 class="hero-headline">
+        <span class="ru hero-line-1" id="hl1">
+          <span class="ru-i">MEASURE</span>
+        </span>
+        <span class="ru hero-line-2" id="hl2">
+          <span class="ru-i">EVERY STRIKE.</span>
+        </span>
+      </h1>
+
+      <!-- Self-drawing underline -->
+      <div class="hero-line-svg-wrap">
+        <svg class="hero-line-svg" viewBox="0 0 1000 4" preserveAspectRatio="none" aria-hidden="true">
+          <path id="line-path" d="M0 2 L1000 2"
+            stroke="#C41E3A" stroke-width="2.5" fill="none"
+            stroke-linecap="square"/>
+        </svg>
+      </div>
+
+      <p class="hero-sub rf" style="transition-delay:0.5s">
+        Precision wearable technology for combat sports athletes and elite gyms.
+      </p>
+
+      <div class="hero-actions rf" style="transition-delay:0.68s">
+        <a href="#waitlist" class="btn btn-black magnetic">Request Access</a>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── PRODUCT ────────────────────────────────────────────── -->
+  <section class="product-section" id="product" aria-label="Product">
+    <span class="section-label rf">The Technology</span>
+
+    <h2 class="product-headline">
+      <span class="ru rf" style="transition-delay:0.08s">
+        <span class="ru-i">Built different.</span>
+      </span>
+    </h2>
+
+    <div class="cards-grid">
+      <div class="glass-card rf" style="transition-delay:0.1s">
+        <div class="card-stat">0.001s</div>
+        <div class="card-kicker">Reaction Tracking</div>
+        <p class="card-desc">Millisecond-precision sensors capture every strike before the human eye can process it. No averaging, no delay.</p>
+      </div>
+      <div class="glass-card rf" style="transition-delay:0.22s">
+        <div class="card-stat">Real&#8209;time</div>
+        <div class="card-kicker">Live Analytics</div>
+        <p class="card-desc">Punch data streams live to the coach's dashboard. No post-session upload. No sync delay. Instant intelligence.</p>
+      </div>
+      <div class="glass-card rf" style="transition-delay:0.34s">
+        <div class="card-stat">Anywhere</div>
+        <div class="card-kicker">Zero Setup</div>
+        <p class="card-desc">No calibration ritual. No complex hardware. Wraps go on, data flows instantly. Built to disappear into training.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── GYMS ──────────────────────────────────────────────── -->
+  <section class="gyms-section" id="gyms" aria-label="For gyms">
+    <div class="gyms-grid">
+
+      <div>
+        <h2 class="gyms-headline">
+          <span class="ru" style="display:block">
+            <span class="ru-i">The gym of the future</span>
+          </span>
+          <span class="ru" style="display:block">
+            <span class="ru-i" style="transition-delay:0.14s">tracks everything.</span>
+          </span>
+        </h2>
+        <p class="gyms-sub rf" style="transition-delay:0.28s">
+          Impkt Band gives coaches the data layer their gym has always needed. No retrofitting. No friction.
+        </p>
+        <div class="gyms-cta rf" style="transition-delay:0.4s">
+          <a href="#waitlist" class="btn btn-outline magnetic">Apply as a Founding Gym Partner</a>
+        </div>
+      </div>
+
+      <ul class="features-list" aria-label="Gym features">
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#C41E3A"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Live session dashboards</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#C41E3A"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Per-fighter performance profiles</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#C41E3A"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Coach and athlete separate views</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#C41E3A"
+              stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Founding partner pricing available now</span>
+        </li>
+      </ul>
+
+    </div>
+  </section>
+
+  <!-- ── STATS ─────────────────────────────────────────────── -->
+  <section class="stats-section" aria-label="Statistics">
+    <div class="stats-grid">
+
+      <div class="stat-cell">
+        <span class="stat-pip"></span>
+        <span class="stat-num">
+          <span class="counter" data-target="50" data-suffix="K+">0</span>
+        </span>
+        <span class="stat-lbl">Strikes Analysed</span>
+      </div>
+
+      <div class="stat-cell">
+        <span class="stat-pip"></span>
+        <span class="stat-num">
+          0.001<span class="stat-sup">s</span>
+        </span>
+        <span class="stat-lbl">Reaction Precision</span>
+      </div>
+
+      <div class="stat-cell">
+        <span class="stat-pip"></span>
+        <span class="stat-num">
+          <span class="counter" data-target="99" data-suffix="%">0</span>
+        </span>
+        <span class="stat-lbl">Data Accuracy</span>
+      </div>
+
+      <div class="stat-cell">
+        <span class="stat-pip"></span>
+        <span class="stat-num">
+          <span class="counter" data-target="12" data-suffix="">0</span>
+        </span>
+        <span class="stat-lbl">Founding Partners</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── FOUNDERS ───────────────────────────────────────────── -->
+  <section class="founders-section" id="founders" aria-label="Founders">
+    <span class="section-label rf">The Team</span>
+    <h2 class="founders-headline">
+      <span class="ru">
+        <span class="ru-i">The team.</span>
+      </span>
+    </h2>
+
+    <div class="founders-grid">
+      <article class="founder-card rf" style="transition-delay:0.12s">
+        <div class="founder-name">Sofia Viola</div>
+        <div class="founder-role">CEO</div>
+        <p class="founder-bio">Combat sports meets venture strategy. Building the commercial infrastructure that places Impkt Band in every elite gym.</p>
+      </article>
+      <article class="founder-card rf" style="transition-delay:0.24s">
+        <div class="founder-name">Rodrigo Rio Tinto</div>
+        <div class="founder-role">CTO</div>
+        <p class="founder-bio">Hardware and firmware engineer. BEng Mechanical Engineering, Loughborough. Built the entire stack from scratch.</p>
+      </article>
+    </div>
+  </section>
+
+  <!-- ── WAITLIST ───────────────────────────────────────────── -->
+  <section class="waitlist-section" id="waitlist" aria-label="Join waitlist">
+    <span class="section-label rf" style="color:#C41E3A">Limited Access</span>
+    <h2 class="waitlist-headline">
+      <span class="ru" style="display:block">
+        <span class="ru-i" style="color:var(--white)">Be First.</span>
+      </span>
+    </h2>
+    <p class="waitlist-sub rf" style="transition-delay:0.2s">
+      A small number of founding gym partners are being onboarded now.
+    </p>
+
+    <form class="waitlist-form rf" id="wl-form" style="transition-delay:0.35s" novalidate>
+      <label for="wl-email" class="sr-only">Email address</label>
+      <input class="waitlist-input" id="wl-email" type="email"
+        placeholder="your@gym.com" autocomplete="email" required>
+      <button class="waitlist-btn magnetic" type="submit">Apply</button>
+    </form>
+    <p class="waitlist-confirm" id="wl-confirm" role="status" aria-live="polite">
+      Application received — we'll be in touch.
+    </p>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <a href="#" class="footer-logo">IMPKT</a>
+      <ul class="footer-links" aria-label="Footer navigation">
+        <li><a href="#product">Product</a></li>
+        <li><a href="#gyms">Gyms</a></li>
+        <li><a href="#founders">Team</a></li>
+        <li><a href="#waitlist">Waitlist</a></li>
+      </ul>
+      <p class="footer-copy">Impkt Band &copy; 2026</p>
+    </div>
+  </footer>
+
+  <script>
+  'use strict';
+
+  /* ── 1. REACTIVE BACKGROUND GLOW ────────────────── */
+  const bgGlow     = document.getElementById('bg-glow');
+  const hasPointer = window.matchMedia('(hover: hover)').matches;
+
+  if (hasPointer) {
+    let tx = window.innerWidth  / 2, ty = window.innerHeight / 2;
+    let cx = tx, cy = ty;
+
+    document.addEventListener('mousemove', e => {
+      tx = e.clientX; ty = e.clientY;
+      bgGlow.classList.add('active');
+    }, { passive: true });
+
+    document.addEventListener('mouseleave', () => bgGlow.classList.remove('active'));
+    document.addEventListener('mouseenter', () => bgGlow.classList.add('active'));
+
+    (function raf() {
+      cx += (tx - cx) * 0.07;
+      cy += (ty - cy) * 0.07;
+      document.documentElement.style.setProperty('--gx', cx + 'px');
+      document.documentElement.style.setProperty('--gy', cy + 'px');
+      requestAnimationFrame(raf);
+    })();
+  }
+
+  /* ── 2. NAV FROST ────────────────────────────────── */
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('frosted', window.scrollY > 48);
+  }, { passive: true });
+
+  /* ── 3. MOBILE NAV ───────────────────────────────── */
+  const hamburger  = document.getElementById('hamburger');
+  const mobileNav  = document.getElementById('mobile-nav');
+  let navOpen = false;
+
+  function toggleNav(force) {
+    navOpen = force !== undefined ? force : !navOpen;
+    hamburger.classList.toggle('open', navOpen);
+    mobileNav.classList.toggle('open', navOpen);
+    mobileNav.setAttribute('aria-hidden', !navOpen);
+    hamburger.setAttribute('aria-expanded', navOpen);
+    document.body.style.overflow = navOpen ? 'hidden' : '';
+  }
+
+  hamburger.addEventListener('click', () => toggleNav());
+  document.querySelectorAll('.mnl').forEach(l => l.addEventListener('click', () => toggleNav(false)));
+
+  /* ── 4. HERO PARALLAX ────────────────────────────── */
+  const heroInner = document.getElementById('hero-inner');
+  if (hasPointer) {
+    window.addEventListener('scroll', () => {
+      const s = window.pageYOffset;
+      if (s < window.innerHeight * 1.2) {
+        heroInner.style.transform = `translateY(${s * 0.2}px)`;
+      }
+    }, { passive: true });
+  }
+
+  /* ── 5. MAGNETIC BUTTONS ─────────────────────────── */
+  if (hasPointer) {
+    document.querySelectorAll('.magnetic').forEach(el => {
+      el.addEventListener('mousemove', e => {
+        const r = el.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width  / 2;
+        const y = e.clientY - r.top  - r.height / 2;
+        el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+      });
+      el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+    });
+  }
+
+  /* ── 6. INTERSECTION OBSERVERS ───────────────────── */
+  function makeObs(cb, opts) {
+    return new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { cb(e.target); } });
+    }, opts);
+  }
+
+  // Slide-up reveals
+  const ruObs = makeObs(el => {
+    el.classList.add('visible');
+    ruObs.unobserve(el);
+  }, { threshold: 0.05 });
+
+  // Fade reveals
+  const rfObs = makeObs(el => {
+    el.classList.add('visible');
+    rfObs.unobserve(el);
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+
+  document.querySelectorAll('.ru').forEach(el => ruObs.observe(el));
+  document.querySelectorAll('.rf').forEach(el => rfObs.observe(el));
+
+  // Hero also observed — fires immediately since already in viewport
+  document.getElementById('hero-eyebrow').classList.add('visible');
+
+  // Feature items (animated checkmarks)
+  const featureObs = makeObs(el => {
+    el.classList.add('visible');
+    featureObs.unobserve(el);
+  }, { threshold: 0.35 });
+
+  document.querySelectorAll('.feature-item').forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.12}s`;
+    featureObs.observe(el);
+  });
+
+  // Stat cells (pip reveal + counter)
+  const statObs = makeObs(el => {
+    el.classList.add('visible');
+    const ctr = el.querySelector('.counter');
+    if (ctr) startCounter(ctr);
+    statObs.unobserve(el);
+  }, { threshold: 0.25 });
+
+  document.querySelectorAll('.stat-cell').forEach(el => statObs.observe(el));
+
+  /* ── 7. HERO DRAW LINE ───────────────────────────── */
+  // Fire after hero text reveals settle
+  setTimeout(() => {
+    document.getElementById('line-path').classList.add('drawn');
+  }, 350);
+
+  /* ── 8. COUNTER ANIMATION ────────────────────────── */
+  function easeOut(t) { return 1 - Math.pow(1 - t, 3); }
+
+  function startCounter(el) {
+    const target   = parseInt(el.dataset.target, 10);
+    const suffix   = el.dataset.suffix || '';
+    const duration = 1800;
+    let   t0       = null;
+
+    function step(ts) {
+      if (!t0) t0 = ts;
+      const prog   = Math.min((ts - t0) / duration, 1);
+      const val    = Math.floor(easeOut(prog) * target);
+      el.textContent = val + suffix;
+      if (prog < 1) requestAnimationFrame(step);
+      else          el.textContent = target + suffix;
+    }
+    requestAnimationFrame(step);
+  }
+
+  /* ── 9. WAITLIST FORM ────────────────────────────── */
+  document.getElementById('wl-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const input   = document.getElementById('wl-email');
+    const btn     = this.querySelector('.waitlist-btn');
+    const confirm = document.getElementById('wl-confirm');
+
+    if (!input.validity.valid) { input.focus(); return; }
+
+    btn.disabled = input.disabled = true;
+    btn.textContent = 'Sent.';
+    confirm.style.display = 'block';
+  });
+
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,976 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Product — Impkt Band</title>
+  <meta name="description" content="The Impkt Band. Precision wearable hardware built for combat sports. 9-axis IMU, 1000Hz sampling, real-time analytics.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+
+    /* ── RESET ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:        #C41E3A;
+      --black:      #000000;
+      --white:      #FFFFFF;
+      --grey:       #6B6B6B;
+      --grey-light: #A0A0A0;
+      --rule:       #EBEBEB;
+      --bg-section: #F5F5F7;
+      --font:       'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --ease:       cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* ── REACTIVE BACKGROUND GLOW ───────────────────────────── */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        700px circle at var(--gx, 50%) var(--gy, 50%),
+        rgba(196, 30, 58, 0.05),
+        transparent 70%
+      );
+      opacity: 0; transition: opacity 0.6s;
+    }
+    .bg-glow.active { opacity: 1; }
+    @media (hover: none) { .bg-glow { display: none; } }
+
+    /* ── MOBILE NAV OVERLAY ─────────────────────────────────── */
+    .mobile-nav {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--black);
+      display: flex; flex-direction: column;
+      justify-content: center; padding: 0 40px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s var(--ease);
+    }
+    .mobile-nav.open { opacity: 1; pointer-events: all; }
+    .mobile-nav-links { list-style: none; }
+    .mobile-nav-links li { overflow: hidden; }
+    .mobile-nav-links a {
+      display: block;
+      font-size: clamp(40px, 10vw, 64px);
+      font-weight: 900; letter-spacing: -0.035em;
+      text-transform: uppercase; line-height: 1.08;
+      color: var(--white); text-decoration: none;
+      padding: 10px 0;
+      opacity: 0; transform: translateY(28px);
+      transition: color 0.2s, opacity 0.5s var(--ease), transform 0.5s var(--ease);
+    }
+    .mobile-nav-links a:hover { color: var(--red); }
+    .mobile-nav.open .mobile-nav-links li:nth-child(1) a { opacity: 1; transform: translateY(0); transition-delay: 0.06s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(2) a { opacity: 1; transform: translateY(0); transition-delay: 0.12s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(3) a { opacity: 1; transform: translateY(0); transition-delay: 0.18s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(4) a { opacity: 1; transform: translateY(0); transition-delay: 0.24s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(5) a { opacity: 1; transform: translateY(0); transition-delay: 0.30s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(6) a { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
+    .mobile-nav-foot {
+      margin-top: 52px; font-size: 11px; font-weight: 500;
+      letter-spacing: 0.2em; text-transform: uppercase; color: #444;
+    }
+
+    /* ── NAV ────────────────────────────────────────────────── */
+    @keyframes nav-in {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100; height: 72px;
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 0 56px;
+      border-bottom: 1px solid transparent;
+      transition: background 0.5s var(--ease), backdrop-filter 0.5s, border-color 0.4s var(--ease);
+      opacity: 0;
+      animation: nav-in 0.7s var(--ease) 0.15s forwards;
+    }
+    nav.frosted {
+      background: rgba(255,255,255,0.86);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-color: var(--rule);
+    }
+    .nav-logo {
+      font-size: 13px; font-weight: 800;
+      letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--black); text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 40px; list-style: none; }
+    .nav-links a {
+      font-size: 12px; font-weight: 500;
+      letter-spacing: 0.06em; color: var(--black);
+      text-decoration: none; opacity: 1;
+      padding-bottom: 2px;
+      border-bottom: 1.5px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .nav-links a:hover { border-color: rgba(0,0,0,0.3); }
+    .nav-links a.active { border-color: var(--black); }
+    .nav-cta {
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.1em; color: var(--red); text-decoration: none;
+    }
+    .hamburger {
+      display: none; flex-direction: column;
+      gap: 5px; padding: 8px; background: none; border: none;
+    }
+    .hamburger span {
+      display: block; width: 22px; height: 1.5px;
+      background: var(--black);
+      transition: all 0.35s var(--ease); transform-origin: center;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    /* ── BUTTONS ────────────────────────────────────────────── */
+    .btn {
+      display: inline-flex; align-items: center;
+      padding: 15px 38px;
+      font-size: 11px; font-family: var(--font);
+      font-weight: 700; letter-spacing: 0.18em;
+      text-transform: uppercase; text-decoration: none;
+      border: none; will-change: transform;
+      transition: background 0.3s, color 0.3s, border-color 0.3s,
+                  transform 0.5s var(--ease);
+    }
+    .btn-black { background: var(--black); color: var(--white); }
+    .btn-black:hover { background: var(--red); }
+    .btn-outline {
+      background: transparent; color: var(--red);
+      border: 1.5px solid var(--red);
+    }
+    .btn-outline:hover { background: var(--red); color: var(--white); }
+
+    /* ── REVEAL ANIMATIONS ──────────────────────────────────── */
+    .ru { display: block; overflow: hidden; }
+    .ru-i {
+      display: block; transform: translateY(110%);
+      transition: transform 1s var(--ease);
+    }
+    .ru.visible .ru-i { transform: translateY(0); }
+
+    .rf {
+      opacity: 0; transform: translateY(22px);
+      transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+    }
+    .rf.visible { opacity: 1; transform: translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ru-i { transform: none; transition: none; }
+      .rf   { opacity: 1; transform: none; transition: none; }
+      *     { animation-duration: 0.01ms !important; }
+    }
+
+    /* ── SHARED SECTION STYLES ──────────────────────────────── */
+    .section-label {
+      display: block; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.34em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 24px;
+    }
+
+    /* ── HERO ───────────────────────────────────────────────── */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 100svh;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      align-items: center;
+      gap: 72px;
+      padding: 0 56px;
+      padding-top: 120px;
+      padding-bottom: 80px;
+    }
+
+    .hero-eyebrow {
+      display: block; overflow: hidden; margin-bottom: 36px;
+    }
+    .hero-eyebrow-i {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.32em; text-transform: uppercase;
+      color: var(--grey-light);
+      transform: translateY(110%);
+      transition: transform 0.9s var(--ease) 0s;
+    }
+    .hero-eyebrow.visible .hero-eyebrow-i { transform: translateY(0); }
+
+    .hero-headline {
+      font-size: clamp(48px, 6.5vw, 88px);
+      font-weight: 900; letter-spacing: -0.04em;
+      line-height: 0.96; text-transform: uppercase;
+    }
+
+    .hero-sub {
+      margin-top: 32px;
+      font-size: 15px; font-weight: 400;
+      color: var(--grey); line-height: 1.7;
+      max-width: 380px;
+    }
+
+    .hero-badges {
+      display: flex; flex-wrap: wrap; gap: 10px;
+      margin-top: 40px;
+    }
+    .badge {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: var(--black);
+      border: 1px solid var(--rule);
+      padding: 8px 16px;
+    }
+
+    .hero-actions { margin-top: 48px; }
+
+    /* Hero device image */
+    .hero-device-img-wrap {
+      width: 100%;
+      background: #FFFFFF;
+      isolation: isolate;
+    }
+    .hero-device-img-wrap img {
+      width: 100%;
+      height: auto; display: block;
+      object-fit: contain;
+      mix-blend-mode: multiply;
+    }
+
+    /* ── HOW IT WORKS ───────────────────────────────────────── */
+    .hiw-section {
+      position: relative; z-index: 1;
+      padding: 140px 56px;
+      background: var(--bg-section);
+    }
+
+    .hiw-headline {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 900; letter-spacing: -0.04em;
+      line-height: 1; margin-bottom: 80px;
+    }
+
+    .steps-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 0;
+    }
+
+    .step {
+      padding: 48px 48px 48px 0;
+      border-left: 1px solid #DEDEDE;
+      padding-left: 48px;
+      opacity: 0; transform: translateY(20px);
+      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+    }
+    .step:first-child { border-left: none; padding-left: 0; }
+    .step.visible { opacity: 1; transform: translateY(0); }
+
+    .step-num {
+      font-size: clamp(56px, 6vw, 80px);
+      font-weight: 900; letter-spacing: -0.05em;
+      color: var(--red); line-height: 1;
+      margin-bottom: 28px;
+    }
+
+    .step-title {
+      font-size: clamp(24px, 2.5vw, 34px);
+      font-weight: 800; letter-spacing: -0.03em;
+      line-height: 1.05; margin-bottom: 18px;
+    }
+
+    .step-desc {
+      font-size: 14px; font-weight: 400;
+      color: var(--grey); line-height: 1.72;
+    }
+
+    /* ── HARDWARE SECTION ───────────────────────────────────── */
+    .hardware-section {
+      position: relative; z-index: 1;
+      padding: 140px 56px;
+      background: var(--white);
+    }
+
+    .hardware-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 80px; align-items: center;
+    }
+
+    .hardware-headline {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 900; letter-spacing: -0.04em;
+      line-height: 1.02; margin-bottom: 28px;
+    }
+
+    .hardware-body {
+      font-size: 15px; font-weight: 400;
+      color: var(--grey); line-height: 1.75;
+      margin-bottom: 36px;
+    }
+
+    .hardware-details {
+      list-style: none;
+      border-top: 1px solid var(--rule);
+    }
+    .hardware-detail-row {
+      display: flex; justify-content: space-between;
+      align-items: baseline;
+      padding: 16px 0;
+      border-bottom: 1px solid var(--rule);
+      opacity: 0; transform: translateX(-12px);
+      transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
+    }
+    .hardware-detail-row.visible { opacity: 1; transform: translateX(0); }
+    .hw-key {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--grey-light);
+    }
+    .hw-val {
+      font-size: 14px; font-weight: 700;
+      letter-spacing: -0.01em; color: var(--black);
+    }
+
+    /* Hardware PCB image */
+    .hardware-device-img-wrap {
+      width: 100%; background: #0a0a0a;
+      display: flex; align-items: center; justify-content: center;
+      padding: 32px;
+    }
+    .hardware-device-img-wrap img {
+      width: 100%; height: auto;
+      display: block; object-fit: contain;
+    }
+
+    /* ── ATHLETES vs COACHES ────────────────────────────────── */
+    .split-section {
+      position: relative; z-index: 1;
+      display: grid; grid-template-columns: 1fr 1fr;
+    }
+
+    .split-panel {
+      padding: 120px 64px;
+    }
+    .split-panel-athlete { background: var(--black); }
+    .split-panel-coach   { background: var(--bg-section); }
+
+    .split-label {
+      display: block; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.34em; text-transform: uppercase;
+      margin-bottom: 24px;
+    }
+    .split-panel-athlete .split-label { color: var(--red); }
+    .split-panel-coach   .split-label { color: var(--red); }
+
+    .split-headline {
+      font-size: clamp(30px, 3.5vw, 48px);
+      font-weight: 900; letter-spacing: -0.035em;
+      line-height: 1.04; margin-bottom: 28px;
+    }
+    .split-panel-athlete .split-headline { color: var(--white); }
+    .split-panel-coach   .split-headline { color: var(--black); }
+
+    .split-sub {
+      font-size: 14px; font-weight: 400;
+      line-height: 1.72; margin-bottom: 40px;
+    }
+    .split-panel-athlete .split-sub { color: #888; }
+    .split-panel-coach   .split-sub { color: var(--grey); }
+
+    .split-features { list-style: none; }
+    .split-feature {
+      display: flex; align-items: flex-start;
+      gap: 14px; padding: 18px 0;
+      opacity: 0; transform: translateY(14px);
+      transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
+    }
+    .split-feature.visible { opacity: 1; transform: translateY(0); }
+    .split-feature:first-child {
+      border-top: 1px solid;
+    }
+    .split-feature {
+      border-bottom: 1px solid;
+    }
+    .split-panel-athlete .split-feature {
+      border-color: rgba(255,255,255,0.08);
+    }
+    .split-panel-coach .split-feature {
+      border-color: #DEDEDE;
+    }
+
+    .split-dot {
+      flex-shrink: 0; margin-top: 5px;
+      width: 5px; height: 5px;
+      border-radius: 50%; background: var(--red);
+    }
+    .split-feature-txt {
+      font-size: 14px; font-weight: 500;
+      letter-spacing: -0.005em; line-height: 1.5;
+    }
+    .split-panel-athlete .split-feature-txt { color: rgba(255,255,255,0.75); }
+    .split-panel-coach   .split-feature-txt { color: var(--black); }
+
+    /* ── TECH SPECS ─────────────────────────────────────────── */
+    .specs-section {
+      position: relative; z-index: 1;
+      padding: 140px 56px;
+      background: var(--white);
+    }
+
+    .specs-headline {
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 900; letter-spacing: -0.04em;
+      line-height: 1; margin-bottom: 72px;
+    }
+
+    .specs-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      border-top: 1px solid var(--rule);
+    }
+
+    .spec-cell {
+      padding: 48px 40px;
+      border-right: 1px solid var(--rule);
+      border-bottom: 1px solid var(--rule);
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+    }
+    .spec-cell:nth-child(3n) { border-right: none; }
+    .spec-cell.visible { opacity: 1; transform: translateY(0); }
+
+    .spec-key {
+      display: block; font-size: 10px; font-weight: 700;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--red); margin-bottom: 16px;
+    }
+    .spec-val {
+      display: block;
+      font-size: clamp(22px, 2.8vw, 36px);
+      font-weight: 900; letter-spacing: -0.035em;
+      line-height: 1.05; margin-bottom: 10px;
+    }
+    .spec-note {
+      display: block; font-size: 13px; font-weight: 400;
+      color: var(--grey); line-height: 1.55;
+    }
+
+    /* ── WAITLIST ────────────────────────────────────────────── */
+    .waitlist-section {
+      position: relative; z-index: 1;
+      padding: 160px 56px;
+      background: var(--black); text-align: center;
+    }
+    .waitlist-headline {
+      font-size: clamp(80px, 14vw, 160px);
+      font-weight: 900; letter-spacing: -0.055em;
+      line-height: 0.86; text-transform: uppercase;
+      color: var(--white);
+    }
+    .waitlist-sub {
+      margin: 32px auto 0;
+      font-size: 15px; color: #777;
+      line-height: 1.72; max-width: 400px;
+    }
+    .waitlist-form {
+      display: flex; max-width: 460px;
+      margin: 52px auto 0;
+    }
+    .waitlist-input {
+      flex: 1; min-width: 0;
+      background: transparent;
+      border: 1px solid rgba(255,255,255,0.18); border-right: none;
+      padding: 18px 20px;
+      font-size: 13px; font-family: var(--font);
+      color: var(--white); letter-spacing: 0.02em;
+      outline: none; transition: border-color 0.25s;
+    }
+    .waitlist-input::placeholder { color: rgba(255,255,255,0.28); }
+    .waitlist-input:focus { border-color: rgba(255,255,255,0.45); }
+    .waitlist-btn {
+      flex-shrink: 0;
+      background: var(--red); border: none;
+      padding: 18px 32px;
+      font-size: 10px; font-family: var(--font);
+      font-weight: 700; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--white);
+      cursor: pointer;
+      transition: background 0.25s, opacity 0.25s; white-space: nowrap;
+    }
+    .waitlist-btn:hover:not(:disabled) { background: #a31430; }
+    .waitlist-btn:disabled { opacity: 0.45; }
+    .waitlist-confirm {
+      display: none; margin-top: 24px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.2em; text-transform: uppercase;
+      color: rgba(255,255,255,0.4);
+    }
+
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      position: relative; z-index: 1;
+      background: var(--white);
+      border-top: 2px solid var(--red);
+    }
+    .footer-inner {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 24px 56px;
+    }
+    .footer-logo {
+      font-size: 12px; font-weight: 800;
+      letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--black); text-decoration: none;
+    }
+    .footer-links { display: flex; gap: 32px; list-style: none; }
+    .footer-links a {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.05em; color: #999;
+      text-decoration: none; transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--black); }
+    .footer-copy { font-size: 11px; color: #999; letter-spacing: 0.06em; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 960px) {
+      nav { padding: 0 28px; }
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+
+      .hero               { grid-template-columns: 1fr; gap: 48px; padding: 0 28px 64px; padding-top: 110px; }
+      .hero-device        { aspect-ratio: 4/3; max-width: 480px; }
+      .hiw-section        { padding: 96px 28px; }
+      .steps-grid         { grid-template-columns: 1fr; }
+      .step               { border-left: none; border-top: 1px solid #DEDEDE; padding-left: 0; padding-top: 48px; }
+      .step:first-child   { border-top: none; padding-top: 0; }
+      .hardware-section   { padding: 96px 28px; }
+      .hardware-grid      { grid-template-columns: 1fr; gap: 52px; }
+      .split-section      { grid-template-columns: 1fr; }
+      .split-panel        { padding: 88px 28px; }
+      .specs-section      { padding: 96px 28px; }
+      .specs-grid         { grid-template-columns: repeat(2, 1fr); }
+      .spec-cell:nth-child(3n)   { border-right: 1px solid var(--rule); }
+      .spec-cell:nth-child(2n)   { border-right: none; }
+      .waitlist-section   { padding: 112px 28px; }
+      .footer-inner       { flex-direction: column; gap: 20px; padding: 24px 28px; text-align: center; }
+      .footer-links       { flex-wrap: wrap; justify-content: center; gap: 18px; }
+    }
+
+    @media (max-width: 560px) {
+      .waitlist-form  { flex-direction: column; }
+      .waitlist-input { border-right: 1px solid rgba(255,255,255,0.18); border-bottom: none; }
+      .specs-grid     { grid-template-columns: 1fr; }
+      .spec-cell:nth-child(2n) { border-right: 1px solid var(--rule); }
+      .spec-cell      { border-right: none !important; }
+    }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow" id="bg-glow" aria-hidden="true"></div>
+
+  <!-- Mobile nav overlay -->
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true" role="dialog" aria-label="Navigation">
+    <ul class="mobile-nav-links">
+      <li><a href="index.html"          class="mnl">Home</a></li>
+      <li><a href="product.html"        class="mnl">Product</a></li>
+      <li><a href="ambassadors.html"    class="mnl">Advisors</a></li>
+      <li><a href="index.html#gyms"     class="mnl">Gyms</a></li>
+      <li><a href="index.html#founders" class="mnl">Team</a></li>
+      <li><a href="#waitlist"           class="mnl">Waitlist</a></li>
+    </ul>
+    <p class="mobile-nav-foot">Impkt Band · 2026</p>
+  </div>
+
+  <!-- Nav -->
+  <nav id="nav">
+    <a href="index.html" class="nav-logo">IMPKT</a>
+    <ul class="nav-links" aria-label="Primary navigation">
+      <li><a href="index.html">Home</a></li>
+      <li><a href="product.html" class="active">Product</a></li>
+      <li><a href="ambassadors.html">Advisors</a></li>
+      <li><a href="index.html#gyms">Gyms</a></li>
+      <li><a href="index.html#founders">Team</a></li>
+    </ul>
+    <a href="#waitlist" class="nav-cta">Request Access</a>
+    <button class="hamburger" id="hamburger"
+      aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ── HERO ──────────────────────────────────────────────── -->
+  <section class="hero">
+
+    <div>
+      <div class="hero-eyebrow" id="hero-eyebrow">
+        <span class="hero-eyebrow-i">The Hardware</span>
+      </div>
+
+      <h1 class="hero-headline">
+        <span class="ru" id="hl1"><span class="ru-i">Built to</span></span>
+        <span class="ru" id="hl2"><span class="ru-i" style="transition-delay:0.14s">disappear.</span></span>
+        <span class="ru" id="hl3"><span class="ru-i" style="transition-delay:0.28s; color:var(--red)">Impossible</span></span>
+        <span class="ru" id="hl4"><span class="ru-i" style="transition-delay:0.42s; color:var(--red)">to ignore.</span></span>
+      </h1>
+
+      <p class="hero-sub rf" style="transition-delay:0.55s">
+        The Impkt Band is a precision wearable built into standard boxing wraps. It disappears into training — and sends back data that changes everything.
+      </p>
+
+      <div class="hero-badges rf" style="transition-delay:0.68s">
+        <span class="badge">9-Axis IMU</span>
+        <span class="badge">1,000 Hz</span>
+        <span class="badge">IPX5</span>
+        <span class="badge">BLE 5.2</span>
+      </div>
+
+      <div class="hero-actions rf" style="transition-delay:0.8s">
+        <a href="#waitlist" class="btn btn-black magnetic">Request Access</a>
+      </div>
+    </div>
+
+    <div class="hero-device-img-wrap rf" style="transition-delay:0.3s">
+      <img src="images/device.jpg" alt="Impkt Band wearable device">
+    </div>
+
+  </section>
+
+  <!-- ── HOW IT WORKS ───────────────────────────────────────── -->
+  <section class="hiw-section" id="how-it-works">
+    <span class="section-label rf">The Process</span>
+    <h2 class="hiw-headline">
+      <span class="ru"><span class="ru-i">Three steps.</span></span>
+      <span class="ru"><span class="ru-i" style="transition-delay:0.13s">Zero friction.</span></span>
+    </h2>
+
+    <div class="steps-grid">
+      <div class="step">
+        <div class="step-num">01</div>
+        <h3 class="step-title">Wrap it.</h3>
+        <p class="step-desc">Pull on the Impkt Band wraps before your session. No calibration ritual. No separate hardware to charge. Just wrap and go — the same way you always have.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">02</div>
+        <h3 class="step-title">Train.</h3>
+        <p class="step-desc">Hit the bags, spar, drill. Impkt Band tracks every strike automatically at 1,000 samples per second. It measures what you can't — reaction time, punch velocity, output pattern.</p>
+      </div>
+      <div class="step">
+        <div class="step-num">03</div>
+        <h3 class="step-title">Analyse.</h3>
+        <p class="step-desc">Open the coach dashboard mid-session or review it after. See exactly what happened, broken down per round, per fighter, per strike type. Data-driven decisions from day one.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── HARDWARE ───────────────────────────────────────────── -->
+  <section class="hardware-section" id="hardware">
+    <div class="hardware-grid">
+
+      <div>
+        <span class="section-label rf">The Build</span>
+        <h2 class="hardware-headline">
+          <span class="ru"><span class="ru-i">Engineered</span></span>
+          <span class="ru"><span class="ru-i" style="transition-delay:0.13s">from scratch.</span></span>
+        </h2>
+        <p class="hardware-body rf" style="transition-delay:0.2s">
+          Every component of the Impkt Band sensor was designed in-house. No off-the-shelf fitness module. A custom-built 9-axis IMU fused with a proprietary signal processing stack — purpose-built for the biomechanics of combat sports, not adapted from a step counter.
+        </p>
+
+        <ul class="hardware-details" aria-label="Hardware details">
+          <li class="hardware-detail-row"><span class="hw-key">Form Factor</span>   <span class="hw-val">Integrated wrap module</span></li>
+          <li class="hardware-detail-row"><span class="hw-key">Sensor</span>        <span class="hw-val">9-axis IMU (accel + gyro + mag)</span></li>
+          <li class="hardware-detail-row"><span class="hw-key">Sample Rate</span>   <span class="hw-val">1,000 Hz</span></li>
+          <li class="hardware-detail-row"><span class="hw-key">Battery</span>       <span class="hw-val">8 hrs continuous use</span></li>
+          <li class="hardware-detail-row"><span class="hw-key">Connectivity</span> <span class="hw-val">Bluetooth LE 5.2</span></li>
+          <li class="hardware-detail-row"><span class="hw-key">Water Rating</span> <span class="hw-val">IPX5</span></li>
+        </ul>
+      </div>
+
+      <div class="hardware-device-img-wrap rf" style="transition-delay:0.2s">
+        <img src="images/pcb.jpg" alt="Impkt Band PCB circuit board">
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ── ATHLETES vs COACHES ───────────────────────────────── -->
+  <section class="split-section" id="for-you">
+
+    <div class="split-panel split-panel-athlete">
+      <span class="split-label rf">For Athletes</span>
+      <h2 class="split-headline">
+        <span class="ru"><span class="ru-i" style="color:var(--white)">You train.</span></span>
+        <span class="ru"><span class="ru-i" style="color:var(--white); transition-delay:0.13s">It measures.</span></span>
+      </h2>
+      <p class="split-sub rf" style="transition-delay:0.2s">
+        Impkt Band doesn't ask you to change anything. Wear it. Train the way you always have. Everything else is handled.
+      </p>
+      <ul class="split-features" aria-label="Athlete features">
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">No app required during training</span></li>
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Reaction time tracked per round</span></li>
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Punch output broken down by type</span></li>
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Personal bests tracked over time</span></li>
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">See what your coach sees, post-session</span></li>
+      </ul>
+    </div>
+
+    <div class="split-panel split-panel-coach">
+      <span class="split-label rf">For Coaches</span>
+      <h2 class="split-headline">
+        <span class="ru"><span class="ru-i">You watch.</span></span>
+        <span class="ru"><span class="ru-i" style="transition-delay:0.13s">It quantifies.</span></span>
+      </h2>
+      <p class="split-sub rf" style="transition-delay:0.2s">
+        Everything you already see in the gym — now with numbers behind it. Make calls with evidence, not just instinct.
+      </p>
+      <ul class="split-features" aria-label="Coach features">
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Live session dashboard, no app for athletes</span></li>
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Side-by-side fighter comparisons</span></li>
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Fatigue patterns across rounds</span></li>
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Historical session archive per fighter</span></li>
+        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Export reports for athlete review</span></li>
+      </ul>
+    </div>
+
+  </section>
+
+  <!-- ── TECH SPECS ─────────────────────────────────────────── -->
+  <section class="specs-section" id="specs">
+    <span class="section-label rf">Under the Hood</span>
+    <h2 class="specs-headline">
+      <span class="ru"><span class="ru-i">The numbers.</span></span>
+    </h2>
+
+    <div class="specs-grid">
+      <div class="spec-cell">
+        <span class="spec-key">Timing Precision</span>
+        <span class="spec-val">±0.001s</span>
+        <span class="spec-note">Millisecond-accurate strike timestamp, no averaging or smoothing applied.</span>
+      </div>
+      <div class="spec-cell">
+        <span class="spec-key">Sampling Rate</span>
+        <span class="spec-val">1,000 Hz</span>
+        <span class="spec-note">1,000 data points per second from a 9-axis inertial measurement unit.</span>
+      </div>
+      <div class="spec-cell">
+        <span class="spec-key">Battery Life</span>
+        <span class="spec-val">8 hrs</span>
+        <span class="spec-note">Continuous active use. Charges via USB-C in under 90 minutes.</span>
+      </div>
+      <div class="spec-cell">
+        <span class="spec-key">Connectivity</span>
+        <span class="spec-val">BLE 5.2</span>
+        <span class="spec-note">Bluetooth Low Energy 5.2. Real-time data to coach dashboard. No Wi-Fi required.</span>
+      </div>
+      <div class="spec-cell">
+        <span class="spec-key">Water Resistance</span>
+        <span class="spec-val">IPX5</span>
+        <span class="spec-note">Rated for sweat and water spray. Built for the realities of a training environment.</span>
+      </div>
+      <div class="spec-cell">
+        <span class="spec-key">Form Factor</span>
+        <span class="spec-val">28g</span>
+        <span class="spec-note">Fully integrated into the wrap. Imperceptible during training.</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── WAITLIST ───────────────────────────────────────────── -->
+  <section class="waitlist-section" id="waitlist">
+    <span class="section-label rf" style="color:var(--red)">Limited Access</span>
+    <h2 class="waitlist-headline">
+      <span class="ru" style="display:block">
+        <span class="ru-i" style="color:var(--white)">Be First.</span>
+      </span>
+    </h2>
+    <p class="waitlist-sub rf" style="transition-delay:0.2s">
+      A small number of founding gym partners are being onboarded now.
+    </p>
+    <form class="waitlist-form rf" id="wl-form" style="transition-delay:0.35s" novalidate>
+      <label for="wl-email" class="sr-only">Email address</label>
+      <input class="waitlist-input" id="wl-email" type="email"
+        placeholder="your@gym.com" autocomplete="email" required>
+      <button class="waitlist-btn magnetic" type="submit">Apply</button>
+    </form>
+    <p class="waitlist-confirm" id="wl-confirm" role="status" aria-live="polite">
+      Application received — we'll be in touch.
+    </p>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <a href="index.html" class="footer-logo">IMPKT</a>
+      <ul class="footer-links" aria-label="Footer navigation">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Product</a></li>
+        <li><a href="index.html#gyms">Gyms</a></li>
+        <li><a href="index.html#founders">Team</a></li>
+        <li><a href="#waitlist">Waitlist</a></li>
+      </ul>
+      <p class="footer-copy">Impkt Band &copy; 2026</p>
+    </div>
+  </footer>
+
+  <script>
+  'use strict';
+
+  /* ── REACTIVE GLOW ───────────────────────────────── */
+  const bgGlow     = document.getElementById('bg-glow');
+  const hasPointer = window.matchMedia('(hover: hover)').matches;
+
+  if (hasPointer) {
+    let tx = window.innerWidth / 2, ty = window.innerHeight / 2;
+    let cx = tx, cy = ty;
+
+    document.addEventListener('mousemove', e => {
+      tx = e.clientX; ty = e.clientY;
+      bgGlow.classList.add('active');
+    }, { passive: true });
+
+    document.addEventListener('mouseleave', () => bgGlow.classList.remove('active'));
+    document.addEventListener('mouseenter', () => bgGlow.classList.add('active'));
+
+    (function raf() {
+      cx += (tx - cx) * 0.07;
+      cy += (ty - cy) * 0.07;
+      document.documentElement.style.setProperty('--gx', cx + 'px');
+      document.documentElement.style.setProperty('--gy', cy + 'px');
+      requestAnimationFrame(raf);
+    })();
+  }
+
+  /* ── NAV FROST ───────────────────────────────────── */
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('frosted', window.scrollY > 48);
+  }, { passive: true });
+
+  /* ── MOBILE NAV ──────────────────────────────────── */
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobile-nav');
+  let navOpen = false;
+
+  function toggleNav(force) {
+    navOpen = force !== undefined ? force : !navOpen;
+    hamburger.classList.toggle('open', navOpen);
+    mobileNav.classList.toggle('open', navOpen);
+    mobileNav.setAttribute('aria-hidden', !navOpen);
+    hamburger.setAttribute('aria-expanded', navOpen);
+    document.body.style.overflow = navOpen ? 'hidden' : '';
+  }
+
+  hamburger.addEventListener('click', () => toggleNav());
+  document.querySelectorAll('.mnl').forEach(l => l.addEventListener('click', () => toggleNav(false)));
+
+  /* ── MAGNETIC BUTTONS ────────────────────────────── */
+  if (hasPointer) {
+    document.querySelectorAll('.magnetic').forEach(el => {
+      el.addEventListener('mousemove', e => {
+        const r = el.getBoundingClientRect();
+        const x = e.clientX - r.left - r.width  / 2;
+        const y = e.clientY - r.top  - r.height / 2;
+        el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
+      });
+      el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+    });
+  }
+
+  /* ── INTERSECTION OBSERVERS ──────────────────────── */
+  function obs(selector, opts, cb) {
+    const o = new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { cb(e.target, o); } });
+    }, opts);
+    document.querySelectorAll(selector).forEach(el => o.observe(el));
+  }
+
+  // Slide-up reveals
+  obs('.ru', { threshold: 0.05 }, (el, o) => {
+    el.classList.add('visible'); o.unobserve(el);
+  });
+
+  // Fade reveals
+  obs('.rf', { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }, (el, o) => {
+    el.classList.add('visible'); o.unobserve(el);
+  });
+
+  // How it works steps — staggered
+  obs('.step', { threshold: 0.2 }, (el, o) => {
+    const i = [...document.querySelectorAll('.step')].indexOf(el);
+    setTimeout(() => el.classList.add('visible'), i * 130);
+    o.unobserve(el);
+  });
+
+  // Hardware detail rows — staggered
+  obs('.hardware-detail-row', { threshold: 0.3 }, (el, o) => {
+    const rows = [...document.querySelectorAll('.hardware-detail-row')];
+    const i = rows.indexOf(el);
+    setTimeout(() => el.classList.add('visible'), i * 80);
+    o.unobserve(el);
+  });
+
+  // Split features — staggered per panel
+  document.querySelectorAll('.split-panel').forEach(panel => {
+    const panelObs = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.querySelectorAll('.split-feature').forEach((f, i) => {
+            setTimeout(() => f.classList.add('visible'), i * 100);
+          });
+          panelObs.unobserve(entry.target);
+        }
+      });
+    }, { threshold: 0.15 });
+    panelObs.observe(panel);
+  });
+
+  // Spec cells — staggered
+  obs('.spec-cell', { threshold: 0.15 }, (el, o) => {
+    const i = [...document.querySelectorAll('.spec-cell')].indexOf(el);
+    setTimeout(() => el.classList.add('visible'), i * 80);
+    o.unobserve(el);
+  });
+
+  /* ── HERO FIRES ON LOAD ──────────────────────────── */
+  document.getElementById('hero-eyebrow').classList.add('visible');
+
+  /* ── WAITLIST FORM ───────────────────────────────── */
+  document.getElementById('wl-form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const input   = document.getElementById('wl-email');
+    const btn     = this.querySelector('.waitlist-btn');
+    const confirm = document.getElementById('wl-confirm');
+    if (!input.validity.valid) { input.focus(); return; }
+    btn.disabled = input.disabled = true;
+    btn.textContent = 'Sent.';
+    confirm.style.display = 'block';
+  });
+
+  </script>
+
+</body>
+</html>

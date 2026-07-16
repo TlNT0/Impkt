@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advisors — Impkt Band</title>
+  <meta name="description" content="The advisory board behind Impkt Band. Industry experts helping shape the future of combat sports technology.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <style>
+
+    /* ── RESET ──────────────────────────────────────────────── */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --red:        #C41E3A;
+      --black:      #000000;
+      --white:      #FFFFFF;
+      --grey:       #6B6B6B;
+      --grey-light: #A0A0A0;
+      --rule:       #EBEBEB;
+      --bg-section: #F5F5F7;
+      --font:       'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      --ease:       cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--white);
+      color: var(--black);
+      font-family: var(--font);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      overflow-x: hidden;
+    }
+
+    /* ── REACTIVE BACKGROUND GLOW ───────────────────────────── */
+    .bg-glow {
+      position: fixed; inset: 0; z-index: 0;
+      pointer-events: none;
+      background: radial-gradient(
+        700px circle at var(--gx, 50%) var(--gy, 50%),
+        rgba(196, 30, 58, 0.05),
+        transparent 70%
+      );
+      opacity: 0; transition: opacity 0.6s;
+    }
+    .bg-glow.active { opacity: 1; }
+    @media (hover: none) { .bg-glow { display: none; } }
+
+    /* ── MOBILE NAV ─────────────────────────────────────────── */
+    .mobile-nav {
+      position: fixed; inset: 0; z-index: 200;
+      background: var(--black);
+      display: flex; flex-direction: column;
+      justify-content: center; padding: 0 40px;
+      opacity: 0; pointer-events: none;
+      transition: opacity 0.4s var(--ease);
+    }
+    .mobile-nav.open { opacity: 1; pointer-events: all; }
+    .mobile-nav-links { list-style: none; }
+    .mobile-nav-links li { overflow: hidden; }
+    .mobile-nav-links a {
+      display: block;
+      font-size: clamp(40px, 10vw, 64px);
+      font-weight: 900; letter-spacing: -0.035em;
+      text-transform: uppercase; line-height: 1.08;
+      color: var(--white); text-decoration: none;
+      padding: 10px 0;
+      opacity: 0; transform: translateY(28px);
+      transition: color 0.2s, opacity 0.5s var(--ease), transform 0.5s var(--ease);
+    }
+    .mobile-nav-links a:hover { color: var(--red); }
+    .mobile-nav.open .mobile-nav-links li:nth-child(1) a { opacity: 1; transform: translateY(0); transition-delay: 0.06s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(2) a { opacity: 1; transform: translateY(0); transition-delay: 0.12s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(3) a { opacity: 1; transform: translateY(0); transition-delay: 0.18s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(4) a { opacity: 1; transform: translateY(0); transition-delay: 0.24s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(5) a { opacity: 1; transform: translateY(0); transition-delay: 0.30s; }
+    .mobile-nav.open .mobile-nav-links li:nth-child(6) a { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
+    .mobile-nav-foot {
+      margin-top: 52px; font-size: 11px; font-weight: 500;
+      letter-spacing: 0.2em; text-transform: uppercase; color: #444;
+    }
+
+    /* ── NAV ────────────────────────────────────────────────── */
+    @keyframes nav-in {
+      from { opacity: 0; transform: translateY(-10px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+    nav {
+      position: fixed; top: 0; left: 0; right: 0;
+      z-index: 100; height: 72px;
+      display: flex; align-items: center;
+      justify-content: space-between; padding: 0 56px;
+      border-bottom: 1px solid transparent;
+      transition: background 0.5s var(--ease), backdrop-filter 0.5s, border-color 0.4s var(--ease);
+      opacity: 0;
+      animation: nav-in 0.7s var(--ease) 0.15s forwards;
+    }
+    nav.frosted {
+      background: rgba(255,255,255,0.86);
+      backdrop-filter: blur(24px);
+      -webkit-backdrop-filter: blur(24px);
+      border-color: var(--rule);
+    }
+    .nav-logo {
+      font-size: 13px; font-weight: 800;
+      letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--black); text-decoration: none;
+    }
+    .nav-links { display: flex; gap: 40px; list-style: none; }
+    .nav-links a {
+      font-size: 12px; font-weight: 500;
+      letter-spacing: 0.06em; color: var(--black);
+      text-decoration: none; opacity: 1;
+      padding-bottom: 2px;
+      border-bottom: 1.5px solid transparent;
+      transition: border-color 0.2s;
+    }
+    .nav-links a:hover { border-color: rgba(0,0,0,0.3); }
+    .nav-links a.active { border-color: var(--black); }
+    .nav-cta {
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.1em; color: var(--red); text-decoration: none;
+    }
+    .hamburger {
+      display: none; flex-direction: column;
+      gap: 5px; padding: 8px; background: none; border: none;
+    }
+    .hamburger span {
+      display: block; width: 22px; height: 1.5px;
+      background: var(--black);
+      transition: all 0.35s var(--ease); transform-origin: center;
+    }
+    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+    /* ── REVEAL ANIMATIONS ──────────────────────────────────── */
+    .ru { display: block; overflow: hidden; }
+    .ru-i {
+      display: block; transform: translateY(110%);
+      transition: transform 1s var(--ease);
+    }
+    .ru.visible .ru-i { transform: translateY(0); }
+
+    .rf {
+      opacity: 0; transform: translateY(22px);
+      transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+    }
+    .rf.visible { opacity: 1; transform: translateY(0); }
+
+    @media (prefers-reduced-motion: reduce) {
+      .ru-i { transform: none; transition: none; }
+      .rf   { opacity: 1; transform: none; transition: none; }
+    }
+
+    /* ── HERO ───────────────────────────────────────────────── */
+    .hero {
+      position: relative; z-index: 1;
+      min-height: 52vh;
+      display: flex; flex-direction: column;
+      justify-content: flex-end;
+      padding: 0 56px 80px;
+      padding-top: 140px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .hero-eyebrow {
+      display: block; overflow: hidden; margin-bottom: 32px;
+    }
+    .hero-eyebrow-i {
+      display: block;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.32em; text-transform: uppercase;
+      color: var(--grey-light);
+      transform: translateY(110%);
+      transition: transform 0.9s var(--ease);
+    }
+    .hero-eyebrow.visible .hero-eyebrow-i { transform: translateY(0); }
+
+    .hero-headline {
+      font-size: clamp(64px, 10vw, 130px);
+      font-weight: 900; letter-spacing: -0.045em;
+      line-height: 0.93; text-transform: uppercase;
+      max-width: 900px;
+    }
+
+    .hero-sub {
+      margin-top: 36px;
+      font-size: 15px; font-weight: 400;
+      color: var(--grey); line-height: 1.7;
+      max-width: 420px;
+    }
+
+    /* ── ADVISORS GRID ──────────────────────────────────────── */
+    .ambassadors-section {
+      position: relative; z-index: 1;
+      padding: 96px 56px 140px;
+      background: var(--white);
+    }
+
+    .grid-header {
+      display: flex; align-items: baseline;
+      justify-content: space-between;
+      margin-bottom: 64px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid var(--rule);
+    }
+
+    .grid-label {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.34em; text-transform: uppercase;
+      color: var(--red);
+    }
+
+    .grid-count {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.1em; color: var(--grey-light);
+    }
+
+    .ambassadors-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      column-gap: 48px;
+      row-gap: 56px;
+    }
+
+    /* ── ADVISOR CARD ───────────────────────────────────────── */
+    .amb-card {
+      padding-top: 32px;
+      border-top: 2px solid var(--black);
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease),
+                  border-top-color 0.3s;
+      cursor: default;
+    }
+    .amb-card:hover { border-top-color: var(--red); }
+    .amb-card.visible { opacity: 1; transform: translateY(0); }
+
+    .amb-index {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.2em; color: var(--red);
+      margin-bottom: 24px;
+    }
+
+    .amb-discipline {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.28em; text-transform: uppercase;
+      color: var(--grey-light); margin-bottom: 8px;
+    }
+
+    .amb-name {
+      font-size: clamp(20px, 2vw, 28px);
+      font-weight: 900; letter-spacing: -0.03em;
+      text-transform: uppercase; line-height: 1.05;
+      margin-bottom: 16px;
+    }
+
+    .amb-bio {
+      font-size: 13px; font-weight: 400;
+      color: var(--grey); line-height: 1.75;
+    }
+
+    .amb-tag {
+      display: inline-block;
+      margin-top: 20px;
+      font-size: 10px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: var(--grey-light);
+      border: 1px solid var(--rule);
+      padding: 5px 12px;
+    }
+
+    /* ── FOOTER ─────────────────────────────────────────────── */
+    footer {
+      position: relative; z-index: 1;
+      background: var(--white);
+      border-top: 2px solid var(--red);
+    }
+    .footer-inner {
+      display: flex; align-items: center;
+      justify-content: space-between;
+      padding: 24px 56px;
+    }
+    .footer-logo {
+      font-size: 12px; font-weight: 800;
+      letter-spacing: 0.26em; text-transform: uppercase;
+      color: var(--black); text-decoration: none;
+    }
+    .footer-links { display: flex; gap: 32px; list-style: none; }
+    .footer-links a {
+      font-size: 11px; font-weight: 500;
+      letter-spacing: 0.05em; color: #999;
+      text-decoration: none; transition: color 0.2s;
+    }
+    .footer-links a:hover { color: var(--black); }
+    .footer-copy { font-size: 11px; color: #999; letter-spacing: 0.06em; }
+
+    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    @media (max-width: 960px) {
+      nav { padding: 0 28px; }
+      .nav-links, .nav-cta { display: none; }
+      .hamburger { display: flex; }
+
+      .hero              { padding: 0 28px 64px; padding-top: 110px; min-height: auto; }
+      .ambassadors-section { padding: 72px 28px 96px; }
+      .ambassadors-grid  { grid-template-columns: repeat(2, 1fr); column-gap: 28px; row-gap: 40px; }
+      .footer-inner      { flex-direction: column; gap: 20px; padding: 24px 28px; text-align: center; }
+      .footer-links      { flex-wrap: wrap; justify-content: center; gap: 18px; }
+    }
+
+    @media (max-width: 560px) {
+      .ambassadors-grid { grid-template-columns: 1fr; column-gap: 0; row-gap: 32px; }
+    }
+
+    .sr-only {
+      position: absolute; width: 1px; height: 1px;
+      padding: 0; margin: -1px; overflow: hidden;
+      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+    }
+
+  </style>
+</head>
+<body>
+
+  <div class="bg-glow" id="bg-glow" aria-hidden="true"></div>
+
+  <!-- Mobile nav -->
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true" role="dialog" aria-label="Navigation">
+    <ul class="mobile-nav-links">
+      <li><a href="index.html"        class="mnl">Home</a></li>
+      <li><a href="product.html"      class="mnl">Product</a></li>
+      <li><a href="ambassadors.html"  class="mnl">Advisors</a></li>
+      <li><a href="index.html#gyms"   class="mnl">Gyms</a></li>
+      <li><a href="index.html#waitlist" class="mnl">Waitlist</a></li>
+    </ul>
+    <p class="mobile-nav-foot">Impkt Band · 2026</p>
+  </div>
+
+  <!-- Nav -->
+  <nav id="nav">
+    <a href="index.html" class="nav-logo">IMPKT</a>
+    <ul class="nav-links" aria-label="Primary navigation">
+      <li><a href="product.html">Product</a></li>
+      <li><a href="ambassadors.html" class="active">Advisors</a></li>
+      <li><a href="index.html#gyms">Gyms</a></li>
+      <li><a href="index.html#founders">Team</a></li>
+    </ul>
+    <a href="index.html#waitlist" class="nav-cta">Request Access</a>
+    <button class="hamburger" id="hamburger"
+      aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav">
+      <span></span><span></span><span></span>
+    </button>
+  </nav>
+
+  <!-- ── HERO ──────────────────────────────────────────────── -->
+  <section class="hero">
+    <div class="hero-eyebrow" id="hero-eyebrow">
+      <span class="hero-eyebrow-i">Advisory Board</span>
+    </div>
+    <h1 class="hero-headline">
+      <span class="ru" id="hl1"><span class="ru-i">The people</span></span>
+      <span class="ru" id="hl2"><span class="ru-i" style="transition-delay:0.15s; color:var(--red)">behind it.</span></span>
+    </h1>
+    <p class="hero-sub rf" style="transition-delay:0.35s">
+      Impkt Band is shaped by a group of advisors who understand combat sports from the inside — coaches, practitioners, and industry experts who keep us honest.
+    </p>
+  </section>
+
+  <!-- ── ADVISORS GRID ─────────────────────────────────────── -->
+  <section class="ambassadors-section" aria-label="Advisors">
+
+    <div class="grid-header rf">
+      <span class="grid-label">Advisory Board</span>
+      <span class="grid-count">6 advisors</span>
+    </div>
+
+    <div class="ambassadors-grid">
+
+      <!-- Card 1 -->
+      <article class="amb-card">
+        <div class="amb-index">01</div>
+        <div class="amb-discipline">Professional Boxing</div>
+        <h2 class="amb-name">Marcus Webb</h2>
+        <p class="amb-bio">Super-welterweight contender with 18 professional bouts. Advises on athlete experience and how data feedback integrates into a fighter's daily routine.</p>
+        <span class="amb-tag">Performance</span>
+      </article>
+
+      <!-- Card 2 -->
+      <article class="amb-card">
+        <div class="amb-index">02</div>
+        <div class="amb-discipline">Muay Thai</div>
+        <h2 class="amb-name">Zara Khalil</h2>
+        <p class="amb-bio">Three-time national Muay Thai champion. Guides product development from the perspective of elite striking sports and competition-level demands.</p>
+        <span class="amb-tag">Striking Sports</span>
+      </article>
+
+      <!-- Card 3 -->
+      <article class="amb-card">
+        <div class="amb-index">03</div>
+        <div class="amb-discipline">MMA</div>
+        <h2 class="amb-name">Dani Torres</h2>
+        <p class="amb-bio">Featherweight MMA competitor and certified S&amp;C coach. Advises on multi-discipline training environments and cross-sport wearable use cases.</p>
+        <span class="amb-tag">Strength &amp; Conditioning</span>
+      </article>
+
+      <!-- Card 4 -->
+      <article class="amb-card">
+        <div class="amb-index">04</div>
+        <div class="amb-discipline">Coaching</div>
+        <h2 class="amb-name">Tyler James</h2>
+        <p class="amb-bio">Former professional boxer, now head coach at a leading gym. Shapes how Impkt Band's dashboard is structured for gym-wide coaching workflows.</p>
+        <span class="amb-tag">Coach Experience</span>
+      </article>
+
+      <!-- Card 5 -->
+      <article class="amb-card">
+        <div class="amb-index">05</div>
+        <div class="amb-discipline">Sports Science</div>
+        <h2 class="amb-name">Ayo Bankole</h2>
+        <p class="amb-bio">Kickboxing competitor and certified sports scientist. Advises on biomechanical accuracy and how sensor data maps to real-world athletic output.</p>
+        <span class="amb-tag">Biomechanics</span>
+      </article>
+
+      <!-- Card 6 -->
+      <article class="amb-card">
+        <div class="amb-index">06</div>
+        <div class="amb-discipline">Amateur Boxing</div>
+        <h2 class="amb-name">Priya Sen</h2>
+        <p class="amb-bio">Elite amateur boxer and national squad member. Provides insight into the development pathway — from club-level training to high-performance competition.</p>
+        <span class="amb-tag">Youth &amp; Development</span>
+      </article>
+
+    </div>
+  </section>
+
+  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  <footer>
+    <div class="footer-inner">
+      <a href="index.html" class="footer-logo">IMPKT</a>
+      <ul class="footer-links" aria-label="Footer navigation">
+        <li><a href="index.html">Home</a></li>
+        <li><a href="product.html">Product</a></li>
+        <li><a href="ambassadors.html">Advisors</a></li>
+        <li><a href="index.html#gyms">Gyms</a></li>
+        <li><a href="index.html#waitlist">Waitlist</a></li>
+      </ul>
+      <p class="footer-copy">Impkt Band &copy; 2026</p>
+    </div>
+  </footer>
+
+  <script>
+  'use strict';
+
+  /* ── REACTIVE GLOW ───────────────────────────────── */
+  const bgGlow     = document.getElementById('bg-glow');
+  const hasPointer = window.matchMedia('(hover: hover)').matches;
+
+  if (hasPointer) {
+    let tx = window.innerWidth / 2, ty = window.innerHeight / 2;
+    let cx = tx, cy = ty;
+    document.addEventListener('mousemove', e => {
+      tx = e.clientX; ty = e.clientY;
+      bgGlow.classList.add('active');
+    }, { passive: true });
+    document.addEventListener('mouseleave', () => bgGlow.classList.remove('active'));
+    document.addEventListener('mouseenter', () => bgGlow.classList.add('active'));
+    (function raf() {
+      cx += (tx - cx) * 0.07;
+      cy += (ty - cy) * 0.07;
+      document.documentElement.style.setProperty('--gx', cx + 'px');
+      document.documentElement.style.setProperty('--gy', cy + 'px');
+      requestAnimationFrame(raf);
+    })();
+  }
+
+  /* ── NAV FROST ───────────────────────────────────── */
+  const nav = document.getElementById('nav');
+  window.addEventListener('scroll', () => {
+    nav.classList.toggle('frosted', window.scrollY > 48);
+  }, { passive: true });
+
+  /* ── MOBILE NAV ──────────────────────────────────── */
+  const hamburger = document.getElementById('hamburger');
+  const mobileNav = document.getElementById('mobile-nav');
+  let navOpen = false;
+  function toggleNav(force) {
+    navOpen = force !== undefined ? force : !navOpen;
+    hamburger.classList.toggle('open', navOpen);
+    mobileNav.classList.toggle('open', navOpen);
+    mobileNav.setAttribute('aria-hidden', !navOpen);
+    hamburger.setAttribute('aria-expanded', navOpen);
+    document.body.style.overflow = navOpen ? 'hidden' : '';
+  }
+  hamburger.addEventListener('click', () => toggleNav());
+  document.querySelectorAll('.mnl').forEach(l => l.addEventListener('click', () => toggleNav(false)));
+
+  /* ── REVEAL ANIMATIONS ───────────────────────────── */
+  const ruObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); ruObs.unobserve(e.target); } });
+  }, { threshold: 0.05 });
+
+  const rfObs = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); rfObs.unobserve(e.target); } });
+  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+
+  document.querySelectorAll('.ru').forEach(el => ruObs.observe(el));
+  document.querySelectorAll('.rf').forEach(el => rfObs.observe(el));
+
+  /* ── HERO FIRES ON LOAD ──────────────────────────── */
+  document.getElementById('hero-eyebrow').classList.add('visible');
+
+  /* ── AMBASSADOR CARDS — staggered ───────────────── */
+  const cardObs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        const cards = [...document.querySelectorAll('.amb-card')];
+        const row   = Math.floor(cards.indexOf(entry.target) / 3);
+        const col   = cards.indexOf(entry.target) % 3;
+        entry.target.style.transitionDelay = `${col * 0.1 + row * 0.05}s`;
+        entry.target.classList.add('visible');
+        cardObs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  document.querySelectorAll('.amb-card').forEach(el => cardObs.observe(el));
+
+  </script>
+
+</body>
+</html>
