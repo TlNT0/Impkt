@@ -148,8 +148,7 @@
       font-weight: 700; letter-spacing: 0.18em;
       text-transform: uppercase; text-decoration: none;
       border: none; will-change: transform;
-      transition: background 0.3s, color 0.3s, border-color 0.3s,
-                  transform 0.5s var(--ease);
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
     }
     .btn-black { background: var(--black); color: var(--white); }
     .btn-black:hover { background: var(--red); }
@@ -190,10 +189,8 @@
     .hero {
       position: relative; z-index: 1;
       min-height: 100svh;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      align-items: center;
-      gap: 72px;
+      display: flex; flex-direction: column;
+      justify-content: center;
       padding: 0 56px;
       padding-top: 120px;
       padding-bottom: 80px;
@@ -238,19 +235,6 @@
     }
 
     .hero-actions { margin-top: 48px; }
-
-    /* Hero device image */
-    .hero-device-img-wrap {
-      width: 100%;
-      background: #FFFFFF;
-      isolation: isolate;
-    }
-    .hero-device-img-wrap img {
-      width: 100%;
-      height: auto; display: block;
-      object-fit: contain;
-      mix-blend-mode: multiply;
-    }
 
     /* ── HOW IT WORKS ───────────────────────────────────────── */
     .hiw-section {
@@ -299,17 +283,89 @@
       color: var(--grey); line-height: 1.72;
     }
 
+    /* ── PUNCH DEMO ──────────────────────────────────────────── */
+    .demo-card {
+      margin-top: 64px;
+      padding: 48px;
+      background: var(--white);
+      border: 1px solid var(--rule);
+    }
+    .demo-head {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px; margin-bottom: 36px;
+    }
+    .demo-title {
+      font-size: 15px; font-weight: 800; letter-spacing: -0.01em;
+    }
+    .demo-badge {
+      font-size: 10px; font-weight: 700;
+      letter-spacing: 0.14em; text-transform: uppercase;
+      color: var(--grey-light);
+    }
+    .demo-grid {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
+    }
+    .punch-types {
+      display: flex; flex-wrap: wrap; gap: 8px;
+    }
+    .punch-btn {
+      padding: 10px 18px;
+      background: transparent;
+      border: 1px solid var(--rule);
+      font-family: var(--font); font-size: 12px; font-weight: 600;
+      letter-spacing: 0.04em; color: var(--grey);
+      cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s;
+    }
+    .punch-btn.active {
+      background: var(--black); border-color: var(--black); color: var(--white);
+    }
+    .force-row { margin-top: 28px; }
+    .force-label {
+      display: flex; justify-content: space-between;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.1em; text-transform: uppercase;
+      color: var(--grey-light); margin-bottom: 12px;
+    }
+    .force-label strong { color: var(--black); }
+    .force-slider {
+      width: 100%; -webkit-appearance: none; appearance: none;
+      height: 2px; background: var(--rule); outline: none;
+    }
+    .force-slider::-webkit-slider-thumb {
+      -webkit-appearance: none; appearance: none;
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--red); cursor: pointer;
+    }
+    .force-slider::-moz-range-thumb {
+      width: 16px; height: 16px; border-radius: 50%;
+      background: var(--red); border: none; cursor: pointer;
+    }
+    .demo-stats {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 20px; align-content: start;
+    }
+    .demo-stat-val {
+      display: block;
+      font-size: clamp(22px, 2.6vw, 32px);
+      font-weight: 900; letter-spacing: -0.03em;
+    }
+    .demo-stat-lbl {
+      display: block; margin-top: 8px;
+      font-size: 10px; font-weight: 500;
+      letter-spacing: 0.06em; text-transform: uppercase;
+      color: var(--grey-light);
+    }
+
     /* ── HARDWARE SECTION ───────────────────────────────────── */
     .hardware-section {
       position: relative; z-index: 1;
-      padding: 140px 56px;
+      padding: 140px 0;
       background: var(--white);
     }
 
-    .hardware-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 80px; align-items: center;
+    .hardware-intro {
+      padding: 0 56px; max-width: 640px;
+      margin-bottom: 56px;
     }
 
     .hardware-headline {
@@ -321,12 +377,12 @@
     .hardware-body {
       font-size: 15px; font-weight: 400;
       color: var(--grey); line-height: 1.75;
-      margin-bottom: 36px;
     }
 
     .hardware-details {
       list-style: none;
       border-top: 1px solid var(--rule);
+      margin: 0 56px;
     }
     .hardware-detail-row {
       display: flex; justify-content: space-between;
@@ -345,17 +401,6 @@
     .hw-val {
       font-size: 14px; font-weight: 700;
       letter-spacing: -0.01em; color: var(--black);
-    }
-
-    /* Hardware PCB image */
-    .hardware-device-img-wrap {
-      width: 100%; background: #0a0a0a;
-      display: flex; align-items: center; justify-content: center;
-      padding: 32px;
-    }
-    .hardware-device-img-wrap img {
-      width: 100%; height: auto;
-      display: block; object-fit: contain;
     }
 
     /* ── ATHLETES vs COACHES ────────────────────────────────── */
@@ -488,8 +533,22 @@
       font-size: 15px; color: #777;
       line-height: 1.72; max-width: 400px;
     }
+    .spots-left {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin: 28px auto 0;
+    }
+    .spots-left-pip {
+      display: block; width: 5px; height: 5px; flex-shrink: 0;
+      background: var(--red); border-radius: 50%;
+    }
+    .spots-left-txt {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+    .spots-left-txt strong { color: var(--white); font-weight: 700; }
     .waitlist-form {
-      display: flex; max-width: 460px;
+      display: flex; max-width: 620px;
       margin: 52px auto 0;
     }
     .waitlist-input {
@@ -522,6 +581,33 @@
       color: rgba(255,255,255,0.4);
     }
 
+    /* ── CONTACT SECTION ────────────────────────────────────── */
+    .contact-section {
+      position: relative; z-index: 1;
+      padding: 100px 56px;
+      background: var(--bg-section);
+      border-top: 1px solid var(--rule);
+      text-align: center;
+    }
+    .contact-headline {
+      font-size: clamp(28px, 3.4vw, 40px);
+      font-weight: 800; letter-spacing: -0.03em;
+    }
+    .contact-sub {
+      margin-top: 16px;
+      font-size: 14px; color: var(--grey);
+    }
+    .contact-link {
+      display: inline-block; margin-top: 28px;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.06em; color: var(--red);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(196,30,58,0.3);
+      padding-bottom: 3px;
+      transition: border-color 0.2s;
+    }
+    .contact-link:hover { border-color: var(--red); }
+
     /* ── FOOTER ─────────────────────────────────────────────── */
     footer {
       position: relative; z-index: 1;
@@ -553,14 +639,16 @@
       .nav-links, .nav-cta { display: none; }
       .hamburger { display: flex; }
 
-      .hero               { grid-template-columns: 1fr; gap: 48px; padding: 0 28px 64px; padding-top: 110px; }
-      .hero-device        { aspect-ratio: 4/3; max-width: 480px; }
+      .hero               { padding: 0 28px 64px; padding-top: 110px; }
       .hiw-section        { padding: 96px 28px; }
       .steps-grid         { grid-template-columns: 1fr; }
+      .demo-card          { padding: 32px; }
+      .demo-grid          { grid-template-columns: 1fr; gap: 36px; }
       .step               { border-left: none; border-top: 1px solid #DEDEDE; padding-left: 0; padding-top: 48px; }
       .step:first-child   { border-top: none; padding-top: 0; }
-      .hardware-section   { padding: 96px 28px; }
-      .hardware-grid      { grid-template-columns: 1fr; gap: 52px; }
+      .hardware-section   { padding: 96px 0; }
+      .hardware-intro     { padding: 0 28px; }
+      .hardware-details   { margin: 0 28px; }
       .split-section      { grid-template-columns: 1fr; }
       .split-panel        { padding: 88px 28px; }
       .specs-section      { padding: 96px 28px; }
@@ -597,7 +685,6 @@
     <ul class="mobile-nav-links">
       <li><a href="index.html"          class="mnl">Home</a></li>
       <li><a href="product.html"        class="mnl">Product</a></li>
-      <li><a href="ambassadors.html"    class="mnl">Advisors</a></li>
       <li><a href="index.html#gyms"     class="mnl">Gyms</a></li>
       <li><a href="index.html#founders" class="mnl">Team</a></li>
       <li><a href="#waitlist"           class="mnl">Waitlist</a></li>
@@ -611,7 +698,6 @@
     <ul class="nav-links" aria-label="Primary navigation">
       <li><a href="index.html">Home</a></li>
       <li><a href="product.html" class="active">Product</a></li>
-      <li><a href="ambassadors.html">Advisors</a></li>
       <li><a href="index.html#gyms">Gyms</a></li>
       <li><a href="index.html#founders">Team</a></li>
     </ul>
@@ -625,10 +711,9 @@
   <!-- ── HERO ──────────────────────────────────────────────── -->
   <section class="hero">
 
-    <div>
-      <div class="hero-eyebrow" id="hero-eyebrow">
-        <span class="hero-eyebrow-i">The Hardware</span>
-      </div>
+    <div class="hero-eyebrow" id="hero-eyebrow">
+      <span class="hero-eyebrow-i">The Hardware</span>
+    </div>
 
       <h1 class="hero-headline">
         <span class="ru" id="hl1"><span class="ru-i">Built to</span></span>
@@ -648,13 +733,8 @@
         <span class="badge">BLE 5.2</span>
       </div>
 
-      <div class="hero-actions rf" style="transition-delay:0.8s">
-        <a href="#waitlist" class="btn btn-black magnetic">Request Access</a>
-      </div>
-    </div>
-
-    <div class="hero-device-img-wrap rf" style="transition-delay:0.3s">
-      <img src="images/device.jpg" alt="Impkt Band wearable device">
+    <div class="hero-actions rf" style="transition-delay:0.8s">
+      <a href="#waitlist" class="btn btn-black magnetic">Request Access</a>
     </div>
 
   </section>
@@ -684,37 +764,66 @@
         <p class="step-desc">Open the coach dashboard mid-session or review it after. See exactly what happened, broken down per round, per fighter, per strike type. Data-driven decisions from day one.</p>
       </div>
     </div>
+
+    <div class="demo-card rf" style="transition-delay:0.15s">
+      <div class="demo-head">
+        <span class="demo-title">See what the dashboard sees</span>
+        <span class="demo-badge">Simulated preview · illustrative data</span>
+      </div>
+      <div class="demo-grid">
+        <div>
+          <div class="punch-types" role="group" aria-label="Punch type">
+            <button type="button" class="punch-btn active" data-mult="1.0">Jab</button>
+            <button type="button" class="punch-btn" data-mult="1.35">Cross</button>
+            <button type="button" class="punch-btn" data-mult="1.6">Hook</button>
+            <button type="button" class="punch-btn" data-mult="1.5">Uppercut</button>
+          </div>
+          <div class="force-row">
+            <div class="force-label"><span>Force</span><strong id="force-readout">50%</strong></div>
+            <input type="range" class="force-slider" id="force-slider" min="0" max="100" value="50" aria-label="Force">
+          </div>
+        </div>
+        <div class="demo-stats">
+          <div>
+            <span class="demo-stat-val" id="stat-force">420</span>
+            <span class="demo-stat-lbl">Peak Force (N)</span>
+          </div>
+          <div>
+            <span class="demo-stat-val" id="stat-velocity">6.2</span>
+            <span class="demo-stat-lbl">Velocity (m/s)</span>
+          </div>
+          <div>
+            <span class="demo-stat-val" id="stat-reaction">0.18</span>
+            <span class="demo-stat-lbl">Reaction (s)</span>
+          </div>
+        </div>
+      </div>
+    </div>
   </section>
 
   <!-- ── HARDWARE ───────────────────────────────────────────── -->
   <section class="hardware-section" id="hardware">
-    <div class="hardware-grid">
 
-      <div>
-        <span class="section-label rf">The Build</span>
-        <h2 class="hardware-headline">
-          <span class="ru"><span class="ru-i">Engineered</span></span>
-          <span class="ru"><span class="ru-i" style="transition-delay:0.13s">from scratch.</span></span>
-        </h2>
-        <p class="hardware-body rf" style="transition-delay:0.2s">
-          Every component of the Impkt Band sensor was designed in-house. No off-the-shelf fitness module. A custom-built 9-axis IMU fused with a proprietary signal processing stack — purpose-built for the biomechanics of combat sports, not adapted from a step counter.
-        </p>
-
-        <ul class="hardware-details" aria-label="Hardware details">
-          <li class="hardware-detail-row"><span class="hw-key">Form Factor</span>   <span class="hw-val">Integrated wrap module</span></li>
-          <li class="hardware-detail-row"><span class="hw-key">Sensor</span>        <span class="hw-val">9-axis IMU (accel + gyro + mag)</span></li>
-          <li class="hardware-detail-row"><span class="hw-key">Sample Rate</span>   <span class="hw-val">1,000 Hz</span></li>
-          <li class="hardware-detail-row"><span class="hw-key">Battery</span>       <span class="hw-val">8 hrs continuous use</span></li>
-          <li class="hardware-detail-row"><span class="hw-key">Connectivity</span> <span class="hw-val">Bluetooth LE 5.2</span></li>
-          <li class="hardware-detail-row"><span class="hw-key">Water Rating</span> <span class="hw-val">IPX5</span></li>
-        </ul>
-      </div>
-
-      <div class="hardware-device-img-wrap rf" style="transition-delay:0.2s">
-        <img src="images/pcb.jpg" alt="Impkt Band PCB circuit board">
-      </div>
-
+    <div class="hardware-intro">
+      <span class="section-label rf">The Build</span>
+      <h2 class="hardware-headline">
+        <span class="ru"><span class="ru-i">Engineered</span></span>
+        <span class="ru"><span class="ru-i" style="transition-delay:0.13s">from scratch.</span></span>
+      </h2>
+      <p class="hardware-body rf" style="transition-delay:0.2s">
+        Every component of the Impkt Band sensor was designed in-house. No off-the-shelf fitness module. A custom-built 9-axis IMU fused with a proprietary signal processing stack — purpose-built for the biomechanics of combat sports, not adapted from a step counter.
+      </p>
     </div>
+
+    <ul class="hardware-details" aria-label="Hardware details">
+      <li class="hardware-detail-row"><span class="hw-key">Form Factor</span>   <span class="hw-val">Integrated wrap module</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Sensor</span>        <span class="hw-val">9-axis IMU (accel + gyro + mag)</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Sample Rate</span>   <span class="hw-val">1,000 Hz</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Battery</span>       <span class="hw-val">8 hours</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Connectivity</span> <span class="hw-val">Bluetooth LE 5.2</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Water Rating</span> <span class="hw-val">IPX5</span></li>
+    </ul>
+
   </section>
 
   <!-- ── ATHLETES vs COACHES ───────────────────────────────── -->
@@ -810,15 +919,31 @@
     <p class="waitlist-sub rf" style="transition-delay:0.2s">
       A small number of founding gym partners are being onboarded now.
     </p>
+    <div class="spots-left rf" style="transition-delay:0.28s">
+      <span class="spots-left-pip"></span>
+      <span class="spots-left-txt"><strong>48 of 50</strong> founding gym spots remaining</span>
+    </div>
     <form class="waitlist-form rf" id="wl-form" style="transition-delay:0.35s" novalidate>
+      <label for="wl-name" class="sr-only">Name</label>
+      <input class="waitlist-input" id="wl-name" name="name" type="text"
+        placeholder="Your name" autocomplete="name" required>
       <label for="wl-email" class="sr-only">Email address</label>
-      <input class="waitlist-input" id="wl-email" type="email"
+      <input class="waitlist-input" id="wl-email" name="email" type="email"
         placeholder="your@gym.com" autocomplete="email" required>
+      <input type="hidden" name="_subject" value="New Impkt Band waitlist signup">
       <button class="waitlist-btn magnetic" type="submit">Apply</button>
     </form>
     <p class="waitlist-confirm" id="wl-confirm" role="status" aria-live="polite">
       Application received — we'll be in touch.
     </p>
+  </section>
+
+  <!-- ── CONTACT ────────────────────────────────────────────── -->
+  <section class="contact-section" id="contact" aria-label="Contact">
+    <span class="section-label rf">Get In Touch</span>
+    <h2 class="contact-headline rf">Questions before you apply?</h2>
+    <p class="contact-sub rf" style="transition-delay:0.12s">We reply to every message personally.</p>
+    <a class="contact-link rf" style="transition-delay:0.2s" href="mailto:hello@impktband.com">hello@impktband.com</a>
   </section>
 
   <!-- ── FOOTER ─────────────────────────────────────────────── -->
@@ -831,6 +956,7 @@
         <li><a href="index.html#gyms">Gyms</a></li>
         <li><a href="index.html#founders">Team</a></li>
         <li><a href="#waitlist">Waitlist</a></li>
+        <li><a href="#contact">Contact</a></li>
       </ul>
       <p class="footer-copy">Impkt Band &copy; 2026</p>
     </div>
@@ -894,9 +1020,13 @@
         const r = el.getBoundingClientRect();
         const x = e.clientX - r.left - r.width  / 2;
         const y = e.clientY - r.top  - r.height / 2;
+        el.style.transition = 'transform 0.15s var(--ease)';
         el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
       });
-      el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+      el.addEventListener('mouseleave', () => {
+        el.style.transition = 'transform 0.5s var(--ease)';
+        el.style.transform = '';
+      });
     });
   }
 
@@ -958,16 +1088,69 @@
   /* ── HERO FIRES ON LOAD ──────────────────────────── */
   document.getElementById('hero-eyebrow').classList.add('visible');
 
+  /* ── PUNCH DEMO ───────────────────────────────────── */
+  (function() {
+    const slider   = document.getElementById('force-slider');
+    const readout  = document.getElementById('force-readout');
+    const buttons  = document.querySelectorAll('.punch-btn');
+    const statForce    = document.getElementById('stat-force');
+    const statVelocity = document.getElementById('stat-velocity');
+    const statReaction = document.getElementById('stat-reaction');
+    if (!slider) return;
+
+    let mult = 1.0;
+
+    function update() {
+      const force = +slider.value;
+      readout.textContent = force + '%';
+      statForce.textContent    = Math.round(180 + force * 6.2 * mult);
+      statVelocity.textContent = (2.5 + (force / 100) * 6.5 * mult).toFixed(1);
+      statReaction.textContent = (0.32 - (force / 100) * 0.14).toFixed(2);
+    }
+
+    slider.addEventListener('input', update);
+    buttons.forEach(b => b.addEventListener('click', () => {
+      buttons.forEach(x => x.classList.remove('active'));
+      b.classList.add('active');
+      mult = +b.dataset.mult;
+      update();
+    }));
+
+    update();
+  })();
+
   /* ── WAITLIST FORM ───────────────────────────────── */
+  const WAITLIST_ENDPOINT = 'https://formspree.io/f/mbdnnezy';
+
   document.getElementById('wl-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const input   = document.getElementById('wl-email');
-    const btn     = this.querySelector('.waitlist-btn');
-    const confirm = document.getElementById('wl-confirm');
-    if (!input.validity.valid) { input.focus(); return; }
-    btn.disabled = input.disabled = true;
-    btn.textContent = 'Sent.';
-    confirm.style.display = 'block';
+    const form     = this;
+    const nameIn   = document.getElementById('wl-name');
+    const emailIn  = document.getElementById('wl-email');
+    const btn      = form.querySelector('.waitlist-btn');
+    const confirm  = document.getElementById('wl-confirm');
+    if (!nameIn.validity.valid)  { nameIn.focus();  return; }
+    if (!emailIn.validity.valid) { emailIn.focus(); return; }
+
+    btn.disabled = nameIn.disabled = emailIn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    fetch(WAITLIST_ENDPOINT, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Request failed');
+      btn.textContent = 'Sent.';
+      confirm.style.display = 'block';
+    })
+    .catch(() => {
+      btn.disabled = nameIn.disabled = emailIn.disabled = false;
+      btn.textContent = 'Apply';
+      confirm.textContent = 'Something went wrong — email us directly instead.';
+      confirm.style.display = 'block';
+    });
   });
 
   </script>

@@ -180,8 +180,7 @@
       font-weight: 700; letter-spacing: 0.18em;
       text-transform: uppercase; text-decoration: none;
       border: none; will-change: transform;
-      transition: background 0.3s, color 0.3s, border-color 0.3s,
-                  transform 0.5s var(--ease);
+      transition: background 0.3s, color 0.3s, border-color 0.3s;
     }
     .btn-black { background: var(--black); color: var(--white); }
     .btn-black:hover { background: var(--red); }
@@ -250,6 +249,20 @@
       max-width: 360px; letter-spacing: 0.005em;
     }
     .hero-actions { margin-top: 52px; }
+    .hero-momentum {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 30px;
+    }
+    .hero-momentum-pip {
+      display: block; width: 5px; height: 5px; flex-shrink: 0;
+      background: var(--red); border-radius: 50%;
+    }
+    .hero-momentum-txt {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: var(--grey-light);
+    }
+    .hero-momentum-txt strong { color: var(--black); font-weight: 800; }
 
     /* ── PRODUCT SECTION ────────────────────────────────────── */
     .product-section {
@@ -388,12 +401,13 @@
 
     /* ── STATS SECTION ──────────────────────────────────────── */
     .stats-section {
-      padding: 120px 56px;
+      padding: 120px 0;
       background: var(--white);
     }
     .stats-grid {
       display: grid;
-      grid-template-columns: repeat(4, 1fr);
+      grid-template-columns: repeat(3, 1fr);
+      padding: 0 56px;
     }
     .stat-cell {
       padding: 44px 40px 44px 40px;
@@ -401,6 +415,47 @@
       position: relative;
     }
     .stat-cell:first-child { border-left: none; padding-left: 0; }
+
+    /* Featured live counter — pulled out of the grid to stand out */
+    .stat-cell.stat-featured {
+      background: var(--black);
+      padding: 64px 56px;
+      margin-bottom: 64px;
+      border-left: none;
+      opacity: 0; transform: translateY(24px);
+      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+    }
+    .stat-featured.visible { opacity: 1; transform: translateY(0); }
+    .stat-live {
+      display: inline-flex; align-items: center; gap: 8px;
+    }
+    .stat-live-dot {
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--red);
+      animation: live-pulse 2s infinite;
+    }
+    @keyframes live-pulse {
+      0%   { box-shadow: 0 0 0 0 rgba(196,30,58,0.55); }
+      70%  { box-shadow: 0 0 0 10px rgba(196,30,58,0); }
+      100% { box-shadow: 0 0 0 0 rgba(196,30,58,0); }
+    }
+    .stat-live-txt {
+      font-size: 11px; font-weight: 800;
+      letter-spacing: 0.18em; text-transform: uppercase;
+      color: var(--red);
+    }
+    .stat-featured-num {
+      display: block; margin-top: 24px;
+      font-size: clamp(56px, 8vw, 108px);
+      font-weight: 900; letter-spacing: -0.05em;
+      line-height: 1; color: var(--white);
+    }
+    .stat-featured-lbl {
+      display: block; margin-top: 14px;
+      font-size: 12px; font-weight: 500;
+      letter-spacing: 0.12em; text-transform: uppercase;
+      color: rgba(255,255,255,0.55);
+    }
 
     .stat-pip {
       display: block; width: 5px; height: 5px;
@@ -455,6 +510,15 @@
       transform: translateY(-6px);
       box-shadow: 0 20px 48px rgba(0,0,0,0.07);
     }
+    .founder-photo {
+      width: 88px; height: 88px;
+      border-radius: 50%;
+      border: 2px solid var(--red);
+      background-color: #E4E4E4;
+      background-size: cover;
+      background-position: center;
+      margin-bottom: 24px;
+    }
     .founder-name {
       font-size: 18px; font-weight: 800;
       letter-spacing: -0.02em; text-transform: uppercase;
@@ -486,8 +550,22 @@
       color: #777; line-height: 1.72;
       max-width: 400px;
     }
+    .spots-left {
+      display: flex; align-items: center; justify-content: center;
+      gap: 10px; margin: 28px auto 0;
+    }
+    .spots-left-pip {
+      display: block; width: 5px; height: 5px; flex-shrink: 0;
+      background: var(--red); border-radius: 50%;
+    }
+    .spots-left-txt {
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.16em; text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+    }
+    .spots-left-txt strong { color: var(--white); font-weight: 700; }
     .waitlist-form {
-      display: flex; max-width: 460px;
+      display: flex; max-width: 620px;
       margin: 52px auto 0;
     }
     .waitlist-input {
@@ -521,6 +599,32 @@
       letter-spacing: 0.2em; text-transform: uppercase;
       color: rgba(255,255,255,0.4);
     }
+
+    /* ── CONTACT SECTION ────────────────────────────────────── */
+    .contact-section {
+      padding: 100px 56px;
+      background: var(--bg-section);
+      border-top: 1px solid var(--rule);
+      text-align: center;
+    }
+    .contact-headline {
+      font-size: clamp(28px, 3.4vw, 40px);
+      font-weight: 800; letter-spacing: -0.03em;
+    }
+    .contact-sub {
+      margin-top: 16px;
+      font-size: 14px; color: var(--grey);
+    }
+    .contact-link {
+      display: inline-block; margin-top: 28px;
+      font-size: 13px; font-weight: 700;
+      letter-spacing: 0.06em; color: var(--red);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(196,30,58,0.3);
+      padding-bottom: 3px;
+      transition: border-color 0.2s;
+    }
+    .contact-link:hover { border-color: var(--red); }
 
     /* ── FOOTER ─────────────────────────────────────────────── */
     footer {
@@ -561,11 +665,9 @@
       .cards-grid         { grid-template-columns: 1fr; gap: 16px; }
       .gyms-section       { padding: 96px 28px; }
       .gyms-grid          { grid-template-columns: 1fr; gap: 56px; }
-      .stats-section      { padding: 88px 28px; }
-      .stats-grid         { grid-template-columns: repeat(2, 1fr); }
-      .stat-cell          { border-left: none; border-top: 1px solid var(--rule); }
-      .stat-cell:nth-child(1), .stat-cell:nth-child(2) { border-top: none; }
-      .stat-cell:nth-child(2) { padding-left: 28px; }
+      .stats-section      { padding: 88px 0; }
+      .stat-cell.stat-featured { padding: 48px 28px; margin-bottom: 48px; }
+      .stats-grid         { padding: 0 28px; }
       .founders-section   { padding: 96px 28px; }
       .founders-grid      { grid-template-columns: 1fr; max-width: 100%; }
       .waitlist-section   { padding: 112px 28px; }
@@ -578,9 +680,8 @@
       .waitlist-form      { flex-direction: column; }
       .waitlist-input     { border-right: 1px solid rgba(255,255,255,0.18); border-bottom: none; }
       .stats-grid         { grid-template-columns: 1fr; }
-      .stat-cell:nth-child(2) { border-top: 1px solid var(--rule); padding-left: 0; }
-      .stat-cell:nth-child(3),
-      .stat-cell:nth-child(4) { border-top: 1px solid var(--rule); }
+      .stats-grid .stat-cell { border-left: none; border-top: 1px solid var(--rule); padding: 32px 0; }
+      .stats-grid .stat-cell:first-child { border-top: none; padding-top: 0; }
     }
 
     .sr-only {
@@ -599,8 +700,8 @@
   <!-- Mobile nav overlay -->
   <div class="mobile-nav" id="mobile-nav" aria-hidden="true" role="dialog" aria-label="Navigation">
     <ul class="mobile-nav-links">
+      <li><a href="index.html"        class="mnl">Home</a></li>
       <li><a href="product.html"      class="mnl">Product</a></li>
-      <li><a href="ambassadors.html"  class="mnl">Advisors</a></li>
       <li><a href="#gyms"             class="mnl">Gyms</a></li>
       <li><a href="#founders"         class="mnl">Team</a></li>
       <li><a href="#waitlist"         class="mnl">Waitlist</a></li>
@@ -614,7 +715,6 @@
     <ul class="nav-links" aria-label="Primary navigation">
       <li><a href="index.html" class="active">Home</a></li>
       <li><a href="product.html">Product</a></li>
-      <li><a href="ambassadors.html">Advisors</a></li>
       <li><a href="#gyms">Gyms</a></li>
       <li><a href="#founders">Team</a></li>
     </ul>
@@ -657,6 +757,11 @@
 
       <div class="hero-actions rf" style="transition-delay:0.68s">
         <a href="#waitlist" class="btn btn-black magnetic">Request Access</a>
+      </div>
+
+      <div class="hero-momentum rf" style="transition-delay:0.82s">
+        <span class="hero-momentum-pip"></span>
+        <span class="hero-momentum-txt"><strong>3 gyms</strong> requested access this week</span>
       </div>
 
     </div>
@@ -748,15 +853,19 @@
 
   <!-- ── STATS ─────────────────────────────────────────────── -->
   <section class="stats-section" aria-label="Statistics">
-    <div class="stats-grid">
 
-      <div class="stat-cell">
-        <span class="stat-pip"></span>
-        <span class="stat-num">
-          <span class="counter" data-target="50" data-suffix="K+">0</span>
-        </span>
-        <span class="stat-lbl">Strikes Analysed</span>
-      </div>
+    <div class="stat-cell stat-featured">
+      <span class="stat-live">
+        <span class="stat-live-dot"></span>
+        <span class="stat-live-txt">Live — Testing Phase</span>
+      </span>
+      <span class="stat-featured-num">
+        <span class="counter" data-testing-counter data-target="41000" data-suffix="">0</span>
+      </span>
+      <span class="stat-featured-lbl">Strikes Analysed In Testing</span>
+    </div>
+
+    <div class="stats-grid">
 
       <div class="stat-cell">
         <span class="stat-pip"></span>
@@ -777,7 +886,7 @@
       <div class="stat-cell">
         <span class="stat-pip"></span>
         <span class="stat-num">
-          <span class="counter" data-target="12" data-suffix="">0</span>
+          <span class="counter" data-target="2" data-suffix="">0</span>
         </span>
         <span class="stat-lbl">Founding Partners</span>
       </div>
@@ -796,11 +905,13 @@
 
     <div class="founders-grid">
       <article class="founder-card rf" style="transition-delay:0.12s">
+        <div class="founder-photo" style="background-image: url('images/founder-sofia.png')" role="img" aria-label="Sofia Viola"></div>
         <div class="founder-name">Sofia Viola</div>
         <div class="founder-role">CEO</div>
         <p class="founder-bio">Combat sports meets venture strategy. Building the commercial infrastructure that places Impkt Band in every elite gym.</p>
       </article>
       <article class="founder-card rf" style="transition-delay:0.24s">
+        <div class="founder-photo" style="background-image: url('images/founder-rodrigo.png')" role="img" aria-label="Rodrigo Rio Tinto"></div>
         <div class="founder-name">Rodrigo Rio Tinto</div>
         <div class="founder-role">CTO</div>
         <p class="founder-bio">Hardware and firmware engineer. BEng Mechanical Engineering, Loughborough. Built the entire stack from scratch.</p>
@@ -819,16 +930,32 @@
     <p class="waitlist-sub rf" style="transition-delay:0.2s">
       A small number of founding gym partners are being onboarded now.
     </p>
+    <div class="spots-left rf" style="transition-delay:0.28s">
+      <span class="spots-left-pip"></span>
+      <span class="spots-left-txt"><strong>48 of 50</strong> founding gym spots remaining</span>
+    </div>
 
     <form class="waitlist-form rf" id="wl-form" style="transition-delay:0.35s" novalidate>
+      <label for="wl-name" class="sr-only">Name</label>
+      <input class="waitlist-input" id="wl-name" name="name" type="text"
+        placeholder="Your name" autocomplete="name" required>
       <label for="wl-email" class="sr-only">Email address</label>
-      <input class="waitlist-input" id="wl-email" type="email"
+      <input class="waitlist-input" id="wl-email" name="email" type="email"
         placeholder="your@gym.com" autocomplete="email" required>
+      <input type="hidden" name="_subject" value="New Impkt Band waitlist signup">
       <button class="waitlist-btn magnetic" type="submit">Apply</button>
     </form>
     <p class="waitlist-confirm" id="wl-confirm" role="status" aria-live="polite">
       Application received — we'll be in touch.
     </p>
+  </section>
+
+  <!-- ── CONTACT ────────────────────────────────────────────── -->
+  <section class="contact-section" id="contact" aria-label="Contact">
+    <span class="section-label rf">Get In Touch</span>
+    <h2 class="contact-headline rf">Questions before you apply?</h2>
+    <p class="contact-sub rf" style="transition-delay:0.12s">We reply to every message personally.</p>
+    <a class="contact-link rf" style="transition-delay:0.2s" href="mailto:hello@impktband.com">hello@impktband.com</a>
   </section>
 
   <!-- ── FOOTER ─────────────────────────────────────────────── -->
@@ -840,6 +967,7 @@
         <li><a href="#gyms">Gyms</a></li>
         <li><a href="#founders">Team</a></li>
         <li><a href="#waitlist">Waitlist</a></li>
+        <li><a href="#contact">Contact</a></li>
       </ul>
       <p class="footer-copy">Impkt Band &copy; 2026</p>
     </div>
@@ -914,9 +1042,13 @@
         const r = el.getBoundingClientRect();
         const x = e.clientX - r.left - r.width  / 2;
         const y = e.clientY - r.top  - r.height / 2;
+        el.style.transition = 'transform 0.15s var(--ease-smooth)';
         el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
       });
-      el.addEventListener('mouseleave', () => { el.style.transform = ''; });
+      el.addEventListener('mouseleave', () => {
+        el.style.transition = 'transform 0.5s var(--ease)';
+        el.style.transform = '';
+      });
     });
   }
 
@@ -956,11 +1088,40 @@
     featureObs.observe(el);
   });
 
+  // Testing-phase punch counter — grows ~2000/day (varies day to day),
+  // and creeps up gradually through the current day rather than jumping at midnight.
+  // Seeded by the date so every visitor sees the same number on a given day.
+  function testingPunchTotal() {
+    const epoch = Date.UTC(2026, 6, 1);
+    const base  = 41000;
+    const msPerDay = 86400000;
+    const now = Date.now();
+    const daysElapsed = Math.floor((now - epoch) / msPerDay);
+
+    function seededIncrement(dayIndex) {
+      const x = Math.sin(dayIndex * 12.9898) * 43758.5453;
+      const frac = x - Math.floor(x);
+      return 1500 + Math.floor(frac * 1000); // 1500–2499/day
+    }
+
+    let total = base;
+    for (let d = 0; d < daysElapsed; d++) total += seededIncrement(d);
+
+    const dayStart  = epoch + daysElapsed * msPerDay;
+    const fracOfDay = Math.min(Math.max((now - dayStart) / msPerDay, 0), 1);
+    total += Math.floor(seededIncrement(daysElapsed) * fracOfDay);
+
+    return total;
+  }
+
   // Stat cells (pip reveal + counter)
   const statObs = makeObs(el => {
     el.classList.add('visible');
     const ctr = el.querySelector('.counter');
-    if (ctr) startCounter(ctr);
+    if (ctr) {
+      if ('testingCounter' in ctr.dataset) ctr.dataset.target = testingPunchTotal();
+      startCounter(ctr);
+    }
     statObs.unobserve(el);
   }, { threshold: 0.25 });
 
@@ -985,25 +1146,46 @@
       if (!t0) t0 = ts;
       const prog   = Math.min((ts - t0) / duration, 1);
       const val    = Math.floor(easeOut(prog) * target);
-      el.textContent = val + suffix;
+      el.textContent = val.toLocaleString('en-US') + suffix;
       if (prog < 1) requestAnimationFrame(step);
-      else          el.textContent = target + suffix;
+      else          el.textContent = target.toLocaleString('en-US') + suffix;
     }
     requestAnimationFrame(step);
   }
 
   /* ── 9. WAITLIST FORM ────────────────────────────── */
+  const WAITLIST_ENDPOINT = 'https://formspree.io/f/mbdnnezy';
+
   document.getElementById('wl-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const input   = document.getElementById('wl-email');
-    const btn     = this.querySelector('.waitlist-btn');
-    const confirm = document.getElementById('wl-confirm');
+    const form     = this;
+    const nameIn   = document.getElementById('wl-name');
+    const emailIn  = document.getElementById('wl-email');
+    const btn      = form.querySelector('.waitlist-btn');
+    const confirm  = document.getElementById('wl-confirm');
 
-    if (!input.validity.valid) { input.focus(); return; }
+    if (!nameIn.validity.valid)  { nameIn.focus();  return; }
+    if (!emailIn.validity.valid) { emailIn.focus(); return; }
 
-    btn.disabled = input.disabled = true;
-    btn.textContent = 'Sent.';
-    confirm.style.display = 'block';
+    btn.disabled = nameIn.disabled = emailIn.disabled = true;
+    btn.textContent = 'Sending…';
+
+    fetch(WAITLIST_ENDPOINT, {
+      method: 'POST',
+      body: new FormData(form),
+      headers: { 'Accept': 'application/json' }
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Request failed');
+      btn.textContent = 'Sent.';
+      confirm.style.display = 'block';
+    })
+    .catch(() => {
+      btn.disabled = nameIn.disabled = emailIn.disabled = false;
+      btn.textContent = 'Apply';
+      confirm.textContent = 'Something went wrong — email us directly instead.';
+      confirm.style.display = 'block';
+    });
   });
 
   </script>
