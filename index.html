@@ -246,6 +246,44 @@
       max-width: 360px; letter-spacing: 0.005em;
     }
     .hero-actions { margin-top: 52px; }
+
+    .hero-waitlist-form {
+      display: flex; max-width: 520px;
+      margin-top: 48px;
+    }
+    .hero-waitlist-input {
+      flex: 1; min-width: 0;
+      background: transparent;
+      border: 1px solid var(--rule);
+      border-right: none;
+      padding: 17px 20px;
+      font-size: 13px; font-family: var(--font);
+      color: var(--black); letter-spacing: 0.02em;
+      outline: none;
+      transition: border-color 0.25s;
+    }
+    .hero-waitlist-input::placeholder { color: var(--grey-light); }
+    .hero-waitlist-input:focus { border-color: var(--black); }
+    .hero-waitlist-btn {
+      flex-shrink: 0;
+      background: var(--black); border: none;
+      padding: 17px 30px;
+      font-size: 10px; font-family: var(--font);
+      font-weight: 700; letter-spacing: 0.22em;
+      text-transform: uppercase; color: var(--white);
+      cursor: pointer;
+      transition: background 0.25s, opacity 0.25s;
+      white-space: nowrap;
+    }
+    .hero-waitlist-btn:hover:not(:disabled) { background: var(--red); }
+    .hero-waitlist-btn:disabled { opacity: 0.45; }
+    .hero-waitlist-confirm {
+      display: none; margin-top: 18px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.15em; text-transform: uppercase;
+      color: var(--grey);
+    }
+
     .hero-momentum {
       display: flex; align-items: center; gap: 10px;
       margin-top: 30px;
@@ -676,6 +714,8 @@
     @media (max-width: 560px) {
       .waitlist-form      { flex-direction: column; }
       .waitlist-input     { border-right: 1px solid rgba(255,255,255,0.18); border-bottom: none; }
+      .hero-waitlist-form  { flex-direction: column; }
+      .hero-waitlist-input { border-right: 1px solid var(--rule); border-bottom: none; }
       .stats-grid         { grid-template-columns: 1fr; }
       .stats-grid .stat-cell { border-left: none; border-top: 1px solid var(--rule); padding: 32px 0; }
       .stats-grid .stat-cell:first-child { border-top: none; padding-top: 0; }
@@ -752,9 +792,19 @@
         Precision wearable technology for combat sports athletes and elite gyms.
       </p>
 
-      <div class="hero-actions rf" style="transition-delay:0.68s">
-        <a href="#waitlist" class="btn btn-black magnetic">Request Access</a>
-      </div>
+      <form class="hero-waitlist-form rf" id="wl-form-hero" style="transition-delay:0.68s" novalidate>
+        <label for="wl-name-hero" class="sr-only">Name</label>
+        <input class="hero-waitlist-input" id="wl-name-hero" name="name" type="text"
+          placeholder="Your name" autocomplete="name" required>
+        <label for="wl-email-hero" class="sr-only">Email address</label>
+        <input class="hero-waitlist-input" id="wl-email-hero" name="email" type="email"
+          placeholder="your@gym.com" autocomplete="email" required>
+        <input type="hidden" name="_subject" value="New Impkt Band waitlist signup">
+        <button class="hero-waitlist-btn magnetic" type="submit">Apply</button>
+      </form>
+      <p class="hero-waitlist-confirm" id="wl-confirm-hero" role="status" aria-live="polite">
+        Application received — we'll be in touch.
+      </p>
 
       <div class="hero-momentum rf" style="transition-delay:0.82s">
         <span class="hero-momentum-pip"></span>
@@ -1150,40 +1200,47 @@
     requestAnimationFrame(step);
   }
 
-  /* ── 9. WAITLIST FORM ────────────────────────────── */
+  /* ── 9. WAITLIST FORMS ───────────────────────────── */
   const WAITLIST_ENDPOINT = 'https://formspree.io/f/mbdnnezy';
 
-  document.getElementById('wl-form').addEventListener('submit', function(e) {
-    e.preventDefault();
-    const form     = this;
-    const nameIn   = document.getElementById('wl-name');
-    const emailIn  = document.getElementById('wl-email');
-    const btn      = form.querySelector('.waitlist-btn');
-    const confirm  = document.getElementById('wl-confirm');
+  function wireWaitlistForm(formId, nameId, emailId, confirmId) {
+    const form = document.getElementById(formId);
+    if (!form) return;
 
-    if (!nameIn.validity.valid)  { nameIn.focus();  return; }
-    if (!emailIn.validity.valid) { emailIn.focus(); return; }
+    form.addEventListener('submit', function(e) {
+      e.preventDefault();
+      const nameIn   = document.getElementById(nameId);
+      const emailIn  = document.getElementById(emailId);
+      const btn      = form.querySelector('button[type="submit"]');
+      const confirm  = document.getElementById(confirmId);
 
-    btn.disabled = nameIn.disabled = emailIn.disabled = true;
-    btn.textContent = 'Sending…';
+      if (!nameIn.validity.valid)  { nameIn.focus();  return; }
+      if (!emailIn.validity.valid) { emailIn.focus(); return; }
 
-    fetch(WAITLIST_ENDPOINT, {
-      method: 'POST',
-      body: new FormData(form),
-      headers: { 'Accept': 'application/json' }
-    })
-    .then(res => {
-      if (!res.ok) throw new Error('Request failed');
-      btn.textContent = 'Sent.';
-      confirm.style.display = 'block';
-    })
-    .catch(() => {
-      btn.disabled = nameIn.disabled = emailIn.disabled = false;
-      btn.textContent = 'Apply';
-      confirm.textContent = 'Something went wrong — email us directly instead.';
-      confirm.style.display = 'block';
+      btn.disabled = nameIn.disabled = emailIn.disabled = true;
+      btn.textContent = 'Sending…';
+
+      fetch(WAITLIST_ENDPOINT, {
+        method: 'POST',
+        body: new FormData(form),
+        headers: { 'Accept': 'application/json' }
+      })
+      .then(res => {
+        if (!res.ok) throw new Error('Request failed');
+        btn.textContent = 'Sent.';
+        confirm.style.display = 'block';
+      })
+      .catch(() => {
+        btn.disabled = nameIn.disabled = emailIn.disabled = false;
+        btn.textContent = 'Apply';
+        confirm.textContent = 'Something went wrong — email us directly instead.';
+        confirm.style.display = 'block';
+      });
     });
-  });
+  }
+
+  wireWaitlistForm('wl-form-hero', 'wl-name-hero', 'wl-email-hero', 'wl-confirm-hero');
+  wireWaitlistForm('wl-form', 'wl-name', 'wl-email', 'wl-confirm');
 
   </script>
 
