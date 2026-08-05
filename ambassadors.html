@@ -110,7 +110,15 @@
       font-size: 13px; font-weight: 800;
       letter-spacing: 0.26em; text-transform: uppercase;
       color: var(--black); text-decoration: none;
+      display: inline-flex; align-items: center; gap: 9px;
     }
+    /* Bolt mark — same geometry as the favicon */
+    .bolt-mark {
+      width: auto; flex-shrink: 0;
+      fill: var(--red);
+    }
+    .nav-logo .bolt-mark { height: 15px; }
+    .footer-logo .bolt-mark { height: 14px; }
     .nav-links { display: flex; gap: 40px; list-style: none; }
     .nav-links a {
       font-size: 12px; font-weight: 500;
@@ -323,6 +331,7 @@
       font-size: 12px; font-weight: 800;
       letter-spacing: 0.26em; text-transform: uppercase;
       color: var(--black); text-decoration: none;
+      display: inline-flex; align-items: center; gap: 9px;
     }
     .footer-links { display: flex; gap: 32px; list-style: none; }
     .footer-links a {
@@ -377,7 +386,7 @@
 
   <!-- Nav -->
   <nav id="nav">
-    <a href="index.html" class="nav-logo">IMPKT</a>
+    <a href="index.html" class="nav-logo"><svg class="bolt-mark" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>IMPKT</a>
     <ul class="nav-links" aria-label="Primary navigation">
       <li><a href="index.html">Home</a></li>
       <li><a href="product.html">Product</a></li>
@@ -484,7 +493,7 @@
   <!-- ── FOOTER ─────────────────────────────────────────────── -->
   <footer>
     <div class="footer-inner">
-      <a href="index.html" class="footer-logo">IMPKT</a>
+      <a href="index.html" class="footer-logo"><svg class="bolt-mark" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>IMPKT</a>
       <ul class="footer-links" aria-label="Footer navigation">
         <li><a href="index.html">Home</a></li>
         <li><a href="product.html">Product</a></li>

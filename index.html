@@ -118,7 +118,15 @@
       font-size: 13px; font-weight: 800;
       letter-spacing: 0.26em; text-transform: uppercase;
       color: var(--black); text-decoration: none;
+      display: inline-flex; align-items: center; gap: 9px;
     }
+    /* Bolt mark — same geometry as the favicon */
+    .bolt-mark {
+      width: auto; flex-shrink: 0;
+      fill: var(--red);
+    }
+    .nav-logo .bolt-mark { height: 15px; }
+    .footer-logo .bolt-mark { height: 14px; }
     .nav-links { display: flex; gap: 40px; list-style: none; }
     .nav-links a {
       font-size: 12px; font-weight: 500;
@@ -195,12 +203,34 @@
     /* ── HERO ───────────────────────────────────────────────── */
     .hero {
       min-height: 100svh;
+      background: #FFFFFF;
       display: flex; flex-direction: column;
       justify-content: center;
       padding: 0 56px 80px; padding-top: 150px;
       position: relative; overflow: hidden;
     }
     .hero-inner { position: relative; z-index: 2; }
+
+    /* Product photo — sits flush on the white background, no frame */
+    .hero-photo {
+      position: absolute; z-index: 1;
+      right: 3vw; top: 60%;
+      transform: translateY(-50%);
+      width: min(48vw, 720px);
+      opacity: 0;
+      animation: band-in 1.2s var(--ease) 0.6s forwards;
+    }
+    .hero-photo img {
+      width: 100%; height: auto; display: block;
+      border: none; box-shadow: none;
+    }
+    @media (max-width: 1160px) {
+      .hero-photo {
+        position: relative; right: auto; top: auto;
+        transform: none; width: 100%; max-width: 420px;
+        margin-top: 56px;
+      }
+    }
 
     .hero-eyebrow {
       display: block; overflow: hidden;
@@ -217,16 +247,17 @@
     .hero-eyebrow.visible .hero-eyebrow-inner { transform: translateY(0); }
 
     .hero-headline {
-      font-size: clamp(64px, 11vw, 148px);
+      font-size: clamp(48px, 6.6vw, 92px);
       font-weight: 900; letter-spacing: -0.045em;
       line-height: 0.93; text-transform: uppercase;
     }
     .hero-line-1 .ru-i  { transition-delay: 0.08s; }
     .hero-line-2 .ru-i  { transition-delay: 0.22s; color: var(--red); }
 
-    /* Animated draw line */
+    /* Animated draw line — runs in from the left and stops at the photo */
     .hero-line-svg-wrap {
       height: 4px; margin-top: 6px; overflow: hidden;
+      width: calc(97vw - min(48vw, 720px) - 60px);
     }
     .hero-line-svg {
       display: block; width: 100%; height: 4px;
@@ -236,10 +267,19 @@
       stroke-dashoffset: 1000;
     }
     #line-path.drawn {
-      animation: draw-line 1.8s var(--ease-smooth) 0.85s forwards;
+      animation: draw-line 1.5s var(--ease-smooth) 0.85s forwards;
     }
     @keyframes draw-line {
       to { stroke-dashoffset: 0; }
+    }
+
+    /* Narrower desktops: pull the render in so it clears the waitlist form */
+    @media (min-width: 1161px) and (max-width: 1320px) {
+      .hero-photo { width: min(40vw, 560px); }
+    }
+    /* Once the photo stacks below, the line runs the full width again */
+    @media (max-width: 1160px) {
+      .hero-line-svg-wrap { width: 100%; }
     }
 
     .hero-sub {
@@ -250,8 +290,10 @@
     }
     .hero-actions { margin-top: 52px; }
 
+    @keyframes band-in { to { opacity: 1; } }
+
     .hero-waitlist-form {
-      display: flex; max-width: 520px;
+      display: flex; max-width: 620px;
       margin-top: 48px;
     }
     .hero-waitlist-input {
@@ -259,8 +301,8 @@
       background: transparent;
       border: 1px solid var(--rule);
       border-right: none;
-      padding: 17px 20px;
-      font-size: 13px; font-family: var(--font);
+      padding: 21px 24px;
+      font-size: 14px; font-family: var(--font);
       color: var(--black); letter-spacing: 0.02em;
       outline: none;
       transition: border-color 0.25s;
@@ -270,8 +312,8 @@
     .hero-waitlist-btn {
       flex-shrink: 0;
       background: var(--black); border: none;
-      padding: 17px 30px;
-      font-size: 10px; font-family: var(--font);
+      padding: 21px 38px;
+      font-size: 11px; font-family: var(--font);
       font-weight: 700; letter-spacing: 0.22em;
       text-transform: uppercase; color: var(--white);
       cursor: pointer;
@@ -460,6 +502,7 @@
       padding: 64px 56px;
       margin-bottom: 64px;
       border-left: none;
+      position: relative; overflow: hidden;
       opacity: 0; transform: translateY(24px);
       transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
     }
@@ -678,6 +721,7 @@
       font-size: 12px; font-weight: 800;
       letter-spacing: 0.26em; text-transform: uppercase;
       color: var(--black); text-decoration: none;
+      display: inline-flex; align-items: center; gap: 9px;
     }
     .footer-links { display: flex; gap: 32px; list-style: none; }
     .footer-links a {
@@ -751,7 +795,7 @@
 
   <!-- Nav -->
   <nav id="nav">
-    <a href="#" class="nav-logo">IMPKT</a>
+    <a href="#" class="nav-logo"><svg class="bolt-mark" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>IMPKT</a>
     <ul class="nav-links" aria-label="Primary navigation">
       <li><a href="index.html" class="active">Home</a></li>
       <li><a href="product.html">Product</a></li>
@@ -767,6 +811,7 @@
 
   <!-- ── HERO ──────────────────────────────────────────────── -->
   <section class="hero" aria-label="Hero">
+
     <div class="hero-inner" id="hero-inner">
 
       <div class="hero-eyebrow" id="hero-eyebrow">
@@ -801,7 +846,7 @@
           placeholder="Your name" autocomplete="name" required>
         <label for="wl-email-hero" class="sr-only">Email address</label>
         <input class="hero-waitlist-input" id="wl-email-hero" name="email" type="email"
-          placeholder="your@gym.com" autocomplete="email" required>
+          placeholder="your@email.com" autocomplete="email" required>
         <input type="hidden" name="_subject" value="New Impkt Band waitlist signup">
         <button class="hero-waitlist-btn magnetic" type="submit">Apply</button>
       </form>
@@ -815,6 +860,11 @@
       </div>
 
     </div>
+
+    <div class="hero-photo">
+      <img src="images/band-hero.png" alt="Impkt Band worn wearable device">
+    </div>
+
   </section>
 
   <!-- ── PRODUCT ────────────────────────────────────────────── -->
@@ -978,7 +1028,7 @@
       </span>
     </h2>
     <p class="waitlist-sub rf" style="transition-delay:0.2s">
-      A small number of founding gym partners are being onboarded now.
+      Athletes, coaches and gyms — early access is opening now.
     </p>
     <div class="spots-left rf" style="transition-delay:0.28s">
       <span class="spots-left-pip"></span>
@@ -991,7 +1041,7 @@
         placeholder="Your name" autocomplete="name" required>
       <label for="wl-email" class="sr-only">Email address</label>
       <input class="waitlist-input" id="wl-email" name="email" type="email"
-        placeholder="your@gym.com" autocomplete="email" required>
+        placeholder="your@email.com" autocomplete="email" required>
       <input type="hidden" name="_subject" value="New Impkt Band waitlist signup">
       <button class="waitlist-btn magnetic" type="submit">Apply</button>
     </form>
@@ -1011,7 +1061,7 @@
   <!-- ── FOOTER ─────────────────────────────────────────────── -->
   <footer>
     <div class="footer-inner">
-      <a href="#" class="footer-logo">IMPKT</a>
+      <a href="#" class="footer-logo"><svg class="bolt-mark" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>IMPKT</a>
       <ul class="footer-links" aria-label="Footer navigation">
         <li><a href="#product">Product</a></li>
         <li><a href="#gyms">Gyms</a></li>
