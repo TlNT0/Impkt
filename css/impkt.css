@@ -1,0 +1,906 @@
+/* ══════════════════════════════════════════════════════════════
+   IMPKT — design system
+   The shared layer. Every page links this file and then adds only
+   the rules that belong to that page alone.
+
+   Follows .claude/APPLE-DESIGN.md with two deliberate deviations,
+   both chosen by us and both recorded here:
+
+   1. ACCENT IS RED, NOT BLUE. The spec's rule is "exactly one
+      chromatic colour, used only as a filled action". We keep that
+      rule and substitute #C41E3A for #0071e3. Red therefore appears
+      on filled buttons, active states and the bolt mark — and
+      nowhere else. It is never body text and never a border.
+
+   2. TYPEFACE IS IBM PLEX SANS, NOT SF PRO. SF Pro is licensed to
+      the OS and cannot be self-hosted or shipped; it is also absent
+      on Windows, where it falls back silently and moves every line
+      break. Plex is OFL, is already the product's face, and is
+      self-hosted below so no visitor IP is sent to a font CDN.
+      Set at 600 with negative tracking it holds the same
+      proportions the spec is describing.
+
+   Tracking is negative at every size and tightens as size grows.
+   The spec's own token block contradicts itself here (positive at
+   28/40/56px, negative at 44px) while its prose asks for negative
+   throughout; we follow the prose, which is also what Apple does.
+
+   Contents
+     1. Fonts          6. Reveals
+     2. Reset, tokens  7. Buttons, fields
+     3. Base type      8. Section furniture
+     4. Focus          9. Waitlist band, contact block
+     5. Nav           10. Footer, responsive
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 1. FONTS — self-hosted, variable, no CDN ─────────────────── */
+/* Paths are relative to this file, which lives in css/.
+   One file per subset covers 300–600; the weight axis is 100–700. */
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('../fonts/ibm-plex-sans-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6,
+    U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122,
+    U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url('../fonts/ibm-plex-sans-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7,
+    U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F,
+    U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F,
+    U+A720-A7FF;
+}
+
+/* ── 2. RESET ─────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  /* The one chromatic colour, in the spec's two tiers */
+  --red:        #C41E3A;   /* filled actions, active states, brand mark */
+  --red-deep:   #A31430;   /* outlined borders, inline links, pressed fill */
+  /* And a third tier, which exists for one reason: contrast on Carbon.
+     --red on Carbon is 2.86:1, which fails even the 3:1 floor for large
+     text, so display-size red type on a dark surface is unreadable at the
+     brand value. This is the same hue and saturation lifted from 44% to 54%
+     lightness — 3.82:1, clear of the large-text floor — and it is for
+     display type on Carbon and nothing else. It is never a fill: a filled
+     pill is --red on every surface, because a fill's contrast is carried by
+     the white text on it. */
+  --red-lift:   #E03351;   /* display type on a dark surface, only */
+  /* A fourth tier, and it exists for the same reason the third does: a
+     surface where --red-lift is not enough. The Avalon block sets a list of
+     short lines in the accent at 26-30px over Carbon, the way Apple's silicon
+     blocks set theirs in lavender over black, and the reference is a long way
+     lighter than --red-lift is — measured off the M5 Max still, that lavender
+     is about 66% lightness against our 54%. --red-lift is 3.82:1, which clears
+     the large-text floor and nothing more; this is 5.8:1, which clears the
+     normal-text one, and the difference on screen is the difference between
+     type that is legible and type that looks lit.
+
+     Same hue, saturation dropped as the lightness climbs, because holding
+     saturation at 76% up here gives a fluorescent pink rather than a lighter
+     red. It is for the Avalon list and its gradient and nothing else — this is
+     a third exception to "red is a fill, never type", not a general licence. */
+  --red-air:    #FF7A8C;   /* the Avalon lines on Carbon, only */
+
+  /* Neutral ladder, straight from the spec */
+  --carbon:     #1D1D1F;   /* primary ink, and dark section surfaces */
+  --frost:      #F5F5F7;   /* canvas */
+  --ice:        #F4F8FB;   /* elevated wash */
+  --pebble:     #E2E2E5;   /* filled surface, disabled */
+  --ash:        #707070;   /* muted text — the only secondary ink */
+  --hairline:   #D2D2D7;   /* every rule on a light surface */
+  --white:      #FFFFFF;
+
+  /* Aliases kept so the rest of the sheet reads unchanged.
+     Both greys now resolve to Ash: one secondary ink, not two.
+     #A0A0A0 at 11px failed WCAG AA on white (3.0:1); Ash is 5.0:1. */
+  --grey:       #707070;
+  --grey-light: #707070;
+  --rule:       #D2D2D7;
+  --bg-section: #F5F5F7;
+
+  --font: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system,
+          BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+
+  /* Type scale — size, leading, tracking */
+  --text-caption:    12px; --tracking-caption:    -0.022em;
+  --text-body-sm:    14px; --tracking-body-sm:    -0.016em;
+  --text-body:       17px; --tracking-body:       -0.016em;
+  --text-subheading: 21px; --tracking-subheading: -0.014em;
+  --text-heading-sm: 28px; --tracking-heading-sm: -0.018em;
+  --text-heading:    40px; --tracking-heading:    -0.021em;
+  --text-display:    56px; --tracking-display:    -0.024em;
+
+  /* Only two radii exist in this system */
+  --radius-pill: 980px;
+  --radius-card: 8px;
+
+  --section-gap: 64px;
+  /* No shadow token. The spec permits exactly one — rgba(0,0,0,.22) 3px 5px
+     30px, to ground a product photo — and our product photo is a white-
+     background JPEG carrying its own cast shadow, so nothing needs it. */
+
+  --ease:        cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── LIQUID GLASS ───────────────────────────────────────────────
+     Rev 13: "can we add some liquid glass throuyghout the website".
+
+     What it is applied to, and what it is deliberately not. Glass goes on
+     things that float over content and things you operate: the nav bar, the
+     menu sheet, the segmented control, the filled pill, the progress rail. It
+     does not go on content. That is not caution, it is the decision already
+     made — "Glass cards → replace with hairline columns" — and it is the same
+     one Apple made: the material exists to say *this layer is above the page*,
+     so putting it on the page's own facts says nothing and costs the type its
+     contrast. A page where everything is glass has no glass in it.
+
+     Four ingredients, because the real material has four and CSS can express
+     all but the fourth honestly:
+
+       tint    a translucent wash of the surface it sits on, light or dark
+       blur    saturate before blur, so what shows through keeps its colour
+               rather than going grey — this is the part that reads as glass
+               rather than as a semi-transparent rectangle
+       spec    a one-pixel specular highlight along the top inside edge, and a
+               matching shade along the bottom. This is the whole difference
+               between Liquid Glass and the flat frosting we had: a sheet of
+               glass catches the light on the edge that faces it.
+       rim     a hairline border, the light bending round the perimeter
+
+     Refraction is the fourth, and it is the one thing not attempted here.
+     Genuine lensing needs the layer below as a texture, which in a browser
+     means an SVG displacement filter over a screenshot of the page — expensive,
+     and wrong the moment anything scrolls. A specular edge is what carries the
+     material at this scale, and a nav bar 56px tall has no room to refract. */
+  --glass-blur:      saturate(180%) blur(20px);
+  --glass-blur-deep: saturate(160%) blur(30px);
+
+  /* On light surfaces. 0.72 rather than the 0.82 the flat frosting used: with
+     a specular edge and a rim doing the work of separating the bar from the
+     page, the tint no longer has to, and 10% more of the page shows through. */
+  --glass-tint:      rgba(255, 255, 255, 0.72);
+  --glass-spec:      rgba(255, 255, 255, 0.85);
+  --glass-shade:     rgba(0, 0, 0, 0.05);
+  --glass-rim:       rgba(0, 0, 0, 0.09);
+
+  /* On dark ones. The specular is dimmer than the light version's, not
+     brighter: a highlight is the light source reflected, and reflecting a white
+     page onto dark glass at 0.85 draws a bright line that reads as a seam. */
+  --glass-tint-dark:  rgba(29, 29, 31, 0.80);
+  --glass-spec-dark:  rgba(255, 255, 255, 0.16);
+  --glass-shade-dark: rgba(0, 0, 0, 0.22);
+  --glass-rim-dark:   rgba(255, 255, 255, 0.12);
+}
+
+/* The two edges, as one declaration each, so nothing has to restate the
+   numbers. Applied with box-shadow rather than borders because an inset shadow
+   follows a border-radius round a pill and a border does not stop at one — and
+   because the top and the bottom of a piece of glass are not the same edge. */
+.glass-edge {
+  box-shadow: inset 0  1px 0 var(--glass-spec),
+              inset 0 -1px 0 var(--glass-shade);
+}
+.glass-edge-dark {
+  box-shadow: inset 0  1px 0 var(--glass-spec-dark),
+              inset 0 -1px 0 var(--glass-shade-dark);
+}
+
+/* Two escape hatches, and both are the platform asking rather than us
+   guessing. Without a backdrop-filter the tint alone is a translucent panel
+   with text behind it, which is worse than an opaque one; and a reader who has
+   asked for less transparency has asked for exactly this. */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  :root {
+    --glass-tint:      rgba(255, 255, 255, 0.97);
+    --glass-tint-dark: rgba(29, 29, 31, 0.97);
+  }
+}
+@media (prefers-reduced-transparency: reduce) {
+  :root {
+    --glass-blur:      none;
+    --glass-blur-deep: none;
+    --glass-tint:      rgba(255, 255, 255, 0.97);
+    --glass-tint-dark: rgba(29, 29, 31, 0.97);
+  }
+}
+
+html { scroll-behavior: smooth; }
+
+body {
+  background: var(--white);
+  color: var(--carbon);
+  font-family: var(--font);
+  font-size: var(--text-body);
+  line-height: 1.47;
+  letter-spacing: var(--tracking-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+/* Every number in the interface aligns on the digit. */
+.num, .stat-num, .stat-featured-num, .spec-stat { font-variant-numeric: tabular-nums; }
+
+/* ── 3. BASE TYPE ─────────────────────────────────────────────── */
+h1, h2, h3 { font-weight: 600; text-wrap: balance; }
+
+.h-display {
+  font-size: clamp(40px, 6vw, var(--text-display));
+  letter-spacing: var(--tracking-display);
+  line-height: 1.07;
+}
+.h-heading {
+  font-size: clamp(28px, 4.2vw, var(--text-heading));
+  letter-spacing: var(--tracking-heading);
+  line-height: 1.14;
+}
+/* The 28px step, for a heading inside a section that already has one. */
+.h-small {
+  font-size: var(--text-heading-sm);
+  letter-spacing: var(--tracking-heading-sm);
+  line-height: 1.2;
+}
+
+/* The whisper voice: 300 weight, Carbon, one or two lines. */
+.tagline {
+  font-weight: 300;
+  font-size: clamp(19px, 2.2vw, 26px);
+  letter-spacing: -0.012em;
+  line-height: 1.3;
+  color: var(--carbon);
+}
+.body-muted { color: var(--ash); }
+
+/* ── 4. FOCUS ─────────────────────────────────────────────────── */
+/* Spec: 2px focus ring in the accent. Keyboard only, never on mouse. */
+:focus-visible {
+  outline: 2px solid var(--red);
+  outline-offset: 3px;
+  border-radius: 3px;
+}
+:focus:not(:focus-visible) { outline: none; }
+
+.skip-link {
+  position: absolute; left: 16px; top: -60px; z-index: 300;
+  background: var(--carbon); color: var(--white);
+  padding: 12px 20px; border-radius: var(--radius-pill);
+  font-size: var(--text-body-sm); font-weight: 500;
+  letter-spacing: var(--tracking-body-sm);
+  text-decoration: none;
+  transition: top 0.2s var(--ease-smooth);
+}
+.skip-link:focus { top: 16px; }
+
+/* Visible to a screen reader, not to the eye. Every form field on the site
+   has a <label class="sr-only">, so without this rule four stray words
+   ("Name", "Email address") print above the hero and waitlist inputs. */
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* ── 5. MOBILE NAV OVERLAY ────────────────────────────────────── */
+/* Liquid Glass, rev 13. This was an opaque Carbon panel, which is a page
+   replacing a page — you close it and find out where you were. Dark glass over
+   a blurred, still-visible document is the iOS sheet, and it is the one place
+   on the site where the material has real work to do rather than decorative
+   work: the menu is unambiguously *over* something.
+
+   The tint is 0.80 and it was measured rather than picked. Over the worst case,
+   a white page, it composites to about #4A4A4C once the blur has flattened
+   everything: white links land at 8.9:1, and the footer caption — white at 0.45,
+   which was 5.6:1 on solid Carbon — falls to 3.1:1, which is why it is raised to
+   0.62 below. 0.66 was the first value tried and the render is why it is not the
+   one here: it composites to #6A6A6C and takes that caption to 2.45:1. Over the
+   product page's Carbon sequence all of this is darker and none of it is the
+   binding case. The reduced-transparency and no-backdrop-filter fallbacks take
+   the tint to 0.97 and it becomes the panel it used to be.
+
+   No specular edge here, and that is the rule rather than an omission: this
+   sheet is full-bleed, so it has no edges on screen to catch a highlight. */
+.mobile-nav {
+  position: fixed; inset: 0; z-index: 200;
+  background: var(--glass-tint-dark);
+  backdrop-filter: var(--glass-blur-deep);
+  -webkit-backdrop-filter: var(--glass-blur-deep);
+  display: flex; flex-direction: column;
+  justify-content: center; padding: 0 40px;
+  opacity: 0; pointer-events: none;
+  transition: opacity 0.4s var(--ease);
+}
+.mobile-nav.open { opacity: 1; pointer-events: all; }
+
+.mobile-nav-links { list-style: none; }
+.mobile-nav-links li { overflow: hidden; }
+.mobile-nav-links a {
+  display: block;
+  font-size: clamp(32px, 7vw, 44px);
+  font-weight: 600; letter-spacing: -0.022em;
+  line-height: 1.18;
+  color: var(--white); text-decoration: none;
+  padding: 10px 0;
+  opacity: 0; transform: translateY(28px);
+  transition: color 0.2s, opacity 0.5s var(--ease), transform 0.5s var(--ease);
+}
+.mobile-nav-links a:hover { color: rgba(255,255,255,0.6); }
+/* Visibility first, for every row there is. The delays below are only the
+   stagger — so a menu longer than the list of delays still opens, it just
+   brings its last rows in together instead of one by one. Tying visibility
+   to nth-child is how a sixth link ends up permanently invisible. */
+.mobile-nav.open .mobile-nav-links a { opacity: 1; transform: translateY(0); }
+.mobile-nav.open .mobile-nav-links li:nth-child(1) a { transition-delay: 0.06s; }
+.mobile-nav.open .mobile-nav-links li:nth-child(2) a { transition-delay: 0.12s; }
+.mobile-nav.open .mobile-nav-links li:nth-child(3) a { transition-delay: 0.18s; }
+.mobile-nav.open .mobile-nav-links li:nth-child(4) a { transition-delay: 0.24s; }
+.mobile-nav.open .mobile-nav-links li:nth-child(5) a { transition-delay: 0.30s; }
+.mobile-nav.open .mobile-nav-links li:nth-child(6) a { transition-delay: 0.36s; }
+.mobile-nav.open .mobile-nav-links li:nth-child(7) a { transition-delay: 0.42s; }
+.mobile-nav.open .mobile-nav-links li:nth-child(8) a { transition-delay: 0.48s; }
+/* 0.45 to 0.62 with the sheet's glass. See the note on .mobile-nav: on solid
+   Carbon 0.45 was 5.6:1, and on glass over a white page it is 3.1:1. This is a
+   12px caption, so it owes 4.5:1, and 0.62 pays it — 4.5 on the worst surface
+   the overlay can open on and better than it used to be on every other. */
+.mobile-nav-foot {
+  margin-top: 52px;
+  font-size: var(--text-caption); font-weight: 400;
+  letter-spacing: var(--tracking-caption);
+  color: rgba(255,255,255,0.62);
+}
+
+/* ── NAV ──────────────────────────────────────────────────────── */
+@keyframes nav-in {
+  from { opacity: 0; transform: translateY(-10px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+nav {
+  position: fixed; top: 0; left: 0; right: 0;
+  z-index: 100; height: 56px;
+  display: flex; align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  border-bottom: 1px solid transparent;
+  transition: background 0.5s var(--ease), backdrop-filter 0.5s,
+              box-shadow 0.5s var(--ease), border-color 0.4s var(--ease);
+  opacity: 0;
+  animation: nav-in 0.7s var(--ease) 0.15s forwards;
+}
+/* Frosted glass is the one blur the spec keeps — Apple's own nav does it — and
+   rev 13 takes it the rest of the way to Liquid Glass. Same blur, less tint,
+   plus the two edges: a specular highlight where the light lands and a shade
+   where it does not. The hairline goes with them, because a border-bottom and
+   an inset bottom shade are the same line drawn twice. */
+nav.frosted {
+  background: var(--glass-tint);
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border-color: transparent;
+  box-shadow: inset 0  1px 0 var(--glass-spec),
+              inset 0 -1px 0 var(--glass-rim);
+}
+
+.nav-logo {
+  font-size: var(--text-body-sm); font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--carbon); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+/* Bolt mark — same geometry as the favicon. Brand mark, so it carries red. */
+.bolt-mark { width: auto; flex-shrink: 0; fill: var(--red); }
+.nav-logo .bolt-mark { height: 14px; }
+.footer-logo .bolt-mark { height: 13px; }
+
+.nav-links { display: flex; gap: 32px; list-style: none; }
+.nav-links a {
+  font-size: var(--text-caption); font-weight: 400;
+  letter-spacing: var(--tracking-caption);
+  color: var(--carbon);
+  text-decoration: none;
+  opacity: 0.82;
+  transition: opacity 0.2s;
+}
+.nav-links a:hover { opacity: 1; }
+/* Active page marked by full-strength ink, not a rule. */
+.nav-links a.active { opacity: 1; font-weight: 500; }
+
+/* The nav CTA is the page's smallest filled pill — never red text.
+   Rev 13 gives it the same top-edge specular the bar has, at a sixth of the
+   strength. It is still a --red fill: an inset white highlight at 0.18 over
+   #C41E3A is the top two pixels of the pill lifting, not a second colour, and
+   the accent rule is about hue, not about whether a surface catches light. */
+.nav-cta {
+  font-size: var(--text-caption); font-weight: 400;
+  letter-spacing: var(--tracking-caption);
+  color: var(--white); text-decoration: none;
+  background: var(--red);
+  padding: 7px 14px;
+  border-radius: var(--radius-pill);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.18),
+              inset 0 -1px 0 rgba(0,0,0,0.10);
+  transition: background 0.25s;
+}
+.nav-cta:hover { background: var(--red-deep); }
+
+.hamburger {
+  display: none; flex-direction: column;
+  gap: 5px; padding: 8px; background: none; border: none;
+  cursor: pointer;
+}
+.hamburger span {
+  display: block; width: 20px; height: 1.5px;
+  background: var(--carbon);
+  transition: all 0.35s var(--ease);
+  transform-origin: center;
+}
+.hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
+.hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+
+/* While the overlay is up the bar has to sit above it. The overlay is a
+   full-screen Carbon panel at z-200, so a z-100 bar buries the X that
+   closes the menu — and on a phone there is no Escape key to fall back
+   on. The bar's glass and its hairline go for the duration, leaving the
+   wordmark and the X over Carbon, both in white. */
+body.nav-open nav {
+  z-index: 250;
+  background: transparent;
+  backdrop-filter: none; -webkit-backdrop-filter: none;
+  border-color: transparent;
+  /* Including the edges. Two sheets of glass stacked at the top of the screen
+     is a seam across the menu, and the bar is not a layer over the sheet — for
+     the duration it is part of it. */
+  box-shadow: none;
+}
+body.nav-open .nav-logo { color: var(--white); }
+body.nav-open .hamburger span { background: var(--white); }
+
+/* ── 6. REVEALS ───────────────────────────────────────────────── */
+/* The mask that makes the slide-up reveal work also clips descenders
+   once line-height drops to 1.07. The padding gives the y/g/p tails
+   room; the matching negative margin keeps the vertical rhythm. */
+.ru {
+  display: block; overflow: hidden;
+  padding-bottom: 0.14em; margin-bottom: -0.14em;
+}
+.ru-i {
+  display: block; transform: translateY(110%);
+  transition: transform 1s var(--ease);
+}
+.ru.visible .ru-i { transform: translateY(0); }
+
+.rf {
+  opacity: 0; transform: translateY(22px);
+  transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
+}
+.rf.visible { opacity: 1; transform: translateY(0); }
+
+@media (prefers-reduced-motion: reduce) {
+  .ru-i { transform: none; transition: none; }
+  .rf   { opacity: 1; transform: none; transition: none; }
+  *     { animation-duration: 0.01ms !important; }
+}
+
+/* ── 7. BUTTONS ───────────────────────────────────────────────── */
+/* Two shapes only: filled pill, outlined pill. Both 980px. No shadow. */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  padding: 11px 22px;
+  font-family: var(--font);
+  font-size: var(--text-body); font-weight: 400;
+  letter-spacing: var(--tracking-body);
+  text-decoration: none;
+  border: none; border-radius: var(--radius-pill);
+  cursor: pointer;
+  transition: background 0.25s, color 0.25s, border-color 0.25s, transform 0.15s var(--ease-smooth);
+}
+.btn:active { transform: scale(0.98); }
+
+.btn-red { background: var(--red); color: var(--white); }
+.btn-red:hover { background: var(--red-deep); }
+
+/* Outlined uses the deeper tier, mirroring the spec's two-blue pairing. */
+.btn-outline {
+  background: transparent; color: var(--red-deep);
+  border: 1px solid var(--red-deep);
+  padding: 10px 21px;
+}
+.btn-outline:hover { background: var(--red-deep); color: var(--white); }
+
+/* Tertiary: a plain link, so a section is never two filled buttons. */
+.btn-ghost {
+  background: none; border: none; padding: 11px 0;
+  color: var(--red-deep); text-decoration: none;
+  font-size: var(--text-body); letter-spacing: var(--tracking-body);
+}
+.btn-ghost:hover { text-decoration: underline; }
+
+/* ── FIELDS ───────────────────────────────────────────────────── */
+.field {
+  background: var(--frost);
+  border: 1px solid var(--hairline);
+  border-radius: var(--radius-card);
+  padding: 12px 16px;
+  font-family: var(--font);
+  font-size: var(--text-body); font-weight: 400;
+  letter-spacing: var(--tracking-body);
+  color: var(--carbon);
+  transition: border-color 0.2s, background 0.2s;
+  min-width: 0;
+}
+.field::placeholder { color: var(--ash); }
+.field:hover { border-color: var(--ash); }
+.field:focus { outline: 2px solid var(--red); outline-offset: 1px; border-color: transparent; }
+.field:disabled { background: var(--pebble); color: var(--ash); }
+
+/* ── 8. SECTION FURNITURE ─────────────────────────────────────── */
+/* Sections are full-bleed and alternate white / Frost. No containers. */
+.section      { padding: 112px 40px; }
+.section-frost{ background: var(--frost); }
+.section-white{ background: var(--white); }
+.section-dark { background: var(--carbon); color: var(--white); }
+
+/* Text blocks centre internally; the section itself never narrows. */
+.measure      { max-width: 700px; }
+.measure-wide { max-width: 980px; }
+
+/* Small label above a heading — Ash, sentence case, no letterspacing. */
+.section-label {
+  display: block;
+  font-size: var(--text-caption); font-weight: 600;
+  letter-spacing: var(--tracking-caption);
+  color: var(--ash);
+  margin-bottom: 16px;
+}
+
+/* ── HERO SCAFFOLDING ─────────────────────────────────────────── */
+/* Shared across pages: the full-height white stage, the eyebrow's
+   masked slide-up, and the copy column's rhythm. What sits inside the
+   stage — photo, form, spec row — belongs to the individual page. */
+.hero {
+  min-height: 100svh;
+  background: var(--white);
+  display: flex; flex-direction: column;
+  justify-content: center;
+  padding: 132px 40px 80px;
+  position: relative; overflow: hidden;
+}
+.hero-inner { position: relative; z-index: 2; }
+
+/* ── HERO DEPTH ───────────────────────────────────────────────── */
+/* "also add those waves on the prodcut page to the home page please".
+
+   This is lab/pcb.html's `.depth` and `.depth-wave` — same three layers, same
+   off-centre wash, the same three SVG paths in the same 1600x1000 user space —
+   inverted for a white page. Opt-in by markup rather than by `.hero`, because
+   `.hero` is shared with survey.html and ambassadors.html and only the home
+   page was asked for.
+
+   Inverting it is not a matter of swapping white for black at the same alpha,
+   because the two pages sit at opposite ends of the value ladder and the eye
+   reads a *difference in levels*, not a difference in alpha. On Carbon, value
+   29, the wave stroke is white at 0.055 through a layer at 0.55 opacity, so an
+   effective 0.030 — which lifts 29 to about 36, seven levels. On white, value
+   255, seven levels down is black at an effective 0.028, so a 0.05 stroke
+   through the same 0.55. Rounded to 0.06 for the same reason the dark version
+   is not 0.05: a line one pixel wide is antialiased along most of its length
+   and loses a little of whatever it is given.
+
+   The wash is the one layer that genuinely changes shape. On Carbon it is a
+   bright bloom at 34% 26% standing in for the key light, and a bright bloom on
+   a white page is nothing at all — there is no headroom above 255. So it flips
+   to a very faint darkening that grows *away* from that point, which is the
+   same statement about where the light is, made from the other side. Held to
+   0.032 at the far corner, eight levels, and off-centre so it reads as room
+   shading rather than as the vignette a centred one would be. */
+.hero-depth {
+  position: absolute; inset: 0; z-index: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(120% 90% at 34% 26%,
+                    rgba(0,0,0,0) 0%,
+                    rgba(0,0,0,0.012) 40%,
+                    rgba(0,0,0,0.032) 100%),
+    repeating-linear-gradient(to bottom,
+                    rgba(0,0,0,0.024) 0 1px,
+                    rgba(0,0,0,0) 1px 112px);
+}
+/* Masked at both ends for the reason it is masked on the product page: three
+   sine curves running the full width draw a hard stop at each edge of the
+   frame, and a line that stops is a line you look at. */
+.hero-wave {
+  position: absolute; inset: 0; z-index: 0;
+  pointer-events: none;
+  opacity: 0.55;
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 22%, #000 78%, transparent);
+}
+.hero-wave svg { display: block; width: 100%; height: 100%; }
+.hero-wave path { fill: none; stroke: rgba(0,0,0,0.06); stroke-width: 1; }
+
+.hero-eyebrow { display: block; overflow: hidden; margin-bottom: 20px; }
+.hero-eyebrow-inner {
+  display: block;
+  font-size: var(--text-caption); font-weight: 600;
+  letter-spacing: var(--tracking-caption);
+  color: var(--ash);
+  transform: translateY(110%);
+  transition: transform 0.9s var(--ease);
+}
+.hero-eyebrow.visible .hero-eyebrow-inner { transform: translateY(0); }
+
+.hero-headline { max-width: 15ch; }
+.hero-line-1 .ru-i { transition-delay: 0.08s; }
+.hero-line-2 .ru-i { transition-delay: 0.22s; }
+
+/* No rule under the headline. The spec's Don't list is explicit that the
+   accent is a button fill and nothing else, and whitespace separates the
+   headline from the tagline perfectly well on its own. */
+.hero-sub { margin-top: 32px; max-width: 30ch; }
+.hero-actions { margin-top: 36px; display: flex; gap: 12px; flex-wrap: wrap; }
+
+/* The home page's band. A cut-out render with a real alpha channel, cropped to
+   the silhouette, so there is no box here at all — no radius, no panel, no
+   border. It sits on the hero's own surface the way the photograph it replaced
+   sat on it, which is the whole point: a render that needs a container of its
+   own is a render that is visibly pasted on.
+
+   No drop-shadow either, and this is now a choice rather than an inheritance.
+   The band is not resting on anything in the model, so a cast shadow would be
+   invented light. What separates it from the page is the shell's own edge line,
+   drawn in Carbon for exactly this reason (?ink=dark — see lab/pcb.html), and a
+   contact shadow under an object that is not standing on anything would be the
+   one invented thing in an otherwise honest render.
+
+   Capped at 480px: the render is 975 real pixels, so that is a shade over 2x
+   and the upper bound is a resolution limit, not a taste one. It is narrower
+   than the 640px the old landscape photograph took because the crop is tight
+   and portrait — the band itself ends up larger on screen, not smaller.
+
+   Centred rather than offset, in both axes, which is rev 13's "center the image
+   more in the hoem apge".
+
+   Horizontally it is centred in the space the copy leaves, not in the hero — so
+   the anchor is a midpoint between the copy column's outer edge and the right
+   padding, and the transform takes the photo's own half-width off it. `right`
+   cannot express that: a fixed inset from the right edge is only centred at one
+   viewport width, and measured at 1440 it left a 228px gap on one side of the
+   band and 188 on the other, growing to 468 against 188 by 1920. 600px is the
+   copy column's reserved width — the headline measures 504 at 1440 with its 15ch
+   cap, and the tagline less — and it is the one hard number here because it is
+   the one thing the layout genuinely depends on.
+
+   Vertically, 56% to 50%. The 6% was carried over from the landscape photograph
+   this replaced, which was wider than it was tall and sat low on purpose. A
+   portrait cut-out of a ring has no such reason, and off-centre in a hero whose
+   only other element is a left-aligned block of type reads as a mistake rather
+   than as composition. */
+.hero-photo {
+  position: absolute; z-index: 1;
+  left: calc((600px + 100% - 40px) / 2); top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(34vw, 480px);
+  opacity: 0;
+  animation: band-in 1.2s var(--ease) 0.6s forwards;
+}
+.hero-photo img { width: 100%; height: auto; display: block; }
+@keyframes band-in { to { opacity: 1; } }
+
+/* Below 1160px the copy column can no longer hold a 15ch headline beside a
+   photo, so the photo drops under it and the hero stops being a split. */
+@media (min-width: 1161px) and (max-width: 1320px) {
+  .hero-photo { width: min(32vw, 400px); }
+}
+@media (max-width: 1160px) {
+  .hero-photo {
+    position: relative; left: auto; top: auto;
+    transform: none; width: 100%; max-width: 320px;
+    margin: 48px auto 0;
+  }
+}
+
+/* ── HAIRLINE COLUMNS ─────────────────────────────────────────── */
+/* The system's one way of laying out a set of parallel facts, and the
+   replacement for the old glass cards: the canvas is the surface, 1px
+   rules divide it, nothing floats and nothing casts a shadow.
+   nth-child(3n) rather than :last-child so a six-cell grid wraps to two
+   rows correctly — cell 4 opens a row and needs no left rule. */
+.spec-row {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  margin-top: 56px;
+  border-top: 1px solid var(--hairline);
+}
+.spec {
+  padding: 40px 40px 8px;
+  border-left: 1px solid var(--hairline);
+}
+.spec:nth-child(3n+1) { border-left: none; padding-left: 0; }
+.spec:nth-child(3n)   { padding-right: 0; }
+
+/* Multi-row variant: a rule under every cell, so the rows read as a table
+   instead of running together. */
+.spec-row-rows .spec {
+  padding-bottom: 32px;
+  border-bottom: 1px solid var(--hairline);
+}
+
+/* Stat and kicker in either order — margins come from the adjacency, so a
+   cell can lead with the figure (home) or with the label (specs table). */
+.spec-stat {
+  font-size: clamp(28px, 3.2vw, 40px);
+  font-weight: 600; letter-spacing: var(--tracking-heading);
+  line-height: 1.14;
+}
+.spec-kicker {
+  font-size: var(--text-caption); font-weight: 600;
+  letter-spacing: var(--tracking-caption);
+  color: var(--ash);
+}
+.spec-stat + .spec-kicker { margin-top: 10px; }
+.spec-kicker + .spec-stat { margin-top: 10px; }
+.spec-desc {
+  margin-top: 16px;
+  font-size: var(--text-body-sm);
+  letter-spacing: var(--tracking-body-sm);
+  line-height: 1.5;
+  color: var(--ash);
+  max-width: 34ch;
+}
+
+/* ── CHECKLIST ────────────────────────────────────────────────── */
+/* Hairline-separated rows with a drawn tick. Icons live in the text
+   greyscale, not in the accent. */
+.features-list { list-style: none; }
+.feature-item {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 0; border-bottom: 1px solid var(--hairline);
+  opacity: 0; transform: translateX(18px);
+  transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+}
+.feature-item:first-child { border-top: 1px solid var(--hairline); }
+.feature-item.visible { opacity: 1; transform: translateX(0); }
+
+.chk { flex-shrink: 0; width: 20px; height: 20px; }
+.chk-path {
+  stroke-dasharray: 28; stroke-dashoffset: 28;
+  transition: stroke-dashoffset 0.55s var(--ease) 0.1s;
+}
+.feature-item.visible .chk-path { stroke-dashoffset: 0; }
+.feature-txt {
+  font-size: var(--text-body);
+  letter-spacing: var(--tracking-body);
+}
+
+/* ── 9. WAITLIST — the one dark section ───────────────────────── */
+/* Carbon, not #000: the spec's ink colour, and pure black on a light
+   page reads as an accident. Full-bleed, so it is a band and not a card. */
+.waitlist-section { padding: 128px 40px; text-align: center; }
+.waitlist-headline { color: var(--white); }
+.waitlist-sub {
+  margin: 24px auto 0; max-width: 42ch;
+  color: rgba(255,255,255,0.62);
+  font-weight: 300;
+}
+.spots-left {
+  display: flex; align-items: center; justify-content: center;
+  gap: 9px; margin: 24px auto 0;
+}
+.spots-left-pip {
+  display: block; width: 5px; height: 5px; flex-shrink: 0;
+  background: var(--red); border-radius: 50%;
+}
+.spots-left-txt {
+  font-size: var(--text-caption); font-weight: 400;
+  letter-spacing: var(--tracking-caption);
+  color: rgba(255,255,255,0.55);
+}
+.spots-left-txt strong { color: var(--white); font-weight: 600; }
+
+.waitlist-form {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  max-width: 560px; margin: 40px auto 0;
+}
+.waitlist-form .field {
+  flex: 1 1 180px;
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(255,255,255,0.22);
+  color: var(--white);
+}
+.waitlist-form .field::placeholder { color: rgba(255,255,255,0.4); }
+.waitlist-form .field:hover { border-color: rgba(255,255,255,0.4); }
+.waitlist-form .field:disabled { background: rgba(255,255,255,0.03); color: rgba(255,255,255,0.4); }
+.waitlist-confirm {
+  display: none; margin-top: 20px;
+  font-size: var(--text-body-sm);
+  letter-spacing: var(--tracking-body-sm);
+  color: rgba(255,255,255,0.55);
+}
+.section-dark :focus-visible { outline-color: var(--white); }
+
+/* ── CONTACT ──────────────────────────────────────────────────── */
+/* The spec's Typography-Only CTA Block: headline 40px/600, descriptor
+   21px/300. The tagline's default 26px is sized to sit under a 56px
+   display headline; against a 40px one it steps down to subheading, or
+   head and sub end up two pixels apart and the hierarchy collapses. */
+.contact-section { text-align: center; }
+.contact-sub {
+  margin-top: 14px;
+  font-size: var(--text-subheading);
+  letter-spacing: var(--tracking-subheading);
+  line-height: 1.24;
+}
+.contact-link {
+  display: inline-block; margin-top: 24px;
+  font-size: var(--text-body);
+  letter-spacing: var(--tracking-body);
+  color: var(--red-deep); text-decoration: none;
+}
+.contact-link:hover { text-decoration: underline; }
+
+/* ── 10. FOOTER ───────────────────────────────────────────────── */
+/* Flat, typographic, structural. A hairline, not a red bar. */
+footer {
+  background: var(--frost);
+  border-top: 1px solid var(--hairline);
+}
+.footer-inner {
+  display: flex; align-items: center;
+  justify-content: space-between; flex-wrap: wrap; gap: 20px;
+  padding: 28px 40px;
+}
+.footer-logo {
+  font-size: var(--text-caption); font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--carbon); text-decoration: none;
+  display: inline-flex; align-items: center; gap: 8px;
+}
+.footer-links { display: flex; gap: 24px; list-style: none; flex-wrap: wrap; }
+.footer-links a {
+  font-size: var(--text-caption); font-weight: 400;
+  letter-spacing: var(--tracking-caption);
+  color: var(--ash); text-decoration: none;
+  transition: color 0.2s;
+}
+.footer-links a:hover { color: var(--carbon); }
+.footer-copy {
+  font-size: var(--text-caption);
+  letter-spacing: var(--tracking-caption);
+  color: var(--ash);
+}
+
+/* ── RESPONSIVE ───────────────────────────────────────────────── */
+/* Only the shared layer's own breakpoints. Page files add their own,
+   after this file, so their overrides win without !important. */
+@media (max-width: 960px) {
+  nav { padding: 0 24px; }
+  .nav-links, .nav-cta { display: none; }
+  .hamburger { display: flex; }
+
+  .hero    { padding: 104px 24px 64px; }
+  .section { padding: 80px 24px; }
+
+  .spec-row { grid-template-columns: 1fr; margin-top: 40px; }
+  .spec {
+    padding: 32px 0 8px;
+    border-left: none; border-bottom: 1px solid var(--hairline);
+  }
+  .spec:last-child { border-bottom: none; }
+  .spec-row-rows .spec:last-child { border-bottom: none; }
+
+  .waitlist-section { padding: 96px 24px; }
+  .footer-inner { flex-direction: column; text-align: center; padding: 28px 24px; }
+  .footer-links { justify-content: center; gap: 16px; }
+}
+
+@media (max-width: 560px) {
+  .waitlist-form .field { flex: 1 1 100%; }
+  .waitlist-form .btn   { width: 100%; }
+}

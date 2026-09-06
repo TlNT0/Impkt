@@ -1,732 +1,641 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>The Product — Impkt Band</title>
+  <title>The product — Impkt Band</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <meta name="description" content="The Impkt Band. Precision wearable hardware built for combat sports. 9-axis IMU, 1000Hz sampling, real-time analytics.">
+
+  <!-- Social sharing -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="The Impkt Band — built to disappear.">
+  <meta property="og:description" content="Precision wearable hardware built for combat sports. 9-axis IMU, 1,000 Hz sampling, real-time analytics.">
+  <meta property="og:image" content="images/band-impkt.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="The Impkt Band — built to disappear.">
+  <meta name="twitter:description" content="Precision wearable hardware built for combat sports. 9-axis IMU, 1,000 Hz sampling, real-time analytics.">
+  <meta name="twitter:image" content="images/band-impkt.jpg">
+
+  <link rel="stylesheet" href="css/impkt.css">
+
   <style>
+    /* ══════════════════════════════════════════════════════════
+       Product page only.
+       Tokens, type, focus, nav, reveals, buttons, fields, section
+       furniture, the hero stage and photo, the hairline columns, the
+       checklist, the waitlist band, the contact block and the footer
+       all live in css/impkt.css, linked above.
+       Rules below are the ones no other page uses.
 
-    /* ── RESET ──────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+       Surfaces: the page opens on two Carbon screens that read as one
+       dark act — the scroll sequence and the numbers under it — and then
+       alternates, Frost process, white build, Frost | white split, Frost
+       specs, Carbon waitlist, Frost contact. Every boundary where two
+       like surfaces meet carries a hairline instead, except the sequence
+       and the numbers, which are meant to be continuous.
+       ══════════════════════════════════════════════════════════ */
 
-    :root {
-      --red:        #C41E3A;
-      --black:      #000000;
-      --white:      #FFFFFF;
-      --grey:       #6B6B6B;
-      --grey-light: #A0A0A0;
-      --rule:       #EBEBEB;
-      --bg-section: #F5F5F7;
-      --font:       "Helvetica Neue", Helvetica, Arial, sans-serif;
-      --ease:       cubic-bezier(0.16, 1, 0.3, 1);
+    /* ── NAV OVER THE SEQUENCE ──────────────────────────────── */
+    /* This page has no photo hero any more — the scroll sequence is the
+       first screen, so for its whole 550svh the fixed bar is over Carbon
+       and the shared nav's Carbon ink is invisible on it. Inverted here
+       rather than in the shared file because this is the only page whose
+       first surface is dark, and the toggle is driven by where the
+       sequence is, not by scroll depth: see script section 3. */
+    nav.on-dark .nav-logo,
+    nav.on-dark .nav-links a { color: var(--white); }
+    nav.on-dark .hamburger span { background: var(--white); }
+    /* The frosted state has to invert with it, or scrolling 24px into a dark
+       first screen drops a white bar across it. Same blur, Carbon instead of
+       white, and — since rev 13 — the dark half of the Liquid Glass edge pair:
+       a dim specular along the top and a deep shade along the bottom. The
+       specular is 0.16 against the light bar's 0.85, because a highlight is a
+       reflection of the light in the room and a bright white line on dark glass
+       reads as a join between two panels rather than as an edge. */
+    nav.on-dark.frosted {
+      background: var(--glass-tint-dark);
+      border-color: transparent;
+      box-shadow: inset 0  1px 0 var(--glass-spec-dark),
+                  inset 0 -1px 0 var(--glass-shade-dark);
     }
+    /* The CTA pill is unchanged. A filled pill's contrast is carried by the
+       white text on it, so --red works on either surface. */
 
-    html { scroll-behavior: smooth; }
+    /* ── STAT STACK ─────────────────────────────────────────── */
+    /* Five hardware facts as centred display lines in the accent, directly
+       after the sequence that just showed you the hardware they describe.
+       Nothing here is a new claim — every line is already in the specs
+       table further down; this is the same information at the size the
+       thing deserves, and the table is the detail behind it.
 
-    body {
-      background: var(--white);
-      color: var(--black);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
+       Type in the accent is a deliberate exception to the one rule this
+       site has kept everywhere else ("red is a fill, never type"). It is
+       allowed here and nowhere else, on the grounds that these lines are
+       the accent carrying meaning rather than decorating a surface. The
+       value is --red-lift and not --red, because --red on Carbon is
+       2.86:1 — see the token's own note. */
+    .stats {
+      background: var(--carbon); color: var(--white);
+      padding: 136px 40px 144px;
+      text-align: center;
     }
+    .stats .section-label { color: rgba(255,255,255,0.42); }
+    /* A px measure and not a ch one. `ch` on the <ul> resolves against the
+       <ul>'s own 17px body size, not against the 56px the items are set at,
+       so 26ch came out as 220px and every line broke after two words. 820px
+       is the width of the longest line ("0.4 mm flexible substrate", 25
+       characters at about 0.52em) with a little to spare, so all five hold
+       one line each on a desktop and wrap only once the clamp has already
+       brought the size down. */
+    .stats-list { list-style: none; margin: 40px auto 0; max-width: 820px; }
+    .stats-list li {
+      font-size: clamp(28px, 4.2vw, var(--text-display));
+      font-weight: 600;
+      letter-spacing: var(--tracking-display);
+      line-height: 1.14;
+      color: var(--red-lift);
+      /* Each line reveals on its own, which is what makes it read as a list
+         being counted off rather than a paragraph arriving. */
+      opacity: 0; transform: translateY(16px);
+      transition: opacity 0.7s var(--ease-smooth), transform 0.7s var(--ease-smooth);
+    }
+    .stats-list li + li { margin-top: 6px; }
+    .stats-list li.visible { opacity: 1; transform: none; }
+    .stats-note {
+      margin: 48px auto 0; max-width: 44ch;
+      font-size: var(--text-body-sm); font-weight: 300;
+      letter-spacing: var(--tracking-body);
+      color: rgba(255,255,255,0.56);
+    }
+    .stats-actions { margin-top: 40px; }
 
-    /* ── REACTIVE BACKGROUND GLOW ───────────────────────────── */
-    .bg-glow {
-      position: fixed; inset: 0; z-index: 0;
-      pointer-events: none;
-      background: radial-gradient(
-        700px circle at var(--gx, 50%) var(--gy, 50%),
-        rgba(196, 30, 58, 0.05),
-        transparent 70%
-      );
-      opacity: 0; transition: opacity 0.6s;
-    }
-    .bg-glow.active { opacity: 1; }
-    @media (hover: none) { .bg-glow { display: none; } }
+    /* ── AVALON ─────────────────────────────────────────────── */
+    /* The brief is an Apple silicon block: "add something like this but instead
+       of M5 Ultra whatever you can call it the firmware which is called Avalon
+       ... use this color scheme but adapted to red but with these fades and
+       making it feel exclusive."
 
-    /* ── MOBILE NAV OVERLAY ─────────────────────────────────── */
-    .mobile-nav {
-      position: fixed; inset: 0; z-index: 200;
-      background: var(--black);
-      display: flex; flex-direction: column;
-      justify-content: center; padding: 0 40px;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.4s var(--ease);
-    }
-    .mobile-nav.open { opacity: 1; pointer-events: all; }
-    .mobile-nav-links { list-style: none; }
-    .mobile-nav-links li { overflow: hidden; }
-    .mobile-nav-links a {
-      display: block;
-      font-size: clamp(40px, 10vw, 64px);
-      font-weight: 900; letter-spacing: -0.035em;
-      text-transform: uppercase; line-height: 1.08;
-      color: var(--white); text-decoration: none;
-      padding: 10px 0;
-      opacity: 0; transform: translateY(28px);
-      transition: color 0.2s, opacity 0.5s var(--ease), transform 0.5s var(--ease);
-    }
-    .mobile-nav-links a:hover { color: var(--red); }
-    .mobile-nav.open .mobile-nav-links li:nth-child(1) a { opacity: 1; transform: translateY(0); transition-delay: 0.06s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(2) a { opacity: 1; transform: translateY(0); transition-delay: 0.12s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(3) a { opacity: 1; transform: translateY(0); transition-delay: 0.18s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(4) a { opacity: 1; transform: translateY(0); transition-delay: 0.24s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(5) a { opacity: 1; transform: translateY(0); transition-delay: 0.30s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(6) a { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
-    .mobile-nav-foot {
-      margin-top: 52px; font-size: 11px; font-weight: 500;
-      letter-spacing: 0.2em; text-transform: uppercase; color: #444;
-    }
+       The reference is a chip die photographed as a glowing tile on black, with
+       its spec lines under it in the accent. Three things carry it and it is
+       worth naming them, because getting any one of them wrong turns it into a
+       gradient rectangle:
 
-    /* ── NAV ────────────────────────────────────────────────── */
-    @keyframes nav-in {
-      from { opacity: 0; transform: translateY(-10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    nav {
-      position: fixed; top: 0; left: 0; right: 0;
-      z-index: 100; height: 72px;
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 0 56px;
-      border-bottom: 1px solid transparent;
-      transition: background 0.5s var(--ease), backdrop-filter 0.5s, border-color 0.4s var(--ease);
-      opacity: 0;
-      animation: nav-in 0.7s var(--ease) 0.15s forwards;
-    }
-    nav.frosted {
-      background: rgba(255,255,255,0.86);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-color: var(--rule);
-    }
-    .nav-logo {
-      font-size: 13px; font-weight: 800;
-      letter-spacing: 0.26em; text-transform: uppercase;
-      color: var(--black); text-decoration: none;
-      display: inline-flex; align-items: center; gap: 9px;
-    }
-    /* Bolt mark — same geometry as the favicon */
-    .bolt-mark {
-      width: auto; flex-shrink: 0;
-      fill: var(--red);
-    }
-    .nav-logo .bolt-mark { height: 15px; }
-    .footer-logo .bolt-mark { height: 14px; }
-    .nav-links { display: flex; gap: 40px; list-style: none; }
-    .nav-links a {
-      font-size: 12px; font-weight: 500;
-      letter-spacing: 0.06em; color: var(--black);
-      text-decoration: none; opacity: 1;
-      padding-bottom: 2px;
-      border-bottom: 1.5px solid transparent;
-      transition: border-color 0.2s;
-    }
-    .nav-links a:hover { border-color: rgba(0,0,0,0.3); }
-    .nav-links a.active { border-color: var(--black); }
-    .nav-cta {
-      font-size: 12px; font-weight: 600;
-      letter-spacing: 0.1em; color: var(--red); text-decoration: none;
-    }
-    .hamburger {
-      display: none; flex-direction: column;
-      gap: 5px; padding: 8px; background: none; border: none;
-    }
-    .hamburger span {
-      display: block; width: 22px; height: 1.5px;
-      background: var(--black);
-      transition: all 0.35s var(--ease); transform-origin: center;
-    }
-    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
-    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
+       1. The tile is lit from one corner, not filled. The reference's brightest
+          pixel is a near-white pink at the bottom-left corner and the top-right
+          third is essentially black — so the light has a direction and the tile
+          has a shape. Filled edge to edge it reads as a swatch.
+       2. The border is brighter than anything inside it except that corner. It
+          is a 1px light rim all the way round, which is what says the object is
+          a physical die with a bevel and not an area of colour.
+       3. The lines under it are the accent at a size and weight that is almost
+          display. They are not body copy that happens to be coloured.
 
-    /* ── BUTTONS ────────────────────────────────────────────── */
-    .btn {
-      display: inline-flex; align-items: center;
-      padding: 15px 38px;
-      font-size: 11px; font-family: var(--font);
-      font-weight: 700; letter-spacing: 0.18em;
-      text-transform: uppercase; text-decoration: none;
-      border: none; will-change: transform;
-      transition: background 0.3s, color 0.3s, border-color 0.3s;
-    }
-    .btn-black { background: var(--black); color: var(--white); }
-    .btn-black:hover { background: var(--red); }
-    .btn-outline {
-      background: transparent; color: var(--red);
-      border: 1.5px solid var(--red);
-    }
-    .btn-outline:hover { background: var(--red); color: var(--white); }
-
-    /* ── REVEAL ANIMATIONS ──────────────────────────────────── */
-    .ru { display: block; overflow: hidden; }
-    .ru-i {
-      display: block; transform: translateY(110%);
-      transition: transform 1s var(--ease);
-    }
-    .ru.visible .ru-i { transform: translateY(0); }
-
-    .rf {
-      opacity: 0; transform: translateY(22px);
-      transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-    }
-    .rf.visible { opacity: 1; transform: translateY(0); }
-
-    @media (prefers-reduced-motion: reduce) {
-      .ru-i { transform: none; transition: none; }
-      .rf   { opacity: 1; transform: none; transition: none; }
-      *     { animation-duration: 0.01ms !important; }
-    }
-
-    /* ── SHARED SECTION STYLES ──────────────────────────────── */
-    .section-label {
-      display: block; font-size: 10px; font-weight: 700;
-      letter-spacing: 0.34em; text-transform: uppercase;
-      color: var(--red); margin-bottom: 24px;
-    }
-
-    /* ── HERO ───────────────────────────────────────────────── */
-    .hero {
-      position: relative; z-index: 1;
-      min-height: 100svh;
-      background: #FFFFFF;
-      display: flex; flex-direction: column;
-      justify-content: center;
-      padding: 0 56px;
-      padding-top: 120px;
-      padding-bottom: 80px;
-      overflow: hidden;
-    }
-
-    .hero-inner { position: relative; z-index: 2; }
-
-    /* Product render — flush on the white, no frame */
-    @keyframes photo-in { to { opacity: 1; } }
-    .hero-photo {
-      position: absolute; z-index: 1;
-      /* Centred in the column beside the headline, keeping the page gutter */
-      left: 46%; right: 104px;
-      top: 54%;
-      transform: translateY(-50%);
-      display: flex; justify-content: center;
-      overflow: hidden;
-      opacity: 0;
-      animation: photo-in 1.2s var(--ease) 0.7s forwards;
-    }
-    .hero-photo img {
-      width: 100%; max-width: 700px;
-      height: auto; display: block;
-      border: none; box-shadow: none;
-    }
-    @media (max-width: 1100px) {
-      .hero-photo {
-        position: relative; left: auto; right: auto; top: auto;
-        transform: none; width: 100%; max-width: 420px;
-        margin-top: 56px;
-      }
-    }
-
-    .hero-eyebrow {
-      display: block; overflow: hidden; margin-bottom: 36px;
-    }
-    .hero-eyebrow-i {
-      display: block;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.32em; text-transform: uppercase;
-      color: var(--grey-light);
-      transform: translateY(110%);
-      transition: transform 0.9s var(--ease) 0s;
-    }
-    .hero-eyebrow.visible .hero-eyebrow-i { transform: translateY(0); }
-
-    .hero-headline {
-      font-size: clamp(44px, 5.6vw, 84px);
-      font-weight: 900; letter-spacing: -0.04em;
-      line-height: 0.96; text-transform: uppercase;
-      max-width: calc(97vw - min(48vw, 700px) - 50px);
-    }
-
-    .hero-sub {
-      margin-top: 32px;
-      font-size: 15px; font-weight: 400;
-      color: var(--grey); line-height: 1.7;
-      max-width: 380px;
-    }
-
-    .hero-badges {
-      display: flex; flex-wrap: wrap; gap: 10px;
-      margin-top: 40px;
-      max-width: calc(97vw - min(48vw, 700px) - 50px);
-    }
-    .badge {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--black);
-      border: 1px solid var(--rule);
-      padding: 8px 16px;
-    }
-
-    .hero-actions { margin-top: 48px; }
-
-    /* ── HOW IT WORKS ───────────────────────────────────────── */
-    .hiw-section {
-      position: relative; z-index: 1;
-      padding: 140px 56px;
-      background: var(--bg-section);
-    }
-
-    .hiw-headline {
-      font-size: clamp(36px, 5vw, 64px);
-      font-weight: 900; letter-spacing: -0.04em;
-      line-height: 1; margin-bottom: 80px;
-    }
-
-    .steps-grid {
+       Placed between the sequence and the numbers, which is the page's dark
+       chapter: the object, then the intelligence in it, then the figures, and
+       the CTA at the foot of the numbers is still the way out of the dark run.
+       Two columns rather than the reference's single stack, deliberately — a
+       centred stack directly above the centred red stats list would read as one
+       block with two lists in it, and the numbers are hardware facts, not
+       Avalon's. */
+    .avalon {
+      background: var(--carbon); color: var(--white);
+      /* 104 at the foot rather than 136. Avalon and the numbers are both
+         Carbon with no rule between them, so their two paddings read as one
+         gap: 136 + 136 was 272px of empty dark between the last Avalon line and
+         "In numbers", which at that value reads as a missing section rather
+         than as a chapter break. */
+      padding: 128px 40px 104px;
       display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 0;
+      /* Both tracks bounded, and the second one especially. With `1fr` on the
+         copy the grid always filled the 1200px cap, so at 1440 the block sat
+         360 + 80 + 760 with the text using about 470 of its 760 — a composition
+         weighted hard to the left with an empty third on the right. Bounded, the
+         whole thing is 1000px wide and `justify-content: center` actually has
+         something to centre. */
+      grid-template-columns: minmax(260px, 360px) minmax(0, 560px);
+      gap: 80px; align-items: center;
+      justify-content: center;
+      max-width: 1200px; margin: 0 auto;
+    }
+    /* The section's own surface has to be Carbon edge to edge while its
+       contents are capped — so the cap is on this grid and the colour comes
+       from a wrapper. */
+    .avalon-band { background: var(--carbon); }
+
+    .avalon-chip-wrap { position: relative; }
+    /* The halo. A large, heavily blurred red radial *behind* the tile, at an
+       opacity where it is a change in the black rather than a visible shape.
+       This is the whole of "exclusive": the reference's tile sits in a faint
+       bloom because a real die under a light does, and without it the tile is
+       a sticker on a flat background. blur() on a filled element rather than a
+       wider gradient, because a gradient's falloff is linear in the stop list
+       and a Gaussian is not — the difference is visible at this radius. */
+    .avalon-bloom {
+      position: absolute; z-index: 0;
+      inset: -14%;
+      border-radius: 50%;
+      background: radial-gradient(50% 50% at 34% 74%,
+                  rgba(224,51,81,0.85) 0%,
+                  rgba(196,30,58,0.30) 42%,
+                  rgba(196,30,58,0) 70%);
+      filter: blur(38px);
+      pointer-events: none;
+    }
+    .avalon-chip {
+      position: relative; z-index: 1;
+      aspect-ratio: 1;
+      border-radius: 30px;
+      display: grid; place-items: center;
+      /* Three layers, and the order is the light: the corner flare, a second
+         cooler wash coming in from the opposite corner so the black in between
+         is not a dead zone, and the substrate under both. The stops are close
+         together near the corner and far apart after it, which is what makes it
+         read as a falloff rather than as a ramp. */
+      /* The flare's centre is *outside* the tile, at -6% 106%, and that is the
+         one thing that separates this from the first attempt. Centred at 10% 92%
+         the near-white core landed as a visible disc sitting in the corner —
+         a light source in the picture rather than the corner being lit. Pushed
+         past the boundary, only the falloff is on screen: the brightest thing
+         the tile contains is its own bottom-left edge, which is what the
+         reference does and why its glow reads as coming from behind. 170% of
+         span then carries the ramp all the way to the far corner instead of
+         dying two thirds of the way across. */
+      background:
+        radial-gradient(170% 170% at -6% 106%,
+                        rgba(255,222,228,0.98)  0%,
+                        rgba(255,138,162,0.90) 12%,
+                        rgba(224,51,81,0.80)   26%,
+                        rgba(150,20,48,0.50)   44%,
+                        rgba(70,8,24,0.18)     62%,
+                        rgba(0,0,0,0)          76%),
+        /* Half the strength it started at. The reference's top-right third is
+           genuinely black — that is where the die's own dark is, and it is what
+           gives the lit corner something to be brighter than. At 0.42 this
+           second wash filled it with maroon and the tile came back reading as
+           one colour with a bright spot in it. It is kept rather than removed
+           because with nothing there at all the far corner clips to a flat
+           #08080a and the falloff visibly ends. */
+        radial-gradient(88% 88% at 96% 6%,
+                        rgba(196,30,58,0.20)  0%,
+                        rgba(96,12,32,0.09)  42%,
+                        rgba(0,0,0,0)        70%),
+        #08080a;
+      /* The rim, and the top edge of it brighter than the rest — same reasoning
+         as the glass utilities. An inset shadow rather than a border so it
+         follows the 30px radius from the inside and never doubles up with the
+         gradient's own antialiased edge. */
+      box-shadow: inset 0 0 0 1px rgba(255,255,255,0.24),
+                  inset 0 1px 0 1px rgba(255,255,255,0.30),
+                  0 24px 60px rgba(0,0,0,0.45);
+    }
+    .avalon-chip-face {
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      /* The die is inset from the tile's edge by about a fifth in the
+         reference, which is what keeps the rim readable as a rim. */
+      padding: 18%;
+    }
+    /* Not --red and not --red-air: the mark is sitting on the accent itself
+       here, so it goes to the same near-white the wordmark does. This is the
+       one place on the site the bolt is not red, and the reason is that the
+       reference's Apple logo is not lavender either. */
+    .avalon-bolt {
+      width: 30px; height: auto;
+      fill: rgba(255,255,255,0.92);
+    }
+    .avalon-chip-name {
+      /* No font-family: the site has one face. The earlier call was "IBM Plex
+         Sans at 600" for display type, which is what --font already is. */
+      font-size: clamp(34px, 3.4vw, 46px); font-weight: 600;
+      letter-spacing: -0.02em; line-height: 1;
+      /* A hair off white, warm side, because the reference's wordmark carries
+         its own accent's cast rather than being neutral. */
+      color: #FBEEF0;
+    }
+    .avalon-chip-sub {
+      font-size: 12px; font-weight: 600;
+      letter-spacing: 0.20em; text-transform: uppercase;
+      color: rgba(255,255,255,0.62);
     }
 
-    .step {
-      padding: 48px 48px 48px 0;
-      border-left: 1px solid #DEDEDE;
-      padding-left: 48px;
-      opacity: 0; transform: translateY(20px);
-      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease);
+    .avalon-copy .section-label { color: rgba(255,255,255,0.42); }
+    .avalon-h { margin-top: 6px; }
+    .avalon-sub {
+      margin-top: 24px; max-width: 46ch;
+      font-size: var(--text-body); font-weight: 300;
+      letter-spacing: var(--tracking-body);
+      color: rgba(255,255,255,0.68);
     }
-    .step:first-child { border-left: none; padding-left: 0; }
-    .step.visible { opacity: 1; transform: translateY(0); }
+    /* A px measure, for the reason .stats-list carries the same note: `ch`
+       resolves against the <ul>'s own 17px font-size and not against the 29px
+       its items are set at, so 22ch came out as about 220px and every one of
+       the five lines wrapped to two or three. The longest line is "A full
+       session on 100 mAh", 25 characters at roughly 0.59em of 29px, which is
+       425px — 480 holds all five on one line each on a desktop and lets them
+       wrap only after the clamp has already brought the size down. */
+    .avalon-list { list-style: none; margin: 36px 0 0; max-width: 480px; }
+    .avalon-list li {
+      font-size: clamp(22px, 2.3vw, 29px);
+      font-weight: 600;
+      letter-spacing: -0.015em;
+      line-height: 1.22;
+      color: var(--red-air);
+      opacity: 0; transform: translateY(14px);
+      transition: opacity 0.7s var(--ease-smooth), transform 0.7s var(--ease-smooth);
+    }
+    .avalon-list li + li { margin-top: 4px; }
+    .avalon-list li.visible { opacity: 1; transform: none; }
+    /* "with these fades" — the list itself fades down the stack, light at the
+       top to the brand-adjacent value at the bottom. Painted on the <ul> and
+       clipped to the glyphs, so it is one gradient across the whole list rather
+       than five gradients that each restart, which is the difference between a
+       list that fades and five words that each do.
 
-    .step-num {
-      font-size: clamp(56px, 6vw, 80px);
-      font-weight: 900; letter-spacing: -0.05em;
-      color: var(--red); line-height: 1;
-      margin-bottom: 28px;
+       The per-item colour above is the fallback and stays: background-clip on
+       text needs the fill transparent, and a transparent fill with no painted
+       background is invisible type. Gated so the two can never both apply.
+       Contrast holds at both ends — #FFD9DE is 9.4:1 on Carbon and #F04863 is
+       4.3:1, so even the darkest glyph clears the large-text floor twice
+       over. */
+    @supports ((background-clip: text) or (-webkit-background-clip: text)) {
+      .avalon-list {
+        background: linear-gradient(to bottom, #FFD9DE 0%, #FF7A8C 55%, #F04863 100%);
+        -webkit-background-clip: text; background-clip: text;
+      }
+      .avalon-list li { color: transparent; }
+    }
+    /* A gradient clipped to text is a hairline away from unreadable if the user
+       has asked for more contrast, because the light end of it is doing the
+       opposite of what was asked. */
+    @media (prefers-contrast: more) {
+      .avalon-list { background: none; }
+      .avalon-list li { color: var(--red-air); }
     }
 
-    .step-title {
-      font-size: clamp(24px, 2.5vw, 34px);
-      font-weight: 800; letter-spacing: -0.03em;
-      line-height: 1.05; margin-bottom: 18px;
-    }
-
-    .step-desc {
-      font-size: 14px; font-weight: 400;
-      color: var(--grey); line-height: 1.72;
-    }
-
-    /* ── PUNCH DEMO ──────────────────────────────────────────── */
+    /* ── DASHBOARD DEMO ─────────────────────────────────────── */
+    /* The only card on the site: 8px radius, one hairline, white on
+       Frost, no shadow. It earns the container because its contents are
+       interactive and need to read as one instrument. */
     .demo-card {
       margin-top: 64px;
-      padding: 48px;
+      padding: 40px;
       background: var(--white);
-      border: 1px solid var(--rule);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-card);
     }
     .demo-head {
-      display: flex; align-items: center; justify-content: space-between;
-      flex-wrap: wrap; gap: 12px; margin-bottom: 36px;
+      display: flex; align-items: baseline; justify-content: space-between;
+      flex-wrap: wrap; gap: 12px;
+      padding-bottom: 24px; margin-bottom: 32px;
+      border-bottom: 1px solid var(--hairline);
     }
     .demo-title {
-      font-size: 15px; font-weight: 800; letter-spacing: -0.01em;
+      font-size: var(--text-body); font-weight: 600;
+      letter-spacing: var(--tracking-body);
     }
     .demo-badge {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.14em; text-transform: uppercase;
-      color: var(--grey-light);
+      font-size: var(--text-caption); font-weight: 400;
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
     }
-    .demo-grid {
-      display: grid; grid-template-columns: 1fr 1fr; gap: 48px;
-    }
+    .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
+
+    /* Segmented control. Apple's own is a neutral track with a white
+       selected pill and no accent at all, which is why the active punch
+       type isn't red: red marks the action you take, and this only
+       changes what you are looking at. */
+    /* Rev 13: the track is glass and the selected pill floats on it. A
+       segmented control is the clearest case in Apple's own material for why
+       glass belongs on controls — the track is a recess and the selection is a
+       thing sitting in it, and that reading needs the two surfaces to differ in
+       material rather than only in lightness. */
     .punch-types {
-      display: flex; flex-wrap: wrap; gap: 8px;
+      display: inline-flex; gap: 4px;
+      padding: 4px;
+      background: var(--glass-tint);
+      backdrop-filter: var(--glass-blur);
+      -webkit-backdrop-filter: var(--glass-blur);
+      border-radius: var(--radius-pill);
+      box-shadow: inset 0 1px 2px var(--glass-shade),
+                  inset 0 0   0 1px var(--glass-rim);
     }
     .punch-btn {
-      padding: 10px 18px;
-      background: transparent;
-      border: 1px solid var(--rule);
-      font-family: var(--font); font-size: 12px; font-weight: 600;
-      letter-spacing: 0.04em; color: var(--grey);
-      cursor: pointer; transition: background 0.2s, border-color 0.2s, color 0.2s;
+      padding: 8px 18px;
+      background: transparent; border: none;
+      border-radius: var(--radius-pill);
+      font-family: var(--font);
+      font-size: var(--text-body-sm); font-weight: 400;
+      letter-spacing: var(--tracking-body-sm);
+      color: var(--ash);
+      cursor: pointer;
+      transition: background 0.2s, color 0.2s;
     }
+    .punch-btn:hover { color: var(--carbon); }
+    /* Opaque white, not glass. The selected pill is what the track is holding,
+       so it is the one element here that should not let anything through — and
+       a specular top edge plus the shadow it casts on the track is what makes it
+       read as lifted. Apple's own selected segment does exactly this. */
     .punch-btn.active {
-      background: var(--black); border-color: var(--black); color: var(--white);
+      background: var(--white); color: var(--carbon); font-weight: 500;
+      box-shadow: inset 0 1px 0 var(--glass-spec),
+                  0 1px 3px rgba(0,0,0,0.10),
+                  0 0 0 0.5px rgba(0,0,0,0.04);
     }
-    .force-row { margin-top: 28px; }
+
+    .force-row { margin-top: 32px; }
     .force-label {
-      display: flex; justify-content: space-between;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--grey-light); margin-bottom: 12px;
+      display: flex; align-items: baseline; justify-content: space-between;
+      font-size: var(--text-caption); font-weight: 600;
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
+      margin-bottom: 14px;
     }
-    .force-label strong { color: var(--black); }
+    .force-label strong { color: var(--carbon); }
+
+    /* Pebble track, Carbon thumb — the accent stays off this control for
+       the same reason it stays off the segmented buttons above. */
     .force-slider {
       width: 100%; -webkit-appearance: none; appearance: none;
-      height: 2px; background: var(--rule); outline: none;
+      height: 3px; border-radius: var(--radius-pill);
+      background: var(--pebble); outline: none;
     }
     .force-slider::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
-      width: 16px; height: 16px; border-radius: 50%;
-      background: var(--red); cursor: pointer;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--carbon); cursor: pointer;
     }
     .force-slider::-moz-range-thumb {
-      width: 16px; height: 16px; border-radius: 50%;
-      background: var(--red); border: none; cursor: pointer;
+      width: 18px; height: 18px; border-radius: 50%;
+      background: var(--carbon); border: none; cursor: pointer;
     }
+
     .demo-stats {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 20px; align-content: start;
+      gap: 24px; align-content: start;
     }
     .demo-stat-val {
       display: block;
-      font-size: clamp(22px, 2.6vw, 32px);
-      font-weight: 900; letter-spacing: -0.03em;
+      font-size: clamp(28px, 3vw, 40px);
+      font-weight: 600; letter-spacing: var(--tracking-heading);
+      line-height: 1.14;
+      font-variant-numeric: tabular-nums;
     }
     .demo-stat-lbl {
-      display: block; margin-top: 8px;
-      font-size: 10px; font-weight: 500;
-      letter-spacing: 0.06em; text-transform: uppercase;
-      color: var(--grey-light);
+      display: block; margin-top: 10px;
+      font-size: var(--text-caption); font-weight: 600;
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
     }
 
-    /* ── HARDWARE SECTION ───────────────────────────────────── */
-    .hardware-section {
-      position: relative; z-index: 1;
-      padding: 140px 0;
-      background: var(--white);
-    }
-
-    .hardware-intro {
-      padding: 0 56px; max-width: 640px;
-      margin-bottom: 56px;
-    }
-
-    .hardware-headline {
-      font-size: clamp(36px, 5vw, 64px);
-      font-weight: 900; letter-spacing: -0.04em;
-      line-height: 1.02; margin-bottom: 28px;
-    }
-
-    .hardware-body {
-      font-size: 15px; font-weight: 400;
-      color: var(--grey); line-height: 1.75;
-    }
-
+    /* ── HARDWARE TABLE ─────────────────────────────────────── */
+    .hardware-body { margin-top: 24px; max-width: 62ch; }
+    /* Capped, because space-between across the full 1200px section would put
+       "Form factor" and "Integrated wrap module" a third of a metre apart and
+       the eye stops pairing them. 780px keeps the two ends in one glance. */
     .hardware-details {
-      list-style: none;
-      border-top: 1px solid var(--rule);
-      margin: 0 56px;
+      list-style: none; margin-top: 56px; max-width: 780px;
+      border-top: 1px solid var(--hairline);
     }
     .hardware-detail-row {
-      display: flex; justify-content: space-between;
-      align-items: baseline;
-      padding: 16px 0;
-      border-bottom: 1px solid var(--rule);
-      opacity: 0; transform: translateX(-12px);
+      display: flex; align-items: baseline;
+      justify-content: space-between; gap: 24px;
+      padding: 18px 0;
+      border-bottom: 1px solid var(--hairline);
+      opacity: 0; transform: translateY(10px);
       transition: opacity 0.6s var(--ease), transform 0.6s var(--ease);
     }
-    .hardware-detail-row.visible { opacity: 1; transform: translateX(0); }
+    .hardware-detail-row.visible { opacity: 1; transform: translateY(0); }
     .hw-key {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.1em; text-transform: uppercase;
-      color: var(--grey-light);
+      font-size: var(--text-caption); font-weight: 600;
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
     }
     .hw-val {
-      font-size: 14px; font-weight: 700;
-      letter-spacing: -0.01em; color: var(--black);
+      font-size: var(--text-body); font-weight: 400;
+      letter-spacing: var(--tracking-body);
+      text-align: right;
     }
 
-    /* ── ATHLETES vs COACHES ────────────────────────────────── */
+    /* ── ATHLETES / COACHES ─────────────────────────────────── */
+    /* Two light panels with one hairline between them, plus hairlines top
+       and bottom so the block still separates from the white section
+       above it. Two surfaces on this page are dark: the teardown stage
+       above and the waitlist band below. Both earn it — a rendered object
+       needs a dark ground to read against, and the waitlist is the page's
+       one instruction. Nothing else on the page may take it. */
     .split-section {
-      position: relative; z-index: 1;
       display: grid; grid-template-columns: 1fr 1fr;
+      border-top: 1px solid var(--hairline);
+      border-bottom: 1px solid var(--hairline);
     }
-
-    .split-panel {
-      padding: 120px 64px;
-    }
-    .split-panel-athlete { background: var(--black); }
-    .split-panel-coach   { background: var(--bg-section); }
-
-    .split-label {
-      display: block; font-size: 10px; font-weight: 700;
-      letter-spacing: 0.34em; text-transform: uppercase;
-      margin-bottom: 24px;
-    }
-    .split-panel-athlete .split-label { color: var(--red); }
-    .split-panel-coach   .split-label { color: var(--red); }
-
-    .split-headline {
-      font-size: clamp(30px, 3.5vw, 48px);
-      font-weight: 900; letter-spacing: -0.035em;
-      line-height: 1.04; margin-bottom: 28px;
-    }
-    .split-panel-athlete .split-headline { color: var(--white); }
-    .split-panel-coach   .split-headline { color: var(--black); }
-
-    .split-sub {
-      font-size: 14px; font-weight: 400;
-      line-height: 1.72; margin-bottom: 40px;
-    }
-    .split-panel-athlete .split-sub { color: #888; }
-    .split-panel-coach   .split-sub { color: var(--grey); }
-
-    .split-features { list-style: none; }
-    .split-feature {
-      display: flex; align-items: flex-start;
-      gap: 14px; padding: 18px 0;
-      opacity: 0; transform: translateY(14px);
-      transition: opacity 0.65s var(--ease), transform 0.65s var(--ease);
-    }
-    .split-feature.visible { opacity: 1; transform: translateY(0); }
-    .split-feature:first-child {
-      border-top: 1px solid;
-    }
-    .split-feature {
-      border-bottom: 1px solid;
-    }
-    .split-panel-athlete .split-feature {
-      border-color: rgba(255,255,255,0.08);
-    }
-    .split-panel-coach .split-feature {
-      border-color: #DEDEDE;
-    }
-
-    .split-dot {
-      flex-shrink: 0; margin-top: 5px;
-      width: 5px; height: 5px;
-      border-radius: 50%; background: var(--red);
-    }
-    .split-feature-txt {
-      font-size: 14px; font-weight: 500;
-      letter-spacing: -0.005em; line-height: 1.5;
-    }
-    .split-panel-athlete .split-feature-txt { color: rgba(255,255,255,0.75); }
-    .split-panel-coach   .split-feature-txt { color: var(--black); }
-
-    /* ── TECH SPECS ─────────────────────────────────────────── */
-    .specs-section {
-      position: relative; z-index: 1;
-      padding: 140px 56px;
+    .split-panel { padding: 96px 40px; }
+    .split-panel-athlete { background: var(--frost); }
+    .split-panel-coach {
       background: var(--white);
+      border-left: 1px solid var(--hairline);
+    }
+    .split-sub { margin-top: 20px; max-width: 34ch; }
+    .split-features { margin-top: 40px; }
+
+    /* ── TEARDOWN ───────────────────────────────────────────── */
+    /* A scroll-driven WebGL sequence of the actual board, its cell and its
+       charge connector, living in lab/pcb.html and consumed here through an
+       iframe. It goes directly after "Engineered from scratch", because that
+       heading makes a claim and this is the evidence for it.
+
+       Why an iframe rather than inlining the module. The sequence is about
+       four thousand lines of geometry, materials and camera schedule, and it
+       is derived from a board layout whose patent disclosure is still a
+       draft — which is why lab/ is in .gitignore. Keeping it behind a frame
+       means this page holds one element and thirty lines of scroll maths, the
+       model stays in exactly one place, and there is a single obvious thing
+       to remove or repoint on the day the disclosure is filed. It also means
+       a WebGL context that fails, leaks or gets killed by the browser takes
+       nothing else on the page with it.
+
+       The tall outer section is the scroll budget and the inner element is
+       `position: sticky`, so pinning costs no JavaScript at all — the only
+       thing script does is turn scroll position into a number from 0 to 1
+       and post it across. Native scrolling is untouched; nothing here
+       intercepts a wheel or a touch. */
+    /* 460 to 550 in rev 13, for the coda — the sequence now ends at 80% of the
+       travel and hands the last fifth to a camera move back out to the whole
+       band. Progress is height minus the pin, so this is 360svh of travel
+       becoming 450: the sequence keeps every millimetre of scroll it was tuned
+       against and the coda is added on top of it. Taking the coda out of the
+       existing budget would have retimed all seven beats to pay for an eighth.
+       SEQ_END lives in lab/pcb.html and is the same 0.80 whatever this height
+       is, which is why the phone breakpoint below needs no separate thought. */
+    .teardown {
+      position: relative;
+      height: 550svh;
+      background: var(--carbon);
+    }
+    .teardown-pin {
+      position: sticky; top: 0;
+      height: 100svh;
+      overflow: hidden;
+    }
+    .teardown-frame {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      border: 0; display: block;
+      /* Faded in on the frame's own ready message, which it sends after its
+         first draw rather than on load — so what is being hidden is the
+         empty canvas, not the file transfer. */
+      opacity: 0; transition: opacity 0.6s var(--ease-smooth);
+    }
+    .teardown.is-ready .teardown-frame { opacity: 1; }
+
+    /* The still, which is doing two jobs: it is the poster under the frame
+       while the frame loads, and it is the whole treatment for anyone with
+       reduced motion set or without a working WebGL context. Same pose the
+       sequence's own reduced-motion branch picks, rendered from the same
+       file, so the two paths cannot drift apart. */
+    .teardown-still {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: contain;
+      object-position: center;
     }
 
-    .specs-headline {
-      font-size: clamp(36px, 5vw, 64px);
-      font-weight: 900; letter-spacing: -0.04em;
-      line-height: 1; margin-bottom: 72px;
+    /* The caption for the static path. The live sequence carries its own
+       beats inside the frame, so this is hidden — visually, not from
+       assistive technology, which should always get the words. */
+    .teardown-copy {
+      position: absolute; left: 40px; bottom: 48px; z-index: 2;
+      max-width: 34ch;
     }
-
-    .specs-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      border-top: 1px solid var(--rule);
+    .teardown-kicker {
+      font-size: var(--text-caption); font-weight: 600;
+      letter-spacing: var(--tracking-caption);
+      color: var(--red);
     }
-
-    .spec-cell {
-      padding: 48px 40px;
-      border-right: 1px solid var(--rule);
-      border-bottom: 1px solid var(--rule);
-      opacity: 0; transform: translateY(16px);
-      transition: opacity 0.7s var(--ease), transform 0.7s var(--ease);
+    /* Visible only on the static path, where this block stops being a
+       screen-reader description and becomes the page's actual hero. Sized
+       to match the sequence's own first beat rather than the shared
+       .h-display, so the two paths read as the same page. */
+    .teardown-h1 {
+      margin-top: 18px;
+      font-size: clamp(30px, 3.1vw, var(--text-heading));
+      font-weight: 600;
+      letter-spacing: var(--tracking-heading);
+      line-height: 1.10;
+      color: var(--white);
+      max-width: 20ch;
     }
-    .spec-cell:nth-child(3n) { border-right: none; }
-    .spec-cell.visible { opacity: 1; transform: translateY(0); }
-
-    .spec-key {
-      display: block; font-size: 10px; font-weight: 700;
-      letter-spacing: 0.28em; text-transform: uppercase;
-      color: var(--red); margin-bottom: 16px;
-    }
-    .spec-val {
-      display: block;
-      font-size: clamp(22px, 2.8vw, 36px);
-      font-weight: 900; letter-spacing: -0.035em;
-      line-height: 1.05; margin-bottom: 10px;
-    }
-    .spec-note {
-      display: block; font-size: 13px; font-weight: 400;
-      color: var(--grey); line-height: 1.55;
-    }
-
-    /* ── WAITLIST ────────────────────────────────────────────── */
-    .waitlist-section {
-      position: relative; z-index: 1;
-      padding: 160px 56px;
-      background: var(--black); text-align: center;
-    }
-    .waitlist-headline {
-      font-size: clamp(80px, 14vw, 160px);
-      font-weight: 900; letter-spacing: -0.055em;
-      line-height: 0.86; text-transform: uppercase;
+    .teardown-txt {
+      margin: 18px 0 0;
+      font-size: var(--text-subheading);
+      letter-spacing: var(--tracking-subheading);
+      line-height: 1.24;
       color: var(--white);
     }
-    .waitlist-sub {
-      margin: 32px auto 0;
-      font-size: 15px; color: #777;
-      line-height: 1.72; max-width: 400px;
+    .teardown.is-live .teardown-copy {
+      /* The .sr-only clip pattern, applied conditionally. */
+      position: absolute; width: 1px; height: 1px;
+      margin: -1px; padding: 0; overflow: hidden;
+      clip-path: inset(50%); white-space: nowrap;
     }
-    .spots-left {
-      display: flex; align-items: center; justify-content: center;
-      gap: 10px; margin: 28px auto 0;
-    }
-    .spots-left-pip {
-      display: block; width: 5px; height: 5px; flex-shrink: 0;
-      background: var(--red); border-radius: 50%;
-    }
-    .spots-left-txt {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.16em; text-transform: uppercase;
-      color: rgba(255,255,255,0.5);
-    }
-    .spots-left-txt strong { color: var(--white); font-weight: 700; }
-    .waitlist-form {
-      display: flex; max-width: 620px;
-      margin: 52px auto 0;
-    }
-    .waitlist-input {
-      flex: 1; min-width: 0;
-      background: transparent;
-      border: 1px solid rgba(255,255,255,0.18); border-right: none;
-      padding: 18px 20px;
-      font-size: 13px; font-family: var(--font);
-      color: var(--white); letter-spacing: 0.02em;
-      outline: none; transition: border-color 0.25s;
-    }
-    .waitlist-input::placeholder { color: rgba(255,255,255,0.28); }
-    .waitlist-input:focus { border-color: rgba(255,255,255,0.45); }
-    .waitlist-btn {
-      flex-shrink: 0;
-      background: var(--red); border: none;
-      padding: 18px 32px;
-      font-size: 10px; font-family: var(--font);
-      font-weight: 700; letter-spacing: 0.22em;
-      text-transform: uppercase; color: var(--white);
-      cursor: pointer;
-      transition: background 0.25s, opacity 0.25s; white-space: nowrap;
-    }
-    .waitlist-btn:hover:not(:disabled) { background: #a31430; }
-    .waitlist-btn:disabled { opacity: 0.45; }
-    .waitlist-confirm {
-      display: none; margin-top: 24px;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.2em; text-transform: uppercase;
-      color: rgba(255,255,255,0.4);
-    }
+    .teardown.is-live .teardown-still { display: none; }
 
-    /* ── CONTACT SECTION ────────────────────────────────────── */
-    .contact-section {
-      position: relative; z-index: 1;
-      padding: 100px 56px;
-      background: var(--bg-section);
-      border-top: 1px solid var(--rule);
-      text-align: center;
-    }
-    .contact-headline {
-      font-size: clamp(28px, 3.4vw, 40px);
-      font-weight: 800; letter-spacing: -0.03em;
-    }
-    .contact-sub {
-      margin-top: 16px;
-      font-size: 14px; color: var(--grey);
-    }
-    .contact-link {
-      display: inline-block; margin-top: 28px;
-      font-size: 13px; font-weight: 700;
-      letter-spacing: 0.06em; color: var(--red);
-      text-decoration: none;
-      border-bottom: 1px solid rgba(196,30,58,0.3);
-      padding-bottom: 3px;
-      transition: border-color 0.2s;
-    }
-    .contact-link:hover { border-color: var(--red); }
-
-    /* ── FOOTER ─────────────────────────────────────────────── */
-    footer {
-      position: relative; z-index: 1;
-      background: var(--white);
-      border-top: 2px solid var(--red);
-    }
-    .footer-inner {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 24px 56px;
-    }
-    .footer-logo {
-      font-size: 12px; font-weight: 800;
-      letter-spacing: 0.26em; text-transform: uppercase;
-      color: var(--black); text-decoration: none;
-      display: inline-flex; align-items: center; gap: 9px;
-    }
-    .footer-links { display: flex; gap: 32px; list-style: none; }
-    .footer-links a {
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 0.05em; color: #999;
-      text-decoration: none; transition: color 0.2s;
-    }
-    .footer-links a:hover { color: var(--black); }
-    .footer-copy { font-size: 11px; color: #999; letter-spacing: 0.06em; }
+    /* No sequence, no scroll budget. Left at 550svh the static path would be
+       five and a half screens of thumb against one unchanging image, which
+       is worse than not having the section. */
+    .teardown.is-static { height: auto; }
+    .teardown.is-static .teardown-pin { position: relative; height: 72svh; }
 
     /* ── RESPONSIVE ─────────────────────────────────────────── */
     @media (max-width: 960px) {
-      nav { padding: 0 28px; }
-      .nav-links, .nav-cta { display: none; }
-      .hamburger { display: flex; }
-
-      .hero               { padding: 0 28px 64px; padding-top: 110px; }
-      .hiw-section        { padding: 96px 28px; }
-      .steps-grid         { grid-template-columns: 1fr; }
-      .demo-card          { padding: 32px; }
-      .demo-grid          { grid-template-columns: 1fr; gap: 36px; }
-      .step               { border-left: none; border-top: 1px solid #DEDEDE; padding-left: 0; padding-top: 48px; }
-      .step:first-child   { border-top: none; padding-top: 0; }
-      .hardware-section   { padding: 96px 0; }
-      .hardware-intro     { padding: 0 28px; }
-      .hardware-details   { margin: 0 28px; }
-      .split-section      { grid-template-columns: 1fr; }
-      .split-panel        { padding: 88px 28px; }
-      .specs-section      { padding: 96px 28px; }
-      .specs-grid         { grid-template-columns: repeat(2, 1fr); }
-      .spec-cell:nth-child(3n)   { border-right: 1px solid var(--rule); }
-      .spec-cell:nth-child(2n)   { border-right: none; }
-      .waitlist-section   { padding: 112px 28px; }
-      .footer-inner       { flex-direction: column; gap: 20px; padding: 24px 28px; text-align: center; }
-      .footer-links       { flex-wrap: wrap; justify-content: center; gap: 18px; }
+      /* Shorter budget on a phone, because a scroll gesture there covers
+         less of the document than a trackpad flick does and 5.5 screens
+         becomes a chore. The sequence itself is unchanged: it is a function
+         of one normalised number, so compressing the travel compresses the
+         whole thing evenly rather than dropping any part of it — the coda
+         included, since it is a fraction of the same number. 320 to 380 keeps
+         the ratio to the desktop budget it had before the coda. */
+      .teardown { height: 380svh; }
+      .teardown-copy { left: 24px; bottom: 32px; }
+      .stats { padding: 96px 24px 104px; }
+      /* One column, and the tile capped rather than left to fill the width: a
+         360px die is a graphic and a 700px one is a wall. */
+      .avalon {
+        grid-template-columns: 1fr; gap: 56px;
+        padding: 96px 24px 104px;
+      }
+      .avalon-chip-wrap { width: 100%; max-width: 300px; margin: 0 auto; }
+      .avalon-copy { text-align: center; }
+      .avalon-sub, .avalon-list { margin-left: auto; margin-right: auto; }
+      .demo-card  { padding: 28px; }
+      .demo-grid  { grid-template-columns: 1fr; gap: 36px; }
+      .split-section { grid-template-columns: 1fr; }
+      .split-panel   { padding: 72px 24px; }
+      .split-panel-coach { border-left: none; border-top: 1px solid var(--hairline); }
     }
 
     @media (max-width: 560px) {
-      .waitlist-form  { flex-direction: column; }
-      .waitlist-input { border-right: 1px solid rgba(255,255,255,0.18); border-bottom: none; }
-      .specs-grid     { grid-template-columns: 1fr; }
-      .spec-cell:nth-child(2n) { border-right: 1px solid var(--rule); }
-      .spec-cell      { border-right: none !important; }
+      .demo-stats { grid-template-columns: 1fr; }
+      /* A wrapped 980px track reads as a blob, so the segmented control
+         falls back to the system's other radius. */
+      .punch-types { display: flex; flex-wrap: wrap; border-radius: var(--radius-card); }
+      .hardware-detail-row { flex-direction: column; align-items: flex-start; gap: 6px; }
+      .hw-val { text-align: left; }
     }
-
-    .sr-only {
-      position: absolute; width: 1px; height: 1px;
-      padding: 0; margin: -1px; overflow: hidden;
-      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-    }
-
   </style>
 </head>
 <body>
 
-  <div class="bg-glow" id="bg-glow" aria-hidden="true"></div>
+  <a class="skip-link" href="#main">Skip to content</a>
 
   <!-- Mobile nav overlay -->
   <div class="mobile-nav" id="mobile-nav" aria-hidden="true" role="dialog" aria-label="Navigation">
     <ul class="mobile-nav-links">
       <li><a href="index.html"          class="mnl">Home</a></li>
       <li><a href="product.html"        class="mnl">Product</a></li>
+      <li><a href="ambassadors.html"    class="mnl">Advisors</a></li>
       <li><a href="index.html#gyms"     class="mnl">Gyms</a></li>
       <li><a href="index.html#founders" class="mnl">Team</a></li>
       <li><a href="#waitlist"           class="mnl">Waitlist</a></li>
@@ -739,79 +648,163 @@
     <a href="index.html" class="nav-logo"><svg class="bolt-mark" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>IMPKT</a>
     <ul class="nav-links" aria-label="Primary navigation">
       <li><a href="index.html">Home</a></li>
-      <li><a href="product.html" class="active">Product</a></li>
+      <li><a href="product.html" class="active" aria-current="page">Product</a></li>
       <li><a href="index.html#gyms">Gyms</a></li>
       <li><a href="index.html#founders">Team</a></li>
     </ul>
-    <a href="#waitlist" class="nav-cta">Request Access</a>
+    <a href="#waitlist" class="nav-cta">Request access</a>
     <button class="hamburger" id="hamburger"
       aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav">
       <span></span><span></span><span></span>
     </button>
   </nav>
 
-  <!-- ── HERO ──────────────────────────────────────────────── -->
-  <section class="hero">
+  <main id="main">
 
-    <div class="hero-inner">
+  <!-- ── TEARDOWN — and it is the hero ─────────────────────────
+       The first thing on the page. There is no photo hero above it any
+       more: the sequence opens with the band drawn as an outline and the
+       page's headline beside it, which is the same job the photograph and
+       the <h1> were doing between them, done by the thing itself.
 
-    <div class="hero-eyebrow" id="hero-eyebrow">
-      <span class="hero-eyebrow-i">The Hardware</span>
+       The frame is not written here — script creates it when the section
+       comes within range and only if the browser can actually run it. What
+       is in the markup is the fallback, which means the fallback is what a
+       reader gets if script never runs at all. That is the right way round,
+       and it matters more now that this is the first screen.
+
+       The <h1> lives in .teardown-copy, which is clipped to
+       screen-reader-only on the live path. The headline is also the
+       sequence's first beat, but that beat is inside an iframe and a heading
+       in a child document is not in this document's outline — so the words
+       exist twice on purpose, once for the eye and once for the outline,
+       and never both visibly at the same time. -->
+  <section class="teardown" id="teardown" aria-label="Inside the band">
+    <div class="teardown-pin">
+      <img class="teardown-still" id="teardown-still"
+           src="lab/poster-board.jpg" width="1600" height="1000"
+           alt="The Impkt Band circuit board, 17 by 15 millimetres, shown from
+                above at a slight angle with its wireless processor, antenna,
+                reference oscillator, battery pads and charge pads labelled.
+                The battery cell sits above it and the magnetic charge
+                connector below, both wired to the board.">
+      <div class="teardown-copy">
+        <div class="teardown-kicker">The hardware</div>
+        <h1 class="teardown-h1">Built to disappear. Impossible to ignore.</h1>
+        <p class="teardown-txt">
+          A 17 × 15 mm board, a millimetre-thick cell and a magnetic charge
+          connector — the whole system, curved into the wall of the strap.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ── THE NUMBERS, LARGE ────────────────────────────────────
+       Straight after the sequence, because the sequence has just shown the
+       hardware and this is what it comes to. Every line also appears in the
+       specs table near the foot of the page; that is deliberate, not a
+       duplication to clean up — this is the headline and that is the
+       detail. -->
+  <!-- ── AVALON ─────────────────────────────────────────────
+       The firmware, given the treatment Apple gives silicon. Every line in the
+       list already appears elsewhere on this page — 1,000 Hz and nine axes in
+       the numbers block above, the millisecond in the specs table, the eight
+       hours in both, "no app required during training" in the athlete column.
+       That is deliberate: the only new sentence on the page is the paragraph,
+       and it is a positioning claim rather than a measurement. There is no
+       benchmark behind "most advanced" or "per milliwatt" and none is quoted,
+       which is the difference between a claim and a number. -->
+  <div class="avalon-band">
+  <section class="avalon" id="avalon" aria-label="Avalon firmware">
+
+    <div class="avalon-chip-wrap rf">
+      <div class="avalon-bloom" aria-hidden="true"></div>
+      <div class="avalon-chip">
+        <div class="avalon-chip-face">
+          <svg class="bolt-mark avalon-bolt" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>
+          <span class="avalon-chip-name">Avalon</span>
+          <span class="avalon-chip-sub">Firmware</span>
+        </div>
+      </div>
     </div>
 
-      <h1 class="hero-headline">
-        <span class="ru" id="hl1"><span class="ru-i">Built to</span></span>
-        <span class="ru" id="hl2"><span class="ru-i" style="transition-delay:0.14s">disappear.</span></span>
-        <span class="ru" id="hl3"><span class="ru-i" style="transition-delay:0.28s; color:var(--red)">Impossible</span></span>
-        <span class="ru" id="hl4"><span class="ru-i" style="transition-delay:0.42s; color:var(--red)">to ignore.</span></span>
-      </h1>
+    <div class="avalon-copy">
+      <span class="section-label rf">On the band</span>
 
-      <p class="hero-sub rf" style="transition-delay:0.55s">
-        The Impkt Band is a precision wearable built into standard boxing wraps. It disappears into training — and sends back data that changes everything.
+      <h2 class="h-heading">
+        <span class="ru" style="display:block">
+          <span class="ru-i">It thinks</span>
+        </span>
+        <span class="ru" style="display:block">
+          <span class="ru-i" style="transition-delay:0.14s">before it speaks.</span>
+        </span>
+      </h2>
+
+      <p class="avalon-sub rf" style="transition-delay:0.24s">
+        Avalon is our combat sports motion classifier, and it runs entirely on
+        the band. Every strike is identified where it happens, at the lowest
+        power draw we have been able to build — which is the reason a 100 mAh
+        cell lasts a full session and the reason there is no phone in the loop.
       </p>
 
-      <div class="hero-badges rf" style="transition-delay:0.68s">
-        <span class="badge">9-Axis IMU</span>
-        <span class="badge">1,000 Hz</span>
-        <span class="badge">IPX5</span>
-        <span class="badge">BLE 5.2</span>
-      </div>
-
-    <div class="hero-actions rf" style="transition-delay:0.8s">
-      <a href="#waitlist" class="btn btn-black magnetic">Request Access</a>
-    </div>
-
-    </div>
-
-    <div class="hero-photo">
-      <img src="images/product-hero.png" alt="Impkt Band hardware render">
+      <ul class="avalon-list" aria-label="Avalon capabilities">
+        <li>On-device classification</li>
+        <li>Nine axes at 1,000 Hz</li>
+        <li>Millisecond timestamps</li>
+        <li>A full session on 100 mAh</li>
+        <li>No phone in the loop</li>
+      </ul>
     </div>
 
   </section>
+  </div>
+
+  <section class="stats" id="numbers" aria-label="The hardware in numbers">
+    <span class="section-label rf">In numbers</span>
+    <ul class="stats-list">
+      <li>17 × 15 mm mainboard</li>
+      <li>0.4 mm flexible substrate</li>
+      <li>9-axis inertial sensing</li>
+      <li>1,000 Hz sampling</li>
+      <li>Up to 8 hours per charge</li>
+    </ul>
+    <p class="stats-note rf">
+      No port, no buttons, no screen. It charges by magnetic contact and
+      otherwise there is nothing to operate.
+    </p>
+    <div class="stats-actions rf">
+      <a href="#waitlist" class="btn btn-red">Request access</a>
+    </div>
+  </section>
 
   <!-- ── HOW IT WORKS ───────────────────────────────────────── -->
-  <section class="hiw-section" id="how-it-works">
-    <span class="section-label rf">The Process</span>
-    <h2 class="hiw-headline">
-      <span class="ru"><span class="ru-i">Three steps.</span></span>
-      <span class="ru"><span class="ru-i" style="transition-delay:0.13s">Zero friction.</span></span>
+  <section class="section section-frost" id="how-it-works" aria-label="How it works">
+    <span class="section-label rf">The process</span>
+
+    <h2 class="h-heading">
+      <span class="ru" style="display:block">
+        <span class="ru-i">Three steps.</span>
+      </span>
+      <span class="ru" style="display:block">
+        <span class="ru-i" style="transition-delay:0.14s">Zero friction.</span>
+      </span>
     </h2>
 
-    <div class="steps-grid">
-      <div class="step">
-        <div class="step-num">01</div>
-        <h3 class="step-title">Wrap it.</h3>
-        <p class="step-desc">Pull on the Impkt Band wraps before your session. No calibration ritual. No separate hardware to charge. Just wrap and go — the same way you always have.</p>
+    <div class="spec-row">
+      <div class="spec rf" style="transition-delay:0.1s">
+        <div class="spec-kicker">Step 01</div>
+        <div class="spec-stat">Wrap it.</div>
+        <p class="spec-desc">Pull on the Impkt Band wraps before your session. No calibration ritual. No separate hardware to charge. Just wrap and go — the same way you always have.</p>
       </div>
-      <div class="step">
-        <div class="step-num">02</div>
-        <h3 class="step-title">Train.</h3>
-        <p class="step-desc">Hit the bags, spar, drill. Impkt Band tracks every strike automatically at 1,000 samples per second. It measures what you can't — reaction time, punch velocity, output pattern.</p>
+      <div class="spec rf" style="transition-delay:0.22s">
+        <div class="spec-kicker">Step 02</div>
+        <div class="spec-stat">Train.</div>
+        <p class="spec-desc">Hit the bags, spar, drill. Impkt Band tracks every strike automatically at 1,000 samples per second. It measures what you can't — reaction time, punch velocity, output pattern.</p>
       </div>
-      <div class="step">
-        <div class="step-num">03</div>
-        <h3 class="step-title">Analyse.</h3>
-        <p class="step-desc">Open the coach dashboard mid-session or review it after. See exactly what happened, broken down per round, per fighter, per strike type. Data-driven decisions from day one.</p>
+      <div class="spec rf" style="transition-delay:0.34s">
+        <div class="spec-kicker">Step 03</div>
+        <div class="spec-stat">Analyse.</div>
+        <p class="spec-desc">Open the coach dashboard mid-session or review it after. See exactly what happened, broken down per round, per fighter, per strike type. Data-driven decisions from day one.</p>
       </div>
     </div>
 
@@ -829,14 +822,14 @@
             <button type="button" class="punch-btn" data-mult="1.5">Uppercut</button>
           </div>
           <div class="force-row">
-            <div class="force-label"><span>Force</span><strong id="force-readout">50%</strong></div>
+            <div class="force-label"><span>Force</span><strong class="num" id="force-readout">50%</strong></div>
             <input type="range" class="force-slider" id="force-slider" min="0" max="100" value="50" aria-label="Force">
           </div>
         </div>
         <div class="demo-stats">
           <div>
             <span class="demo-stat-val" id="stat-force">420</span>
-            <span class="demo-stat-lbl">Peak Force (N)</span>
+            <span class="demo-stat-lbl">Peak force (N)</span>
           </div>
           <div>
             <span class="demo-stat-val" id="stat-velocity">6.2</span>
@@ -852,136 +845,210 @@
   </section>
 
   <!-- ── HARDWARE ───────────────────────────────────────────── -->
-  <section class="hardware-section" id="hardware">
+  <section class="section section-white" id="hardware" aria-label="Hardware">
+    <span class="section-label rf">The build</span>
 
-    <div class="hardware-intro">
-      <span class="section-label rf">The Build</span>
-      <h2 class="hardware-headline">
-        <span class="ru"><span class="ru-i">Engineered</span></span>
-        <span class="ru"><span class="ru-i" style="transition-delay:0.13s">from scratch.</span></span>
-      </h2>
-      <p class="hardware-body rf" style="transition-delay:0.2s">
-        Every component of the Impkt Band sensor was designed in-house. No off-the-shelf fitness module. A custom-built 9-axis IMU fused with a proprietary signal processing stack — purpose-built for the biomechanics of combat sports, not adapted from a step counter.
-      </p>
-    </div>
+    <h2 class="h-heading">
+      <span class="ru" style="display:block">
+        <span class="ru-i">Engineered</span>
+      </span>
+      <span class="ru" style="display:block">
+        <span class="ru-i" style="transition-delay:0.14s">from scratch.</span>
+      </span>
+    </h2>
+
+    <p class="hardware-body body-muted rf" style="transition-delay:0.24s">
+      Every component of the Impkt Band sensor was designed in-house. No off-the-shelf fitness module. A custom-built 9-axis IMU fused with a proprietary signal processing stack — purpose-built for the biomechanics of combat sports, not adapted from a step counter.
+    </p>
 
     <ul class="hardware-details" aria-label="Hardware details">
-      <li class="hardware-detail-row"><span class="hw-key">Form Factor</span>   <span class="hw-val">Integrated wrap module</span></li>
-      <li class="hardware-detail-row"><span class="hw-key">Sensor</span>        <span class="hw-val">9-axis IMU (accel + gyro + mag)</span></li>
-      <li class="hardware-detail-row"><span class="hw-key">Sample Rate</span>   <span class="hw-val">1,000 Hz</span></li>
-      <li class="hardware-detail-row"><span class="hw-key">Battery</span>       <span class="hw-val">8 hours</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Form factor</span>  <span class="hw-val">Integrated wrap module</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Sensor</span>       <span class="hw-val">9-axis IMU (accel + gyro + mag)</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Sample rate</span>  <span class="hw-val">1,000 Hz</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Battery</span>      <span class="hw-val">8 hours</span></li>
       <li class="hardware-detail-row"><span class="hw-key">Connectivity</span> <span class="hw-val">Bluetooth LE 5.2</span></li>
-      <li class="hardware-detail-row"><span class="hw-key">Water Rating</span> <span class="hw-val">IPX5</span></li>
+      <li class="hardware-detail-row"><span class="hw-key">Water rating</span> <span class="hw-val">IPX5</span></li>
     </ul>
 
   </section>
 
   <!-- ── ATHLETES vs COACHES ───────────────────────────────── -->
-  <section class="split-section" id="for-you">
+  <section class="split-section" id="for-you" aria-label="For athletes and coaches">
 
     <div class="split-panel split-panel-athlete">
-      <span class="split-label rf">For Athletes</span>
-      <h2 class="split-headline">
-        <span class="ru"><span class="ru-i" style="color:var(--white)">You train.</span></span>
-        <span class="ru"><span class="ru-i" style="color:var(--white); transition-delay:0.13s">It measures.</span></span>
+      <span class="section-label rf">For athletes</span>
+      <h2 class="h-heading">
+        <span class="ru" style="display:block">
+          <span class="ru-i">You train.</span>
+        </span>
+        <span class="ru" style="display:block">
+          <span class="ru-i" style="transition-delay:0.14s">It measures.</span>
+        </span>
       </h2>
-      <p class="split-sub rf" style="transition-delay:0.2s">
+      <p class="split-sub tagline rf" style="transition-delay:0.24s">
         Impkt Band doesn't ask you to change anything. Wear it. Train the way you always have. Everything else is handled.
       </p>
-      <ul class="split-features" aria-label="Athlete features">
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">No app required during training</span></li>
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Reaction time tracked per round</span></li>
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Punch output broken down by type</span></li>
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Personal bests tracked over time</span></li>
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">See what your coach sees, post-session</span></li>
+      <ul class="features-list split-features" aria-label="Athlete features">
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">No app required during training</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Reaction time tracked per round</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Punch output broken down by type</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Personal bests tracked over time</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">See what your coach sees, post-session</span>
+        </li>
       </ul>
     </div>
 
     <div class="split-panel split-panel-coach">
-      <span class="split-label rf">For Coaches</span>
-      <h2 class="split-headline">
-        <span class="ru"><span class="ru-i">You watch.</span></span>
-        <span class="ru"><span class="ru-i" style="transition-delay:0.13s">It quantifies.</span></span>
+      <span class="section-label rf">For coaches</span>
+      <h2 class="h-heading">
+        <span class="ru" style="display:block">
+          <span class="ru-i">You watch.</span>
+        </span>
+        <span class="ru" style="display:block">
+          <span class="ru-i" style="transition-delay:0.14s">It quantifies.</span>
+        </span>
       </h2>
-      <p class="split-sub rf" style="transition-delay:0.2s">
+      <p class="split-sub tagline rf" style="transition-delay:0.24s">
         Everything you already see in the gym — now with numbers behind it. Make calls with evidence, not just instinct.
       </p>
-      <ul class="split-features" aria-label="Coach features">
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Live session dashboard, no app for athletes</span></li>
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Side-by-side fighter comparisons</span></li>
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Fatigue patterns across rounds</span></li>
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Historical session archive per fighter</span></li>
-        <li class="split-feature"><span class="split-dot"></span><span class="split-feature-txt">Export reports for athlete review</span></li>
+      <ul class="features-list split-features" aria-label="Coach features">
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Live session dashboard, no app for athletes</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Side-by-side fighter comparisons</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Fatigue patterns across rounds</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Historical session archive per fighter</span>
+        </li>
+        <li class="feature-item">
+          <svg class="chk" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <path class="chk-path" d="M4 12.5 L9 17.5 L20 7" stroke="#1D1D1F"
+              stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"/>
+          </svg>
+          <span class="feature-txt">Export reports for athlete review</span>
+        </li>
       </ul>
     </div>
 
   </section>
 
   <!-- ── TECH SPECS ─────────────────────────────────────────── -->
-  <section class="specs-section" id="specs">
-    <span class="section-label rf">Under the Hood</span>
-    <h2 class="specs-headline">
-      <span class="ru"><span class="ru-i">The numbers.</span></span>
+  <section class="section section-frost" id="specs" aria-label="Technical specifications">
+    <span class="section-label rf">Under the hood</span>
+
+    <h2 class="h-heading">
+      <span class="ru">
+        <span class="ru-i">The numbers.</span>
+      </span>
     </h2>
 
-    <div class="specs-grid">
-      <div class="spec-cell">
-        <span class="spec-key">Timing Precision</span>
-        <span class="spec-val">±0.001s</span>
-        <span class="spec-note">Millisecond-accurate strike timestamp, no averaging or smoothing applied.</span>
+    <div class="spec-row spec-row-rows">
+      <div class="spec rf" style="transition-delay:0.08s">
+        <div class="spec-kicker">Timing precision</div>
+        <div class="spec-stat">±0.001s</div>
+        <p class="spec-desc">Millisecond-accurate strike timestamp, no averaging or smoothing applied.</p>
       </div>
-      <div class="spec-cell">
-        <span class="spec-key">Sampling Rate</span>
-        <span class="spec-val">1,000 Hz</span>
-        <span class="spec-note">1,000 data points per second from a 9-axis inertial measurement unit.</span>
+      <div class="spec rf" style="transition-delay:0.16s">
+        <div class="spec-kicker">Sampling rate</div>
+        <div class="spec-stat">1,000 Hz</div>
+        <p class="spec-desc">1,000 data points per second from a 9-axis inertial measurement unit.</p>
       </div>
-      <div class="spec-cell">
-        <span class="spec-key">Battery Life</span>
-        <span class="spec-val">8 hrs</span>
-        <span class="spec-note">Continuous active use. Charges via USB-C in under 90 minutes.</span>
+      <div class="spec rf" style="transition-delay:0.24s">
+        <div class="spec-kicker">Battery life</div>
+        <div class="spec-stat">8 hrs</div>
+        <p class="spec-desc">Continuous active use. Charges by magnetic contact in under 90 minutes.</p>
       </div>
-      <div class="spec-cell">
-        <span class="spec-key">Connectivity</span>
-        <span class="spec-val">BLE 5.2</span>
-        <span class="spec-note">Bluetooth Low Energy 5.2. Real-time data to coach dashboard. No Wi-Fi required.</span>
+      <div class="spec rf" style="transition-delay:0.32s">
+        <div class="spec-kicker">Connectivity</div>
+        <div class="spec-stat">BLE 5.2</div>
+        <p class="spec-desc">Bluetooth Low Energy 5.2. Real-time data to coach dashboard. No Wi-Fi required.</p>
       </div>
-      <div class="spec-cell">
-        <span class="spec-key">Water Resistance</span>
-        <span class="spec-val">IPX5</span>
-        <span class="spec-note">Rated for sweat and water spray. Built for the realities of a training environment.</span>
+      <div class="spec rf" style="transition-delay:0.40s">
+        <div class="spec-kicker">Water resistance</div>
+        <div class="spec-stat">IPX5</div>
+        <p class="spec-desc">Rated for sweat and water spray. Built for the realities of a training environment.</p>
       </div>
-      <div class="spec-cell">
-        <span class="spec-key">Form Factor</span>
-        <span class="spec-val">28g</span>
-        <span class="spec-note">Fully integrated into the wrap. Imperceptible during training.</span>
+      <div class="spec rf" style="transition-delay:0.48s">
+        <div class="spec-kicker">Form factor</div>
+        <div class="spec-stat">28g</div>
+        <p class="spec-desc">Fully integrated into the wrap. Imperceptible during training.</p>
       </div>
     </div>
   </section>
 
   <!-- ── WAITLIST ───────────────────────────────────────────── -->
-  <section class="waitlist-section" id="waitlist">
-    <span class="section-label rf" style="color:var(--red)">Limited Access</span>
-    <h2 class="waitlist-headline">
+  <section class="waitlist-section section-dark" id="waitlist" aria-label="Join waitlist">
+    <h2 class="waitlist-headline h-display">
       <span class="ru" style="display:block">
-        <span class="ru-i" style="color:var(--white)">Be First.</span>
+        <span class="ru-i">Be first.</span>
       </span>
     </h2>
-    <p class="waitlist-sub rf" style="transition-delay:0.2s">
+    <p class="waitlist-sub tagline rf" style="transition-delay:0.2s">
       Athletes, coaches and gyms — early access is opening now.
     </p>
     <div class="spots-left rf" style="transition-delay:0.28s">
       <span class="spots-left-pip"></span>
       <span class="spots-left-txt"><strong>48 of 50</strong> founding gym spots remaining</span>
     </div>
+
     <form class="waitlist-form rf" id="wl-form" style="transition-delay:0.35s" novalidate>
       <label for="wl-name" class="sr-only">Name</label>
-      <input class="waitlist-input" id="wl-name" name="name" type="text"
+      <input class="field" id="wl-name" name="name" type="text"
         placeholder="Your name" autocomplete="name" required>
       <label for="wl-email" class="sr-only">Email address</label>
-      <input class="waitlist-input" id="wl-email" name="email" type="email"
+      <input class="field" id="wl-email" name="email" type="email"
         placeholder="your@email.com" autocomplete="email" required>
       <input type="hidden" name="_subject" value="New Impkt Band waitlist signup">
-      <button class="waitlist-btn magnetic" type="submit">Apply</button>
+      <button class="btn btn-red" type="submit">Apply</button>
     </form>
     <p class="waitlist-confirm" id="wl-confirm" role="status" aria-live="polite">
       Application received — we'll be in touch.
@@ -989,12 +1056,15 @@
   </section>
 
   <!-- ── CONTACT ────────────────────────────────────────────── -->
-  <section class="contact-section" id="contact" aria-label="Contact">
-    <span class="section-label rf">Get In Touch</span>
-    <h2 class="contact-headline rf">Questions before you apply?</h2>
-    <p class="contact-sub rf" style="transition-delay:0.12s">We reply to every message personally.</p>
+  <!-- White, not frost: the footer is frost, and two frost surfaces meeting
+       read as one grey mass with a stray line through it. -->
+  <section class="section section-white contact-section" id="contact" aria-label="Contact">
+    <h2 class="h-heading">Questions before you apply?</h2>
+    <p class="contact-sub tagline rf" style="transition-delay:0.12s">We reply to every message personally.</p>
     <a class="contact-link rf" style="transition-delay:0.2s" href="mailto:hello@impktband.com">hello@impktband.com</a>
   </section>
+
+  </main>
 
   <!-- ── FOOTER ─────────────────────────────────────────────── -->
   <footer>
@@ -1002,11 +1072,12 @@
       <a href="index.html" class="footer-logo"><svg class="bolt-mark" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>IMPKT</a>
       <ul class="footer-links" aria-label="Footer navigation">
         <li><a href="index.html">Home</a></li>
-        <li><a href="product.html">Product</a></li>
+        <li><a href="product.html" aria-current="page">Product</a></li>
+        <li><a href="ambassadors.html">Advisors</a></li>
         <li><a href="index.html#gyms">Gyms</a></li>
         <li><a href="index.html#founders">Team</a></li>
         <li><a href="#waitlist">Waitlist</a></li>
-        <li><a href="survey.html">Athlete Survey</a></li>
+        <li><a href="survey.html">Athlete survey</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
       <p class="footer-copy">Impkt Band &copy; 2026</p>
@@ -1016,38 +1087,13 @@
   <script>
   'use strict';
 
-  /* ── REACTIVE GLOW ───────────────────────────────── */
-  const bgGlow     = document.getElementById('bg-glow');
-  const hasPointer = window.matchMedia('(hover: hover)').matches;
-
-  if (hasPointer) {
-    let tx = window.innerWidth / 2, ty = window.innerHeight / 2;
-    let cx = tx, cy = ty;
-
-    document.addEventListener('mousemove', e => {
-      tx = e.clientX; ty = e.clientY;
-      bgGlow.classList.add('active');
-    }, { passive: true });
-
-    document.addEventListener('mouseleave', () => bgGlow.classList.remove('active'));
-    document.addEventListener('mouseenter', () => bgGlow.classList.add('active'));
-
-    (function raf() {
-      cx += (tx - cx) * 0.07;
-      cy += (ty - cy) * 0.07;
-      document.documentElement.style.setProperty('--gx', cx + 'px');
-      document.documentElement.style.setProperty('--gy', cy + 'px');
-      requestAnimationFrame(raf);
-    })();
-  }
-
-  /* ── NAV FROST ───────────────────────────────────── */
+  /* ── 1. NAV FROST ────────────────────────────────── */
   const nav = document.getElementById('nav');
   window.addEventListener('scroll', () => {
-    nav.classList.toggle('frosted', window.scrollY > 48);
+    nav.classList.toggle('frosted', window.scrollY > 24);
   }, { passive: true });
 
-  /* ── MOBILE NAV ──────────────────────────────────── */
+  /* ── 2. MOBILE NAV ───────────────────────────────── */
   const hamburger = document.getElementById('hamburger');
   const mobileNav = document.getElementById('mobile-nav');
   let navOpen = false;
@@ -1058,92 +1104,108 @@
     mobileNav.classList.toggle('open', navOpen);
     mobileNav.setAttribute('aria-hidden', !navOpen);
     hamburger.setAttribute('aria-expanded', navOpen);
+    /* The bar lifts above the overlay so the X stays tappable. */
+    document.body.classList.toggle('nav-open', navOpen);
     document.body.style.overflow = navOpen ? 'hidden' : '';
   }
 
   hamburger.addEventListener('click', () => toggleNav());
   document.querySelectorAll('.mnl').forEach(l => l.addEventListener('click', () => toggleNav(false)));
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && navOpen) toggleNav(false); });
 
-  /* ── MAGNETIC BUTTONS ────────────────────────────── */
-  if (hasPointer) {
-    document.querySelectorAll('.magnetic').forEach(el => {
-      el.addEventListener('mousemove', e => {
+  /* ── 3. NAV OVER A DARK SURFACE ────────────────────
+     The bar inverts for as long as a Carbon section is under it. Driven by the
+     sections' own geometry rather than by scroll thresholds, because the
+     sequence alone is 550svh on a desktop and 380svh on a phone and a
+     hard-coded number would be wrong on one of them — and would be wrong again
+     if a section were removed, whereas this reads false.
+
+     This used to watch #teardown and nothing else, which was a bug and not a
+     scope decision: the page has four Carbon surfaces and the bar went light
+     over three of them. It was survivable while the dark run was one section
+     long, because you scroll past a 550svh sequence quickly enough at the
+     boundary that the wrong bar is on screen for a moment. Avalon put a second
+     full-height dark section directly under it and made the moment several
+     seconds long.
+
+     `.bottom > 56 && .top < 56` rather than just the bottom test the old
+     version used, because with more than one candidate an unbounded test is
+     true for every section still below the fold — the waitlist would have
+     inverted the bar from the top of the page. 56 is the bar's own height. */
+  const darks = document.querySelectorAll(
+    '#teardown, .stats, .avalon-band, .waitlist-section');
+  if (darks.length) {
+    const syncNav = () => {
+      let on = false;
+      for (const el of darks) {
         const r = el.getBoundingClientRect();
-        const x = e.clientX - r.left - r.width  / 2;
-        const y = e.clientY - r.top  - r.height / 2;
-        el.style.transition = 'transform 0.15s var(--ease)';
-        el.style.transform = `translate(${x * 0.3}px, ${y * 0.3}px)`;
-      });
-      el.addEventListener('mouseleave', () => {
-        el.style.transition = 'transform 0.5s var(--ease)';
-        el.style.transform = '';
-      });
-    });
+        if (r.bottom > 56 && r.top < 56) { on = true; break; }
+      }
+      nav.classList.toggle('on-dark', on);
+    };
+    window.addEventListener('scroll', syncNav, { passive: true });
+    window.addEventListener('resize', syncNav);
+    syncNav();
   }
 
-  /* ── INTERSECTION OBSERVERS ──────────────────────── */
-  function obs(selector, opts, cb) {
-    const o = new IntersectionObserver((entries) => {
-      entries.forEach(e => { if (e.isIntersecting) { cb(e.target, o); } });
+  /* ── 4. INTERSECTION OBSERVERS ───────────────────── */
+  function makeObs(cb, opts) {
+    return new IntersectionObserver((entries) => {
+      entries.forEach(e => { if (e.isIntersecting) { cb(e.target); } });
     }, opts);
-    document.querySelectorAll(selector).forEach(el => o.observe(el));
   }
 
-  // Slide-up reveals
-  obs('.ru', { threshold: 0.05 }, (el, o) => {
-    el.classList.add('visible'); o.unobserve(el);
+  const ruObs = makeObs(el => { el.classList.add('visible'); ruObs.unobserve(el); },
+    { threshold: 0.05 });
+  const rfObs = makeObs(el => { el.classList.add('visible'); rfObs.unobserve(el); },
+    { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+
+  document.querySelectorAll('.ru').forEach(el => ruObs.observe(el));
+  document.querySelectorAll('.rf').forEach(el => rfObs.observe(el));
+
+  // The five large numbers — counted off one at a time. Observed as
+  // individual list items rather than as one block, because the point of
+  // the stack is that each line lands separately.
+  const numObs = makeObs(el => { el.classList.add('visible'); numObs.unobserve(el); },
+    { threshold: 0.6 });
+  document.querySelectorAll('.stats-list li').forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.09}s`;
+    numObs.observe(el);
   });
 
-  // Fade reveals
-  obs('.rf', { threshold: 0.08, rootMargin: '0px 0px -20px 0px' }, (el, o) => {
-    el.classList.add('visible'); o.unobserve(el);
+  // Avalon's lines, on the same observer and the same stagger as the numbers.
+  // They are the same kind of object — a set of short accent lines counted off
+  // one at a time — so they should not arrive at a different rhythm.
+  document.querySelectorAll('.avalon-list li').forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.09}s`;
+    numObs.observe(el);
   });
 
-  // How it works steps — staggered
-  obs('.step', { threshold: 0.2 }, (el, o) => {
-    const i = [...document.querySelectorAll('.step')].indexOf(el);
-    setTimeout(() => el.classList.add('visible'), i * 130);
-    o.unobserve(el);
+  // Hardware table rows — staggered per row.
+  const hwObs = makeObs(el => { el.classList.add('visible'); hwObs.unobserve(el); },
+    { threshold: 0.3 });
+  document.querySelectorAll('.hardware-detail-row').forEach((el, i) => {
+    el.style.transitionDelay = `${i * 0.08}s`;
+    hwObs.observe(el);
   });
 
-  // Hardware detail rows — staggered
-  obs('.hardware-detail-row', { threshold: 0.3 }, (el, o) => {
-    const rows = [...document.querySelectorAll('.hardware-detail-row')];
-    const i = rows.indexOf(el);
-    setTimeout(() => el.classList.add('visible'), i * 80);
-    o.unobserve(el);
-  });
-
-  // Split features — staggered per panel
-  document.querySelectorAll('.split-panel').forEach(panel => {
-    const panelObs = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.querySelectorAll('.split-feature').forEach((f, i) => {
-            setTimeout(() => f.classList.add('visible'), i * 100);
-          });
-          panelObs.unobserve(entry.target);
-        }
-      });
+  // Checklists — staggered within each panel, so the two columns animate
+  // independently as you scroll past them rather than as one long queue.
+  document.querySelectorAll('.features-list').forEach(list => {
+    const items = [...list.querySelectorAll('.feature-item')];
+    items.forEach((el, i) => { el.style.transitionDelay = `${i * 0.1}s`; });
+    const listObs = makeObs(() => {
+      items.forEach(el => el.classList.add('visible'));
+      listObs.unobserve(list);
     }, { threshold: 0.15 });
-    panelObs.observe(panel);
+    listObs.observe(list);
   });
 
-  // Spec cells — staggered
-  obs('.spec-cell', { threshold: 0.15 }, (el, o) => {
-    const i = [...document.querySelectorAll('.spec-cell')].indexOf(el);
-    setTimeout(() => el.classList.add('visible'), i * 80);
-    o.unobserve(el);
-  });
-
-  /* ── HERO FIRES ON LOAD ──────────────────────────── */
-  document.getElementById('hero-eyebrow').classList.add('visible');
-
-  /* ── PUNCH DEMO ───────────────────────────────────── */
+  /* ── 5. DASHBOARD DEMO ───────────────────────────── */
   (function() {
-    const slider   = document.getElementById('force-slider');
-    const readout  = document.getElementById('force-readout');
-    const buttons  = document.querySelectorAll('.punch-btn');
+    const slider  = document.getElementById('force-slider');
+    const readout = document.getElementById('force-readout');
+    const buttons = document.querySelectorAll('.punch-btn');
     const statForce    = document.getElementById('stat-force');
     const statVelocity = document.getElementById('stat-velocity');
     const statReaction = document.getElementById('stat-reaction');
@@ -1161,25 +1223,31 @@
 
     slider.addEventListener('input', update);
     buttons.forEach(b => b.addEventListener('click', () => {
-      buttons.forEach(x => x.classList.remove('active'));
+      buttons.forEach(x => {
+        x.classList.remove('active');
+        x.setAttribute('aria-pressed', 'false');
+      });
       b.classList.add('active');
+      b.setAttribute('aria-pressed', 'true');
       mult = +b.dataset.mult;
       update();
     }));
+    buttons.forEach(b => b.setAttribute('aria-pressed', String(b.classList.contains('active'))));
 
     update();
   })();
 
-  /* ── WAITLIST FORM ───────────────────────────────── */
+  /* ── 6. WAITLIST FORM ────────────────────────────── */
   const WAITLIST_ENDPOINT = 'https://formspree.io/f/mbdnnezy';
 
   document.getElementById('wl-form').addEventListener('submit', function(e) {
     e.preventDefault();
-    const form     = this;
-    const nameIn   = document.getElementById('wl-name');
-    const emailIn  = document.getElementById('wl-email');
-    const btn      = form.querySelector('.waitlist-btn');
-    const confirm  = document.getElementById('wl-confirm');
+    const form    = this;
+    const nameIn  = document.getElementById('wl-name');
+    const emailIn = document.getElementById('wl-email');
+    const btn     = form.querySelector('button[type="submit"]');
+    const confirm = document.getElementById('wl-confirm');
+
     if (!nameIn.validity.valid)  { nameIn.focus();  return; }
     if (!emailIn.validity.valid) { emailIn.focus(); return; }
 
@@ -1203,6 +1271,149 @@
       confirm.style.display = 'block';
     });
   });
+
+  /* ── 7. TEARDOWN ─────────────────────────────────────
+     Thirty lines, and all they do is decide whether the sequence runs and
+     turn scroll position into a number between 0 and 1. Everything about
+     what that number *means* — the four acts, the camera schedule, the
+     captions — lives in lab/pcb.html, which is the only place it should.
+
+     The frame is created here rather than written into the markup so that
+     the fallback in the markup is what a reader gets when script does not
+     run, and so that a page which is never scrolled this far never opens a
+     WebGL context at all. */
+  (function() {
+    const sec = document.getElementById('teardown');
+    if (!sec) return;
+    const pin   = sec.querySelector('.teardown-pin');
+    const still = document.getElementById('teardown-still');
+
+    /* Fail closed if the assets are not there.
+
+       Both the sequence and its poster live in lab/, which .gitignore
+       excludes, because the model is derived from a board layout whose
+       patent disclosure is still a draft. So on a deploy made before that
+       call is taken deliberately, this section's two files are simply
+       absent — and the visible result of that would be a broken-image icon
+       on four and a half screens of dark, which is a worse outcome than the
+       page not having the section at all.
+
+       The poster is the canary rather than the frame: it is one request,
+       it either 200s or it does not, and an iframe pointing at a missing
+       document reports load rather than error, so it cannot be used to
+       tell. If the poster is missing the whole section is removed from the
+       document — the page above and below it is unaffected, and the
+       omission is silent because there is nothing a reader could do about
+       it.
+
+       This is a guard, not a plan. Publishing the sequence means deciding
+       to publish the model. */
+    if (still) {
+      still.addEventListener('error', () => sec.remove());
+      if (still.complete && still.naturalWidth === 0) { sec.remove(); return; }
+    }
+
+    /* Two reasons to stay on the still, and they are different in kind.
+       Reduced motion is a stated preference and must be honoured even on a
+       machine that could run this easily. No WebGL is a capability, and it
+       has to be *tested* rather than assumed from a user agent string —
+       the context is refused for reasons that have nothing to do with the
+       browser's identity: a blocklisted driver, a headless build without a
+       software rasteriser, too many live contexts on other tabs. Creating
+       one throwaway canvas and asking is the only honest check. */
+    const reduced = matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let gl = false;
+    try {
+      const c = document.createElement('canvas');
+      gl = !!(c.getContext('webgl2') || c.getContext('webgl'));
+    } catch (e) { gl = false; }
+
+    if (reduced || !gl) { sec.classList.add('is-static'); return; }
+
+    let frame = null;
+    let ready = false;
+
+    /* p is measured against the sticky element's travel, not the section's
+       height: the pin is stuck for `height - pin` of scrolling and free
+       before and after it, so that difference is the whole of the sequence.
+       getBoundingClientRect rather than offsetTop because the section is
+       inside <main> and the number wanted is relative to the viewport
+       anyway — no parent-offset walking, and it stays right if anything
+       above it changes height. */
+    function post() {
+      if (!frame || !ready) return;
+      const r = sec.getBoundingClientRect();
+      const travel = Math.max(1, r.height - pin.clientHeight);
+      const p = Math.max(0, Math.min(1, -r.top / travel));
+      frame.contentWindow.postMessage({ type: 'pcb:p', p: p }, '*');
+    }
+
+    /* Coalesced to one post per animation frame. Without this a trackpad
+       fires scroll events faster than the frame can draw, and every extra
+       message is a structured clone across a document boundary that the
+       receiver will discard unrendered. */
+    let ticking = false;
+    function request() {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => { ticking = false; post(); });
+    }
+
+    addEventListener('message', e => {
+      if (!frame || e.source !== frame.contentWindow) return;
+      if (!e.data || e.data.type !== 'pcb:ready') return;
+      ready = true;
+      sec.classList.add('is-ready');
+      /* Immediately, not on the next scroll. The reader may already have
+         scrolled well into the section while it was loading, and fading in
+         at p = 0 would then be visibly wrong for as long as they held
+         still. */
+      post();
+    });
+
+    /* Two screens of margin. The sequence has a few megabytes of geometry
+       and textures to fetch and a first frame to draw, and starting that
+       when the section is already on screen means it arrives after it was
+       wanted. Two screens is far enough ahead to be loaded on a normal
+       scroll and near enough that a reader who stops at the hero never
+       pays for it. */
+    const io = new IntersectionObserver(entries => {
+      if (!entries.some(en => en.isIntersecting) || frame) return;
+      frame = document.createElement('iframe');
+      frame.className = 'teardown-frame';
+      frame.title = 'Inside the band — an animated cutaway of the sensor module';
+      /* aria-hidden with the caption block un-hidden beside it: the frame
+         is a canvas whose content no screen reader can describe, and the
+         .teardown-copy paragraph is the description. Exposing both would
+         announce an empty frame and then the words. */
+      frame.setAttribute('aria-hidden', 'true');
+      frame.setAttribute('tabindex', '-1');
+      frame.setAttribute('scrolling', 'no');
+      frame.src = 'lab/pcb.html?embed=1';
+      pin.appendChild(frame);
+      /* .is-live only once the frame exists, so the still and the caption
+         stay visible for anything that stops short of this point. */
+      sec.classList.add('is-live');
+      /* If the frame never draws — a context lost on creation, a fetch that
+         stalls, a module that throws — the section would otherwise sit as
+         four and a half screens of empty dark with the poster suppressed by
+         .is-live and the frame held at zero opacity. Twelve seconds is long
+         enough that a slow connection is not punished for being slow and
+         short enough that nobody scrolls the whole thing waiting. */
+      setTimeout(() => {
+        if (ready) return;
+        sec.classList.remove('is-live');
+        sec.classList.add('is-static');
+        frame.remove();
+        frame = null;
+      }, 12000);
+      io.disconnect();
+    }, { rootMargin: '200% 0px' });
+    io.observe(sec);
+
+    addEventListener('scroll', request, { passive: true });
+    addEventListener('resize', request);
+  })();
 
   </script>
 

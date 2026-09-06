@@ -1,0 +1,20 @@
+# This repo is public. Anything below either does not belong in a website
+# or must not leave this machine.
+
+# Working notes and agent config — includes the design reference this
+# redesign was built against. Not for publication.
+.claude/
+.agents/
+skills-lock.json
+
+# macOS
+.DS_Store
+**/.DS_Store
+
+# Screenshot probes written next to the pages so relative paths resolve
+.__shot.html
+
+# Prototypes. Holds the PCB model, which is derived from the board layout —
+# a patent disclosure that is still a draft. Nothing in here is publishable
+# until that call has been made deliberately.
+lab/

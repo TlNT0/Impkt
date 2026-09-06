@@ -3,48 +3,60 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Impkt Band — Athlete Survey · Loughborough Boxing</title>
+  <title>Athlete survey — Impkt Band</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <meta name="description" content="Loughborough University Boxing — tell us what a boxing wearable should measure. Eleven questions, three minutes.">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Impkt Band — Athlete Survey">
+  <meta property="og:title" content="Athlete survey — Impkt Band">
   <meta property="og:description" content="Eleven questions. Three minutes. Your answers decide what we build first.">
+  <meta property="og:image" content="images/band-impkt.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Athlete survey — Impkt Band">
+  <meta name="twitter:description" content="Eleven questions. Three minutes. Your answers decide what we build first.">
+
+  <link rel="stylesheet" href="css/impkt.css">
   <style>
-    /* ── RESET ──────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    /* ══════════════════════════════════════════════════════════
+       Athlete survey only.
+
+       Tokens, type, focus, nav, reveals, buttons, the hero stage,
+       the hairline columns, the footer and the responsive base all
+       live in css/impkt.css, linked above. Rules below are the
+       ones no other page uses — almost all of them the form.
+
+       Surfaces alternate strictly, so no two like surfaces ever
+       touch and no boundary needs a hairline of its own:
+       white hero | frost 01 | white 02 | frost 03 | white 04 |
+       frost 05 | white submit | frost footer. The submitted state
+       is Carbon, and it is this page's only dark surface — this
+       page has no waitlist band.
+
+       One deviation from the accent rule, and it is functional
+       rather than decorative: RED MARKS AN INVALID ANSWER. Error
+       text and the border of a field that needs filling both go
+       red. Nothing else can say "you missed this" as fast, and a
+       form that fails silently fails everyone. Red is never used
+       here for emphasis, headings or decoration.
+       ══════════════════════════════════════════════════════════ */
+
     [hidden] { display: none !important; }
 
-    :root {
-      --red:         #C41E3A;
-      --black:       #000000;
-      --white:       #FFFFFF;
-      --grey:        #6B6B6B;
-      --grey-light:  #A0A0A0;
-      --rule:        #EBEBEB;
-      --rule-mid:    #DEDEDE;
-      --rule-field:  #C9C9C9;
-      --bg-section:  #F5F5F7;
-      --bg-product:  #F8F8F8;
-      --font:        "Helvetica Neue", Helvetica, Arial, sans-serif;
-      --ease:        cubic-bezier(0.16, 1, 0.3, 1);
-      --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
-    }
+    /* The shared sheet hides .rf and .ru-i and relies on an Intersection-
+       Observer to reveal them. Inside a fixed-height iframe the inner
+       viewport never scrolls, so nothing would ever intersect and the whole
+       survey would sit invisible forever. The head script below sets
+       html.anim only when this page owns the viewport; without it every
+       reveal starts in its finished state and the page renders static. */
+    html:not(.anim) .ru-i,
+    html:not(.anim) .hero-eyebrow-inner { transform: none; transition: none; }
+    html:not(.anim) .rf { opacity: 1; transform: none; transition: none; }
 
-    html { scroll-behavior: smooth; }
-
-    body {
-      background: var(--white);
-      color: var(--black);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
-    }
-
-    /* ── PROGRESS RAIL ──────────────────────────────────────── */
+    /* ── PROGRESS RAIL ────────────────────────────────────────
+       Above the nav, and the one place a bar of the accent is a
+       fill rather than a border. It grows as required answers land. */
     .progress {
       position: fixed; top: 0; left: 0; right: 0;
       z-index: 150; height: 2px;
@@ -57,283 +69,46 @@
       transition: transform 0.5s var(--ease);
     }
 
-    /* ── MOBILE NAV OVERLAY ─────────────────────────────────── */
-    .mobile-nav {
-      position: fixed; inset: 0; z-index: 200;
-      background: var(--black);
-      display: flex; flex-direction: column;
-      justify-content: center; padding: 0 40px;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.4s var(--ease);
-    }
-    .mobile-nav.open { opacity: 1; pointer-events: all; }
+    /* ── HERO ─────────────────────────────────────────────────
+       No photograph. The three hairline columns are the hero's
+       image, which is also what stops the page opening with the
+       same band shot as the two pages before it. */
+    .hero-headline { max-width: 14ch; }
+    .hero-sub { max-width: 42ch; }
 
-    .mobile-nav-links { list-style: none; }
-    .mobile-nav-links li { overflow: hidden; }
-    .mobile-nav-links a {
-      display: block;
-      font-size: clamp(40px, 10vw, 64px);
-      font-weight: 900; letter-spacing: -0.035em;
-      text-transform: uppercase; line-height: 1.08;
-      color: var(--white); text-decoration: none;
-      padding: 10px 0;
-      opacity: 0; transform: translateY(28px);
-      transition: color 0.2s, opacity 0.5s var(--ease), transform 0.5s var(--ease);
-    }
-    .mobile-nav-links a:hover { color: var(--red); }
-    .mobile-nav-links a.active { color: var(--red); }
-    .mobile-nav.open .mobile-nav-links li:nth-child(1) a { opacity: 1; transform: translateY(0); transition-delay: 0.06s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(2) a { opacity: 1; transform: translateY(0); transition-delay: 0.12s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(3) a { opacity: 1; transform: translateY(0); transition-delay: 0.18s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(4) a { opacity: 1; transform: translateY(0); transition-delay: 0.24s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(5) a { opacity: 1; transform: translateY(0); transition-delay: 0.30s; }
-    .mobile-nav-foot {
-      margin-top: 52px;
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 0.2em; text-transform: uppercase;
-      color: #444;
-    }
-
-    /* ── NAV ────────────────────────────────────────────────── */
-    @keyframes nav-in {
-      from { opacity: 0; transform: translateY(-10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    nav {
-      position: fixed; top: 0; left: 0; right: 0;
-      z-index: 100; height: 72px;
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 0 56px;
-      border-bottom: 1px solid transparent;
-      transition: background 0.5s var(--ease), backdrop-filter 0.5s, border-color 0.4s var(--ease);
-      opacity: 0;
-      animation: nav-in 0.7s var(--ease) 0.15s forwards;
-    }
-    nav.frosted {
-      background: rgba(255,255,255,0.86);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-color: var(--rule);
-    }
-    .nav-logo {
-      font-size: 13px; font-weight: 800;
-      letter-spacing: 0.26em; text-transform: uppercase;
-      color: var(--black); text-decoration: none;
-      display: inline-flex; align-items: center; gap: 9px;
-    }
-    /* Bolt mark — same geometry as the favicon */
-    .bolt-mark { width: auto; flex-shrink: 0; fill: var(--red); }
-    .nav-logo .bolt-mark { height: 15px; }
-    .footer-logo .bolt-mark { height: 14px; }
-
-    .nav-links { display: flex; gap: 40px; list-style: none; }
-    .nav-links a {
-      font-size: 12px; font-weight: 500;
-      letter-spacing: 0.06em; color: var(--black);
-      text-decoration: none;
-      padding-bottom: 2px;
-      border-bottom: 1.5px solid transparent;
-      transition: border-color 0.2s;
-    }
-    .nav-links a:hover { border-color: rgba(0,0,0,0.3); }
-    .nav-links a.active { border-color: var(--black); }
-    .nav-cta {
-      font-size: 12px; font-weight: 600;
-      letter-spacing: 0.1em; color: var(--red);
-      text-decoration: none;
-    }
-    .hamburger {
-      display: none; flex-direction: column;
-      gap: 5px; padding: 8px; background: none; border: none;
-    }
-    .hamburger span {
-      display: block; width: 22px; height: 1.5px;
-      background: var(--black);
-      transition: all 0.35s var(--ease);
-      transform-origin: center;
-    }
-    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
-    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
-
-    /* ── REVEALS ────────────────────────────────────────────────
-       Gated behind html.anim, which the head script sets only when
-       this page is the top-level document. Inside a fixed-height
-       iframe the inner viewport never scrolls, so an Intersection-
-       Observer would never fire and everything below the fold would
-       stay invisible forever. Embeds render fully static instead.
-       ──────────────────────────────────────────────────────────── */
-    .ru { display: block; overflow: hidden; }
-    .ru-i { display: block; }
-    .anim .ru-i {
-      transform: translateY(110%);
-      transition: transform 1s var(--ease);
-    }
-    .anim .ru.visible .ru-i { transform: translateY(0); }
-
-    .anim .rf {
-      opacity: 0; transform: translateY(22px);
-      transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-    }
-    .anim .rf.visible { opacity: 1; transform: translateY(0); }
-
-    @media (prefers-reduced-motion: reduce) {
-      .anim .ru-i { transform: none; transition: none; }
-      .anim .rf   { opacity: 1; transform: none; transition: none; }
-      * { animation-duration: 0.01ms !important; }
-    }
-
-    /* ── BUTTONS ────────────────────────────────────────────── */
-    .btn {
-      display: inline-flex; align-items: center; justify-content: center;
-      padding: 15px 38px;
-      font-size: 11px; font-family: var(--font);
-      font-weight: 700; letter-spacing: 0.18em;
-      text-transform: uppercase; text-decoration: none;
-      border: none; cursor: pointer;
-      transition: background 0.3s, color 0.3s, border-color 0.3s, opacity 0.3s;
-    }
-    .btn-black { background: var(--black); color: var(--white); }
-    .btn-black:hover { background: var(--red); }
-    .btn-ghost-light {
-      background: transparent; color: var(--white);
-      border: 1.5px solid rgba(255,255,255,0.3);
-    }
-    .btn-ghost-light:hover { border-color: var(--white); background: var(--white); color: var(--black); }
-
-    .section-label {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.34em; text-transform: uppercase;
-      color: var(--red); margin-bottom: 24px;
-      display: block;
-    }
-
-    /* ── HERO ───────────────────────────────────────────────── */
-    .hero {
-      background: var(--white);
-      padding: 150px 56px 104px;
-      position: relative; overflow: hidden;
-    }
-    /* Grid rather than the home page's absolute positioning — the survey
-       column is text-heavy, and a grid track can't be overlapped by a
-       long headline at an awkward viewport width. */
-    .hero-grid {
-      display: grid; grid-template-columns: 1fr;
-      gap: 56px; align-items: center;
-    }
-    .hero-inner { min-width: 0; }
-    .hero-photo { max-width: 400px; }
-    .hero-photo img {
-      display: block; width: 100%; height: auto;
-      border: none; box-shadow: none;
-      opacity: 0;
-      animation: band-in 1.2s var(--ease) 0.6s forwards;
-    }
-    @keyframes band-in { to { opacity: 1; } }
-
-    @media (min-width: 1161px) {
-      .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 470px); gap: 64px; }
-      .hero-photo { max-width: none; }
-    }
-
-    .hero-eyebrow { display: block; overflow: hidden; margin-bottom: 40px; }
-    .hero-eyebrow-inner {
-      display: block;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.32em; text-transform: uppercase;
-      color: var(--grey-light);
-    }
-    .anim .hero-eyebrow-inner {
-      transform: translateY(110%);
-      transition: transform 0.9s var(--ease);
-    }
-    .anim .hero-eyebrow.visible .hero-eyebrow-inner { transform: translateY(0); }
-
-    .hero-headline {
-      font-size: clamp(44px, 5.6vw, 78px);
-      font-weight: 900; letter-spacing: -0.045em;
-      line-height: 0.94; text-transform: uppercase;
-    }
-    .anim .hero-line-1 .ru-i { transition-delay: 0.08s; }
-    .anim .hero-line-2 .ru-i { transition-delay: 0.22s; }
-    .hero-line-2 .ru-i { color: var(--red); }
-
-    /* Self-drawing rule — same device as the home hero. The dash offset is
-       scoped to .anim so that static (embedded / reduced-motion) renders
-       show a plain solid rule instead of an invisible one. */
-    .hero-rule-wrap { height: 4px; margin-top: 12px; max-width: 560px; overflow: hidden; }
-    .hero-rule { display: block; width: 100%; height: 4px; }
-    .anim #rule-path { stroke-dasharray: 1000; stroke-dashoffset: 1000; }
-    .anim #rule-path.drawn { animation: draw-rule 1.5s var(--ease-smooth) 0.7s forwards; }
-    @keyframes draw-rule { to { stroke-dashoffset: 0; } }
-
-    .hero-sub {
-      margin-top: 40px;
-      font-size: 16px; font-weight: 400;
-      color: var(--grey); line-height: 1.72;
-      max-width: 470px; letter-spacing: 0.005em;
-    }
-    .hero-sub strong { color: var(--black); font-weight: 600; }
-
-    .cred { display: flex; align-items: flex-start; gap: 10px; margin-top: 30px; }
+    .cred { display: flex; align-items: flex-start; gap: 9px; margin-top: 22px; }
     .cred-pip {
       display: block; width: 5px; height: 5px; flex-shrink: 0;
-      margin-top: 5px;
+      margin-top: 7px;
       background: var(--red); border-radius: 50%;
     }
     .cred-txt {
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.16em; text-transform: uppercase;
-      color: var(--grey-light);
+      font-size: var(--text-caption);
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
     }
-    .cred-txt strong { color: var(--black); font-weight: 700; }
+    .cred-txt strong { color: var(--carbon); font-weight: 600; }
 
-    .hero-meta {
-      display: flex; flex-wrap: wrap;
-      margin-top: 52px; max-width: 720px;
-      border-top: 1px solid var(--rule-mid);
-      border-bottom: 1px solid var(--rule-mid);
-    }
-    .hero-meta-cell { flex: 1; min-width: 124px; padding: 26px 28px 26px 0; }
-    .hero-meta-cell + .hero-meta-cell { padding-left: 28px; border-left: 1px solid var(--rule); }
-    .hero-meta-n {
-      display: block;
-      font-size: 26px; font-weight: 900;
-      letter-spacing: -0.03em; line-height: 1;
-    }
-    .hero-meta-l {
-      display: block; margin-top: 9px;
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--grey-light);
-    }
-    .hero-actions { margin-top: 48px; }
+    /* Capped so three columns of two words don't stretch across a
+       1440px viewport and stop reading as one table. */
+    .hero .spec-row { max-width: 720px; }
 
-    /* ── SURVEY SECTIONS ────────────────────────────────────── */
-    .sec {
-      padding: 116px 56px;
-      border-top: 1px solid var(--rule);
-    }
-    .sec:nth-of-type(even) { background: var(--bg-product); }
+    /* ── SECTIONS ─────────────────────────────────────────────── */
     .sec-inner { max-width: 820px; }
-
-    .sec-headline {
-      font-size: clamp(32px, 4.4vw, 56px);
-      font-weight: 900; letter-spacing: -0.04em;
-      line-height: 0.95; text-transform: uppercase;
-    }
+    /* Descriptor voice at the 21px step, not the 26px tagline: these
+       sit under a 40px heading, and 26px under 40px is not a step. */
     .sec-sub {
-      margin-top: 20px;
-      font-size: 14px; color: var(--grey);
-      line-height: 1.7; max-width: 440px;
+      margin-top: 14px; max-width: 36ch;
+      font-size: var(--text-subheading); font-weight: 300;
+      letter-spacing: var(--tracking-subheading);
+      line-height: 1.24;
     }
-    .sec-body { margin-top: 62px; }
+    .sec-body { margin-top: 56px; }
 
-    /* ── QUESTION ───────────────────────────────────────────── */
+    /* ── QUESTION ─────────────────────────────────────────────── */
     .q {
       border: none; padding: 40px 0 44px;
-      border-top: 1px solid var(--rule-mid);
+      border-top: 1px solid var(--hairline);
     }
     .q:first-child { border-top: none; padding-top: 0; }
     /* Explicit :last-child on the container — a bare :last-of-type would
@@ -341,210 +116,196 @@
        so would zero out the wrong block's spacing. */
     .sec-body > .q:last-child { padding-bottom: 0; }
 
-    .q-head { display: flex; align-items: baseline; gap: 16px; }
+    /* A fixed 28px number column, so every question's text and every
+       answer below it start on the same vertical line. */
+    .q-head { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 16px; }
     .q-num {
-      flex-shrink: 0;
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.18em; color: var(--red);
+      font-size: var(--text-caption); font-weight: 600;
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
+      padding-top: 5px;
     }
-    .q-head-txt { min-width: 0; }
     .q-label {
       display: block;
-      font-size: clamp(19px, 2.1vw, 23px);
-      font-weight: 600; letter-spacing: -0.012em;
-      line-height: 1.38; color: var(--black);
+      font-size: var(--text-subheading); font-weight: 500;
+      letter-spacing: var(--tracking-subheading);
+      line-height: 1.3; color: var(--carbon);
     }
     legend.q-label { padding: 0; }
-    .q-label em { font-style: normal; color: var(--red); }
+    /* Italic, not red. The accent is a fill; emphasis inside a label is
+       a typographic job. */
+    .q-label em { font-style: italic; }
     .q-tag {
       display: inline-block; margin-left: 10px;
-      font-size: 9px; font-weight: 700;
-      letter-spacing: 0.2em; text-transform: uppercase;
-      color: var(--grey-light);
-      vertical-align: 2px; white-space: nowrap;
+      font-size: var(--text-caption); font-weight: 400;
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
+      vertical-align: 1px; white-space: nowrap;
     }
     .q-hint {
-      margin-top: 10px;
-      font-size: 13px; color: var(--grey);
-      line-height: 1.6; letter-spacing: 0.01em;
+      margin-top: 8px;
+      font-size: var(--text-body-sm);
+      letter-spacing: var(--tracking-body-sm);
+      line-height: 1.5; color: var(--ash);
     }
-    .q-body { margin-top: 26px; margin-left: 43px; }
+    .q-body { margin-top: 24px; margin-left: 44px; }
 
-    /* ── OPTIONS ────────────────────────────────────────────── */
-    .opts { display: grid; gap: 9px; }
+    /* ── OPTIONS ──────────────────────────────────────────────── */
+    .opts { display: grid; gap: 8px; }
     .opts-2col { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
+    /* White on either surface, defined by its hairline rather than by a
+       fill — the same 8px radius as every other input on the site. */
     .opt {
       display: flex; align-items: center; gap: 14px;
-      padding: 16px 20px;
+      padding: 14px 18px;
       background: var(--white);
-      border: 1px solid var(--rule-field);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-card);
       cursor: pointer;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      transition: border-color 0.2s;
     }
-    .opt:hover { border-color: rgba(0,0,0,0.45); }
-    .opt.is-checked {
-      border-color: var(--red);
-      box-shadow: inset 3px 0 0 0 var(--red);
-    }
-    .opt.is-checked .opt-txt { font-weight: 600; }
+    .opt:hover { border-color: var(--ash); }
+    /* Chosen: the row's hairline goes to full-strength ink and the label
+       steps to 500. The colour lives in the control, not in the border. */
+    .opt.is-checked { border-color: var(--carbon); }
+    .opt.is-checked .opt-txt { font-weight: 500; }
 
     .opt input {
       appearance: none; -webkit-appearance: none;
       flex-shrink: 0; margin: 0; position: relative;
-      width: 15px; height: 15px;
+      width: 17px; height: 17px;
       background: var(--white);
-      border: 1px solid var(--rule-field);
-      transition: border-color 0.2s, background 0.2s, box-shadow 0.2s;
+      border: 1px solid var(--hairline);
+      border-radius: 3px;
+      transition: border-color 0.2s, background 0.2s;
     }
     .opt input[type="radio"] { border-radius: 50%; }
+    /* The accent, as a fill. */
     .opt input:checked { border-color: var(--red); background: var(--red); }
-    .opt input[type="radio"]:checked { box-shadow: inset 0 0 0 3px var(--white); }
+    .opt input[type="radio"]:checked { box-shadow: inset 0 0 0 3.5px var(--white); }
     .opt input[type="checkbox"]:checked::after {
       content: ''; position: absolute;
-      left: 4px; top: 1px; width: 4px; height: 8px;
+      left: 5px; top: 2px; width: 4px; height: 8px;
       border: solid var(--white);
       border-width: 0 1.6px 1.6px 0;
       transform: rotate(45deg);
     }
-    /* Focus is indicated on the whole row rather than as a ring around the
-       control — at 15px a black ring reads too much like a selected state. */
-    .opt:focus-within { border-color: var(--black); box-shadow: inset 0 0 0 1px var(--black); }
-    .opt.is-checked:focus-within { border-color: var(--red); box-shadow: inset 3px 0 0 0 var(--red); }
+
+    /* Focus rings the whole row, since a ring around a 17px control is
+       hard to tell from that control being filled. It's an outline rather
+       than a border change, so it can never be read as "chosen".
+       :focus-within works everywhere; the :has() rule below suppresses it
+       for mouse clicks and is simply dropped by browsers without :has(). */
+    .opt input:focus-visible { outline: none; }
+    .opt:focus-within { outline: 2px solid var(--red); outline-offset: 2px; }
+    .opt:has(input:focus:not(:focus-visible)) { outline: none; }
 
     .opt-txt {
-      font-size: 14px; font-weight: 400;
-      letter-spacing: 0.01em; line-height: 1.4;
-      color: var(--black);
+      font-size: var(--text-body-sm);
+      letter-spacing: var(--tracking-body-sm);
+      line-height: 1.4; color: var(--carbon);
     }
 
-    /* ── FIELDS ─────────────────────────────────────────────── */
-    .field {
-      display: block; width: 100%;
-      background: var(--white);
-      border: 1px solid var(--rule-field);
-      padding: 18px 20px;
-      font-size: 14px; font-family: var(--font);
-      color: var(--black); letter-spacing: 0.02em;
-      line-height: 1.6; outline: none;
-      transition: border-color 0.25s;
-    }
-    .field::placeholder { color: var(--grey-light); }
-    .field:hover { border-color: rgba(0,0,0,0.45); }
-    .field:focus { border-color: var(--black); }
-    textarea.field { min-height: 132px; resize: vertical; }
+    /* ── FIELDS ───────────────────────────────────────────────── */
+    /* White, not the shared Frost: half these sections are Frost, and a
+       Frost field on a Frost surface has no edges at all. */
+    .q .field { display: block; width: 100%; background: var(--white); }
+    textarea.field { min-height: 128px; resize: vertical; line-height: 1.5; }
+    .field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .other-wrap { margin-top: 8px; }
 
-    .field-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-    .other-wrap { margin-top: 9px; }
-
-    /* ── INVALID STATE ──────────────────────────────────────── */
-    .q.invalid .q-tag { color: var(--red); }
+    /* ── INVALID ──────────────────────────────────────────────── */
+    .q.invalid .q-tag { color: var(--red); font-weight: 600; }
     .q-error {
-      display: none; margin: 14px 0 0 43px;
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.2em; text-transform: uppercase;
+      display: none; margin: 14px 0 0 44px;
+      font-size: var(--text-body-sm); font-weight: 500;
+      letter-spacing: var(--tracking-body-sm);
       color: var(--red);
     }
     .q.invalid .q-error { display: block; }
     .q.invalid .opt, .q.invalid .field { border-color: var(--red); }
 
-    /* ── SUBMIT ─────────────────────────────────────────────── */
-    .submit-sec {
-      padding: 100px 56px 124px;
-      border-top: 1px solid var(--rule);
-      background: var(--white);
-    }
+    /* ── SUBMIT ───────────────────────────────────────────────── */
     .submit-inner { max-width: 820px; }
     .submit-row { display: flex; align-items: center; gap: 28px; flex-wrap: wrap; }
-    .submit-btn { padding: 20px 52px; letter-spacing: 0.22em; }
-    .submit-btn:disabled { opacity: 0.45; cursor: default; }
+    .submit-btn { padding: 14px 32px; }
+    /* Disabled is the spec's Pebble surface, not a faded red pill. */
+    .submit-btn:disabled { background: var(--pebble); color: var(--ash); cursor: default; }
     .submit-note {
-      font-size: 12px; color: var(--grey);
-      letter-spacing: 0.04em; line-height: 1.6;
-      max-width: 290px;
+      font-size: var(--text-body-sm);
+      letter-spacing: var(--tracking-body-sm);
+      line-height: 1.5; color: var(--ash);
+      max-width: 26ch;
     }
+    /* Frost panel with a hairline, no pink wash and no coloured edge — the
+       red is carried by the questions themselves, which is where you have
+       to look anyway. */
     .form-error {
       display: none; margin-top: 26px;
-      padding: 16px 20px;
-      border-left: 2px solid var(--red);
-      background: #FBF2F4;
-      font-size: 12.5px; font-weight: 500;
-      letter-spacing: 0.03em; color: var(--black);
-      line-height: 1.65;
+      padding: 14px 18px;
+      background: var(--frost);
+      border: 1px solid var(--hairline);
+      border-radius: var(--radius-card);
+      font-size: var(--text-body-sm);
+      letter-spacing: var(--tracking-body-sm);
+      line-height: 1.55; color: var(--carbon);
     }
     .form-error.show { display: block; }
-    .form-error a { color: var(--red); }
+    .form-error a { color: var(--red-deep); }
 
     .gotcha {
       position: absolute; left: -9999px;
       width: 1px; height: 1px; overflow: hidden;
     }
 
-    /* ── THANK YOU ──────────────────────────────────────────── */
+    /* ── SUBMITTED ──────────────────────────────────────────────
+       A full screen, so the footer sits below the fold rather than
+       leaving a white band under a half-height dark panel. */
     .done {
-      padding: 168px 56px;
-      background: var(--black); text-align: center;
+      min-height: 100svh;
+      display: flex; flex-direction: column; justify-content: center;
+      padding: 120px 40px; text-align: center;
     }
     .done:focus { outline: none; }
-    .done-headline {
-      font-size: clamp(72px, 13vw, 150px);
-      font-weight: 900; letter-spacing: -0.055em;
-      line-height: 0.86; text-transform: uppercase;
-      color: var(--white);
-    }
+
+    /* This panel replaces the form and scrolls the page back to the top, so
+       the nav ends up over Carbon with no scroll to frost it — and Carbon
+       ink on Carbon is nothing at all. The JS adds .nav-inverted when the
+       panel appears; once the nav does frost to white glass the ink has to
+       come straight back, which is what the :not(.frosted) guard is for. */
+    .nav-inverted:not(.frosted) .nav-logo,
+    .nav-inverted:not(.frosted) .nav-links a { color: var(--white); }
+    .nav-inverted:not(.frosted) .hamburger span { background: var(--white); }
+    /* Ash on Carbon is 2.2:1. On the dark surface the label goes white
+       at 55%, which matches the waitlist band's secondary text. */
+    .done .section-label { color: rgba(255,255,255,0.55); }
+    .done-headline { color: var(--white); }
     .done-sub {
-      margin: 34px auto 0;
-      font-size: 17px; font-weight: 400;
-      color: rgba(255,255,255,0.74); line-height: 1.66;
-      max-width: 420px;
+      margin: 20px auto 0; max-width: 34ch;
+      font-size: var(--text-subheading); font-weight: 300;
+      letter-spacing: var(--tracking-subheading);
+      line-height: 1.24; color: rgba(255,255,255,0.72);
     }
     .done-meta {
-      margin: 22px auto 0;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.18em; text-transform: uppercase;
-      color: #8A8A8A; max-width: 420px; line-height: 1.9;
+      margin: 14px auto 0;
+      font-size: var(--text-caption);
+      letter-spacing: var(--tracking-caption);
+      color: rgba(255,255,255,0.45);
     }
-    .done-actions { margin-top: 48px; }
+    .done-actions { margin-top: 40px; }
+    /* The outlined pill, inverted for the dark surface. The red fill would
+       be a second call to action on a page whose action is already done. */
+    .btn-light {
+      background: transparent; color: var(--white);
+      border: 1px solid rgba(255,255,255,0.4);
+      padding: 10px 21px;
+    }
+    .btn-light:hover { background: var(--white); color: var(--carbon); border-color: var(--white); }
 
-    /* ── FOOTER ─────────────────────────────────────────────── */
-    footer {
-      background: var(--white);
-      border-top: 2px solid var(--red);
-    }
-    .footer-inner {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 24px 56px;
-    }
-    .footer-logo {
-      font-size: 12px; font-weight: 800;
-      letter-spacing: 0.26em; text-transform: uppercase;
-      color: var(--black); text-decoration: none;
-      display: inline-flex; align-items: center; gap: 9px;
-    }
-    .footer-links { display: flex; gap: 32px; list-style: none; }
-    .footer-links a {
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 0.05em; color: #999;
-      text-decoration: none;
-      transition: color 0.2s;
-    }
-    .footer-links a:hover { color: var(--black); }
-    .footer-links a.active { color: var(--black); }
-    .footer-copy { font-size: 11px; color: #999; letter-spacing: 0.06em; }
-
-    /* ── RESPONSIVE ─────────────────────────────────────────── */
+    /* ── RESPONSIVE ───────────────────────────────────────────── */
     @media (max-width: 960px) {
-      nav { padding: 0 28px; }
-      .nav-links, .nav-cta { display: none; }
-      .hamburger { display: flex; }
-
-      .hero        { padding: 118px 28px 78px; }
-      .sec         { padding: 84px 28px; }
-      .submit-sec  { padding: 76px 28px 96px; }
-      .done        { padding: 120px 28px; }
-      .footer-inner { flex-direction: column; gap: 20px; padding: 24px 28px; text-align: center; }
-      .footer-links { flex-wrap: wrap; justify-content: center; gap: 18px; }
+      .done { padding: 120px 24px; }
     }
 
     @media (max-width: 700px) {
@@ -553,30 +314,21 @@
     }
 
     @media (max-width: 560px) {
-      .q-head { gap: 12px; }
-      .q-num  { font-size: 10px; letter-spacing: 0.14em; }
-      .q-body { margin-left: 0; }
+      /* The number column collapses: at this width a 44px indent costs
+         more legibility in the answers than it buys in alignment. */
+      .q-head  { grid-template-columns: 20px 1fr; gap: 12px; }
+      .q-body  { margin-left: 0; }
       .q-error { margin-left: 0; }
       .q { padding: 32px 0 36px; }
-      .sec-body { margin-top: 44px; }
+      .sec-body { margin-top: 40px; }
       .submit-btn { width: 100%; }
       .submit-note { max-width: none; }
-      .hero-meta { flex-direction: column; }
-      .hero-meta-cell { min-width: 0; padding: 20px 0; border-top: 1px solid var(--rule); }
-      .hero-meta-cell:first-child { border-top: none; }
-      .hero-meta-cell + .hero-meta-cell { padding-left: 0; border-left: none; }
-    }
-
-    .sr-only {
-      position: absolute; width: 1px; height: 1px;
-      padding: 0; margin: -1px; overflow: hidden;
-      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
     }
   </style>
   <script>
     /* Scroll-reveal opt-in. Only when this page owns the viewport and motion
-       isn't reduced — see the REVEALS note in the stylesheet. Runs in <head>
-       so there's no flash of hidden content. */
+       isn't reduced — see the note at the top of the stylesheet. Runs in
+       <head> so there's no flash of hidden content. */
     (function () {
       try {
         if (window.self === window.top &&
@@ -590,6 +342,8 @@
 </head>
 <body>
 
+  <a class="skip-link" href="#survey">Skip to the survey</a>
+
   <!-- Required-question progress -->
   <div class="progress" aria-hidden="true"><span class="progress-fill" id="prog-fill"></span></div>
 
@@ -598,9 +352,11 @@
     <ul class="mobile-nav-links">
       <li><a class="mnl" href="index.html">Home</a></li>
       <li><a class="mnl" href="product.html">Product</a></li>
+      <li><a class="mnl" href="ambassadors.html">Advisors</a></li>
       <li><a class="mnl" href="index.html#gyms">Gyms</a></li>
       <li><a class="mnl" href="index.html#founders">Team</a></li>
-      <li><a class="mnl active" href="#survey">Survey</a></li>
+      <li><a class="mnl" href="index.html#waitlist">Waitlist</a></li>
+      <li><a class="mnl" href="#survey">Survey</a></li>
     </ul>
     <p class="mobile-nav-foot">Impkt Band · 2026</p>
   </div>
@@ -613,39 +369,33 @@
       <li><a href="product.html">Product</a></li>
       <li><a href="index.html#gyms">Gyms</a></li>
       <li><a href="index.html#founders">Team</a></li>
-      <li><a href="#survey" class="active">Survey</a></li>
+      <li><a href="#survey" class="active" aria-current="page">Survey</a></li>
     </ul>
-    <a href="index.html#waitlist" class="nav-cta">Request Access</a>
+    <a href="index.html#waitlist" class="nav-cta">Request access</a>
     <button class="hamburger" id="hamburger"
       aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav">
       <span></span><span></span><span></span>
     </button>
   </nav>
 
+  <main id="main">
+
   <!-- ── HERO ──────────────────────────────────────────────── -->
   <section class="hero" aria-label="Introduction">
-   <div class="hero-grid">
     <div class="hero-inner">
 
       <div class="hero-eyebrow" id="hero-eyebrow">
         <span class="hero-eyebrow-inner">Loughborough University Boxing</span>
       </div>
 
-      <h1 class="hero-headline">
-        <span class="ru hero-line-1"><span class="ru-i">Tell Us</span></span>
-        <span class="ru hero-line-2"><span class="ru-i">What To Build.</span></span>
+      <h1 class="hero-headline h-display">
+        <span class="ru hero-line-1"><span class="ru-i">Tell us what</span></span>
+        <span class="ru hero-line-2"><span class="ru-i">to build.</span></span>
       </h1>
 
-      <div class="hero-rule-wrap">
-        <svg class="hero-rule" viewBox="0 0 1000 4" preserveAspectRatio="none" aria-hidden="true">
-          <line id="rule-path" x1="0" y1="2" x2="1000" y2="2" stroke="#C41E3A" stroke-width="4"/>
-        </svg>
-      </div>
-
-      <p class="hero-sub rf">
-        IMPKT is a tiny wearable that tracks your boxing performance in real time.
+      <p class="hero-sub tagline rf">
         The hardware works. What goes into the app next is
-        <strong>decided by what you tell us here.</strong>
+        decided by what you tell us here.
       </p>
 
       <div class="cred rf" style="transition-delay:0.1s">
@@ -653,31 +403,26 @@
         <span class="cred-txt"><strong>2nd place</strong> — Stanford ASES startup competition</span>
       </div>
 
-      <div class="hero-meta rf" style="transition-delay:0.18s">
-        <div class="hero-meta-cell">
-          <span class="hero-meta-n">11</span>
-          <span class="hero-meta-l">Questions</span>
+      <div class="spec-row spec-row-rows rf" style="transition-delay:0.18s">
+        <div class="spec">
+          <div class="spec-stat">11</div>
+          <div class="spec-kicker">Questions</div>
         </div>
-        <div class="hero-meta-cell">
-          <span class="hero-meta-n">3 min</span>
-          <span class="hero-meta-l">To Complete</span>
+        <div class="spec">
+          <div class="spec-stat">3 min</div>
+          <div class="spec-kicker">To complete</div>
         </div>
-        <div class="hero-meta-cell">
-          <span class="hero-meta-n">Anon</span>
-          <span class="hero-meta-l">Unless You Opt In</span>
+        <div class="spec">
+          <div class="spec-stat">Anon</div>
+          <div class="spec-kicker">Unless you opt in</div>
         </div>
       </div>
 
       <div class="hero-actions rf" style="transition-delay:0.26s">
-        <a href="#survey" class="btn btn-black">Start The Survey</a>
+        <a href="#survey" class="btn btn-red">Start the survey</a>
       </div>
 
     </div>
-
-    <div class="hero-photo">
-      <img src="images/band-hero.png" alt="Technical render of the Impkt Band">
-    </div>
-   </div>
   </section>
 
   <!-- ── SURVEY ────────────────────────────────────────────── -->
@@ -691,10 +436,10 @@
     </div>
 
     <!-- 01 ─ YOUR BOXING -->
-    <section class="sec" id="survey" aria-labelledby="sec-1-h">
+    <section class="section section-frost" id="survey" aria-labelledby="sec-1-h">
       <div class="sec-inner">
-        <span class="section-label rf">01 — Your Boxing</span>
-        <h2 class="sec-headline ru" id="sec-1-h"><span class="ru-i">Where You're At</span></h2>
+        <span class="section-label rf">01 — Your boxing</span>
+        <h2 class="h-heading ru" id="sec-1-h"><span class="ru-i">Where you're at.</span></h2>
         <p class="sec-sub rf">Context first, so we can read the rest of your answers properly.</p>
 
         <div class="sec-body">
@@ -740,10 +485,10 @@
     </section>
 
     <!-- 02 ─ TECH TODAY -->
-    <section class="sec" aria-labelledby="sec-2-h">
+    <section class="section section-white" aria-labelledby="sec-2-h">
       <div class="sec-inner">
-        <span class="section-label rf">02 — Tech Today</span>
-        <h2 class="sec-headline ru" id="sec-2-h"><span class="ru-i">What You Use Now</span></h2>
+        <span class="section-label rf">02 — Tech today</span>
+        <h2 class="h-heading ru" id="sec-2-h"><span class="ru-i">What you use now.</span></h2>
         <p class="sec-sub rf">We'd rather replace something done badly than add another app you ignore.</p>
 
         <div class="sec-body">
@@ -782,10 +527,10 @@
     </section>
 
     <!-- 03 ─ THE DATA -->
-    <section class="sec" aria-labelledby="sec-3-h">
+    <section class="section section-frost" aria-labelledby="sec-3-h">
       <div class="sec-inner">
-        <span class="section-label rf">03 — The Data</span>
-        <h2 class="sec-headline ru" id="sec-3-h"><span class="ru-i">Worth Measuring</span></h2>
+        <span class="section-label rf">03 — The data</span>
+        <h2 class="h-heading ru" id="sec-3-h"><span class="ru-i">Worth measuring.</span></h2>
         <p class="sec-sub rf">The band can capture more than any app should show. You decide what earns screen space.</p>
 
         <div class="sec-body">
@@ -859,10 +604,10 @@
     </section>
 
     <!-- 04 ─ THE APP -->
-    <section class="sec" aria-labelledby="sec-4-h">
+    <section class="section section-white" aria-labelledby="sec-4-h">
       <div class="sec-inner">
-        <span class="section-label rf">04 — The App</span>
-        <h2 class="sec-headline ru" id="sec-4-h"><span class="ru-i">What Makes It Stick</span></h2>
+        <span class="section-label rf">04 — The app</span>
+        <h2 class="h-heading ru" id="sec-4-h"><span class="ru-i">What makes it stick.</span></h2>
         <p class="sec-sub rf">Plenty of training tech gets worn twice. Tell us how to avoid that.</p>
 
         <div class="sec-body">
@@ -918,10 +663,10 @@
     </section>
 
     <!-- 05 ─ EARLY ACCESS -->
-    <section class="sec" aria-labelledby="sec-5-h">
+    <section class="section section-frost" aria-labelledby="sec-5-h">
       <div class="sec-inner">
-        <span class="section-label rf">05 — Early Access</span>
-        <h2 class="sec-headline ru" id="sec-5-h"><span class="ru-i">Want To Test One?</span></h2>
+        <span class="section-label rf">05 — Early access</span>
+        <h2 class="h-heading ru" id="sec-5-h"><span class="ru-i">Want to test one?</span></h2>
         <p class="sec-sub rf">Optional. Leave it blank and your answers stay completely anonymous.</p>
 
         <div class="sec-body">
@@ -955,10 +700,10 @@
     </section>
 
     <!-- SUBMIT -->
-    <section class="submit-sec">
+    <section class="section section-white">
       <div class="submit-inner">
         <div class="submit-row">
-          <button class="btn btn-black submit-btn" id="submit-btn" type="submit">Send My Answers</button>
+          <button class="btn btn-red submit-btn" id="submit-btn" type="submit">Send my answers</button>
           <p class="submit-note">Eight questions are required. Everything else is a bonus.</p>
         </div>
         <div class="form-error" id="form-error" role="alert"></div>
@@ -967,27 +712,31 @@
 
   </form>
 
-  <!-- ── THANK YOU ─────────────────────────────────────────── -->
-  <section class="done" id="done" hidden tabindex="-1" aria-live="polite" aria-label="Submitted">
+  <!-- ── SUBMITTED ─────────────────────────────────────────── -->
+  <section class="section section-dark done" id="done" hidden tabindex="-1" aria-live="polite" aria-label="Submitted">
     <span class="section-label">Received</span>
-    <h2 class="done-headline">Thanks.</h2>
-    <p class="done-sub">You're shaping what we build 🥊</p>
+    <h2 class="done-headline h-display">Thanks.</h2>
+    <p class="done-sub">You're shaping what we build.</p>
     <p class="done-meta">Loughborough Boxing × IMPKT</p>
     <div class="done-actions">
-      <a class="btn btn-ghost-light" href="index.html">Back To Impkt</a>
+      <a class="btn btn-light" href="index.html">Back to Impkt</a>
     </div>
   </section>
+
+  </main>
 
   <!-- ── FOOTER ────────────────────────────────────────────── -->
   <footer>
     <div class="footer-inner">
       <a href="index.html" class="footer-logo"><svg class="bolt-mark" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>IMPKT</a>
       <ul class="footer-links" aria-label="Footer navigation">
+        <li><a href="index.html">Home</a></li>
         <li><a href="product.html">Product</a></li>
+        <li><a href="ambassadors.html">Advisors</a></li>
         <li><a href="index.html#gyms">Gyms</a></li>
         <li><a href="index.html#founders">Team</a></li>
         <li><a href="index.html#waitlist">Waitlist</a></li>
-        <li><a href="survey.html" class="active">Athlete Survey</a></li>
+        <li><a href="survey.html" aria-current="page">Athlete survey</a></li>
         <li><a href="index.html#contact">Contact</a></li>
       </ul>
       <p class="footer-copy">Impkt Band &copy; 2026</p>
@@ -1015,7 +764,7 @@
   /* ── NAV FROST ──────────────────────────────────────────── */
   var nav = document.getElementById('nav');
   window.addEventListener('scroll', function () {
-    nav.classList.toggle('frosted', window.scrollY > 48);
+    nav.classList.toggle('frosted', window.scrollY > 24);
   }, { passive: true });
 
   /* ── MOBILE NAV ─────────────────────────────────────────── */
@@ -1029,11 +778,16 @@
     mobileNav.classList.toggle('open', navOpen);
     mobileNav.setAttribute('aria-hidden', String(!navOpen));
     hamburger.setAttribute('aria-expanded', String(navOpen));
+    /* The bar lifts above the overlay so the X stays tappable. */
+    document.body.classList.toggle('nav-open', navOpen);
     document.body.style.overflow = navOpen ? 'hidden' : '';
   }
   hamburger.addEventListener('click', function () { toggleNav(); });
   Array.prototype.forEach.call(document.querySelectorAll('.mnl'), function (l) {
     l.addEventListener('click', function () { toggleNav(false); });
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && navOpen) { toggleNav(false); hamburger.focus(); }
   });
 
   /* ── REVEALS ────────────────────────────────────────────── */
@@ -1057,7 +811,6 @@
       obs.observe(el);
     });
     eyebrow.classList.add('visible');
-    document.getElementById('rule-path').classList.add('drawn');
 
     /* Safety net — nothing should ever be able to stay stuck invisible. */
     setTimeout(revealAll, 4000);
@@ -1171,13 +924,14 @@
       .then(function () {
         form.hidden = true;
         donePanel.hidden = false;
+        nav.classList.add('nav-inverted');
         progFill.style.transform = 'scaleX(1)';
         donePanel.focus();
         window.scrollTo({ top: 0, behavior: 'smooth' });
       })
       .catch(function () {
         submitBtn.disabled = false;
-        submitBtn.textContent = 'Send My Answers';
+        submitBtn.textContent = 'Send my answers';
         formError.innerHTML = 'That didn’t send — check your connection and try again. ' +
           'If it keeps failing, email your answers to ' +
           '<a href="mailto:' + FALLBACK_EMAIL + '">' + FALLBACK_EMAIL + '</a>.';

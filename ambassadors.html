@@ -5,379 +5,107 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Advisors — Impkt Band</title>
   <link rel="icon" type="image/x-icon" href="favicon.ico">
-   <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
-   <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
-   <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32x32.png">
+  <link rel="icon" type="image/png" sizes="16x16" href="favicon-16x16.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
   <meta name="description" content="The advisory board behind Impkt Band. Industry experts helping shape the future of combat sports technology.">
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Advisors — Impkt Band">
+  <meta property="og:description" content="Coaches, competitors and sports scientists who keep us honest.">
+  <meta property="og:image" content="images/band-impkt.jpg">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Advisors — Impkt Band">
+  <meta name="twitter:description" content="Coaches, competitors and sports scientists who keep us honest.">
+
+  <link rel="stylesheet" href="css/impkt.css">
   <style>
+    /* ══════════════════════════════════════════════════════════
+       Advisors only.
 
-    /* ── RESET ──────────────────────────────────────────────── */
-    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+       Tokens, type, focus, nav, reveals, the hairline columns, the
+       contact block, the footer and the responsive base all live in
+       css/impkt.css, linked above. Rules below are the ones no
+       other page uses.
 
-    :root {
-      --red:        #C41E3A;
-      --black:      #000000;
-      --white:      #FFFFFF;
-      --grey:       #6B6B6B;
-      --grey-light: #A0A0A0;
-      --rule:       #EBEBEB;
-      --bg-section: #F5F5F7;
-      --font:       "Helvetica Neue", Helvetica, Arial, sans-serif;
-      --ease:       cubic-bezier(0.16, 1, 0.3, 1);
-    }
+       The six advisors are the shared hairline grid — the same
+       .spec-row that carries the home page's figures and the
+       product page's specs table. Nothing here is a card, nothing
+       floats, and nothing changes colour when the cursor passes
+       over it: these are six facts, not six buttons.
 
-    html { scroll-behavior: smooth; }
+       Surfaces: white hero | frost advisors | white contact |
+       frost footer. Strict alternation, so no boundary needs a
+       hairline of its own.
+       ══════════════════════════════════════════════════════════ */
 
-    body {
-      background: var(--white);
-      color: var(--black);
-      font-family: var(--font);
-      -webkit-font-smoothing: antialiased;
-      -moz-osx-font-smoothing: grayscale;
-      overflow-x: hidden;
-    }
-
-    /* ── REACTIVE BACKGROUND GLOW ───────────────────────────── */
-    .bg-glow {
-      position: fixed; inset: 0; z-index: 0;
-      pointer-events: none;
-      background: radial-gradient(
-        700px circle at var(--gx, 50%) var(--gy, 50%),
-        rgba(196, 30, 58, 0.05),
-        transparent 70%
-      );
-      opacity: 0; transition: opacity 0.6s;
-    }
-    .bg-glow.active { opacity: 1; }
-    @media (hover: none) { .bg-glow { display: none; } }
-
-    /* ── MOBILE NAV ─────────────────────────────────────────── */
-    .mobile-nav {
-      position: fixed; inset: 0; z-index: 200;
-      background: var(--black);
-      display: flex; flex-direction: column;
-      justify-content: center; padding: 0 40px;
-      opacity: 0; pointer-events: none;
-      transition: opacity 0.4s var(--ease);
-    }
-    .mobile-nav.open { opacity: 1; pointer-events: all; }
-    .mobile-nav-links { list-style: none; }
-    .mobile-nav-links li { overflow: hidden; }
-    .mobile-nav-links a {
-      display: block;
-      font-size: clamp(40px, 10vw, 64px);
-      font-weight: 900; letter-spacing: -0.035em;
-      text-transform: uppercase; line-height: 1.08;
-      color: var(--white); text-decoration: none;
-      padding: 10px 0;
-      opacity: 0; transform: translateY(28px);
-      transition: color 0.2s, opacity 0.5s var(--ease), transform 0.5s var(--ease);
-    }
-    .mobile-nav-links a:hover { color: var(--red); }
-    .mobile-nav.open .mobile-nav-links li:nth-child(1) a { opacity: 1; transform: translateY(0); transition-delay: 0.06s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(2) a { opacity: 1; transform: translateY(0); transition-delay: 0.12s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(3) a { opacity: 1; transform: translateY(0); transition-delay: 0.18s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(4) a { opacity: 1; transform: translateY(0); transition-delay: 0.24s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(5) a { opacity: 1; transform: translateY(0); transition-delay: 0.30s; }
-    .mobile-nav.open .mobile-nav-links li:nth-child(6) a { opacity: 1; transform: translateY(0); transition-delay: 0.36s; }
-    .mobile-nav-foot {
-      margin-top: 52px; font-size: 11px; font-weight: 500;
-      letter-spacing: 0.2em; text-transform: uppercase; color: #444;
-    }
-
-    /* ── NAV ────────────────────────────────────────────────── */
-    @keyframes nav-in {
-      from { opacity: 0; transform: translateY(-10px); }
-      to   { opacity: 1; transform: translateY(0); }
-    }
-    nav {
-      position: fixed; top: 0; left: 0; right: 0;
-      z-index: 100; height: 72px;
-      display: flex; align-items: center;
-      justify-content: space-between; padding: 0 56px;
-      border-bottom: 1px solid transparent;
-      transition: background 0.5s var(--ease), backdrop-filter 0.5s, border-color 0.4s var(--ease);
-      opacity: 0;
-      animation: nav-in 0.7s var(--ease) 0.15s forwards;
-    }
-    nav.frosted {
-      background: rgba(255,255,255,0.86);
-      backdrop-filter: blur(24px);
-      -webkit-backdrop-filter: blur(24px);
-      border-color: var(--rule);
-    }
-    .nav-logo {
-      font-size: 13px; font-weight: 800;
-      letter-spacing: 0.26em; text-transform: uppercase;
-      color: var(--black); text-decoration: none;
-      display: inline-flex; align-items: center; gap: 9px;
-    }
-    /* Bolt mark — same geometry as the favicon */
-    .bolt-mark {
-      width: auto; flex-shrink: 0;
-      fill: var(--red);
-    }
-    .nav-logo .bolt-mark { height: 15px; }
-    .footer-logo .bolt-mark { height: 14px; }
-    .nav-links { display: flex; gap: 40px; list-style: none; }
-    .nav-links a {
-      font-size: 12px; font-weight: 500;
-      letter-spacing: 0.06em; color: var(--black);
-      text-decoration: none; opacity: 1;
-      padding-bottom: 2px;
-      border-bottom: 1.5px solid transparent;
-      transition: border-color 0.2s;
-    }
-    .nav-links a:hover { border-color: rgba(0,0,0,0.3); }
-    .nav-links a.active { border-color: var(--black); }
-    .nav-cta {
-      font-size: 12px; font-weight: 600;
-      letter-spacing: 0.1em; color: var(--red); text-decoration: none;
-    }
-    .hamburger {
-      display: none; flex-direction: column;
-      gap: 5px; padding: 8px; background: none; border: none;
-    }
-    .hamburger span {
-      display: block; width: 22px; height: 1.5px;
-      background: var(--black);
-      transition: all 0.35s var(--ease); transform-origin: center;
-    }
-    .hamburger.open span:nth-child(1) { transform: translateY(6.5px) rotate(45deg); }
-    .hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
-    .hamburger.open span:nth-child(3) { transform: translateY(-6.5px) rotate(-45deg); }
-
-    /* ── REVEAL ANIMATIONS ──────────────────────────────────── */
-    .ru { display: block; overflow: hidden; }
-    .ru-i {
-      display: block; transform: translateY(110%);
-      transition: transform 1s var(--ease);
-    }
-    .ru.visible .ru-i { transform: translateY(0); }
-
-    .rf {
-      opacity: 0; transform: translateY(22px);
-      transition: opacity 0.9s var(--ease), transform 0.9s var(--ease);
-    }
-    .rf.visible { opacity: 1; transform: translateY(0); }
-
-    @media (prefers-reduced-motion: reduce) {
-      .ru-i { transform: none; transition: none; }
-      .rf   { opacity: 1; transform: none; transition: none; }
-    }
-
-    /* ── HERO ───────────────────────────────────────────────── */
+    /* A directory page's hero is a page header, not a stage. There's no
+       photograph and no form to hold, so a full 100svh of it would just be
+       a screen of white above the thing you came to read. */
     .hero {
-      position: relative; z-index: 1;
-      min-height: 52vh;
-      display: flex; flex-direction: column;
+      min-height: auto;
       justify-content: flex-end;
-      padding: 0 56px 80px;
-      padding-top: 140px;
-      border-bottom: 1px solid var(--rule);
+      padding: 176px 40px 88px;
     }
+    .hero-sub { max-width: 40ch; }
 
-    .hero-eyebrow {
-      display: block; overflow: hidden; margin-bottom: 32px;
-    }
-    .hero-eyebrow-i {
-      display: block;
-      font-size: 11px; font-weight: 600;
-      letter-spacing: 0.32em; text-transform: uppercase;
-      color: var(--grey-light);
-      transform: translateY(110%);
-      transition: transform 0.9s var(--ease);
-    }
-    .hero-eyebrow.visible .hero-eyebrow-i { transform: translateY(0); }
-
-    .hero-headline {
-      font-size: clamp(64px, 10vw, 130px);
-      font-weight: 900; letter-spacing: -0.045em;
-      line-height: 0.93; text-transform: uppercase;
-      max-width: 900px;
-    }
-
-    .hero-sub {
-      margin-top: 36px;
-      font-size: 15px; font-weight: 400;
-      color: var(--grey); line-height: 1.7;
-      max-width: 420px;
-    }
-
-    /* ── ADVISORS GRID ──────────────────────────────────────── */
-    .ambassadors-section {
-      position: relative; z-index: 1;
-      padding: 96px 56px 140px;
-      background: var(--white);
-    }
-
+    /* ── ADVISORS ─────────────────────────────────────────────── */
+    /* Label left, count right, sitting on the table's own top rule rather
+       than carrying a second one of its own. */
     .grid-header {
       display: flex; align-items: baseline;
-      justify-content: space-between;
-      margin-bottom: 64px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--rule);
+      justify-content: space-between; gap: 24px;
     }
-
-    .grid-label {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.34em; text-transform: uppercase;
-      color: var(--red);
-    }
-
+    .grid-header .section-label { margin-bottom: 0; }
     .grid-count {
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 0.1em; color: var(--grey-light);
+      font-size: var(--text-caption);
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
+    }
+    .advisors .spec-row { margin-top: 20px; }
+
+    /* Each cell is a flex column so the focus line can be pinned to the
+       bottom: bios run to different lengths, and without this the six focus
+       lines would sit at six different heights across the row. */
+    .advisors .spec { display: flex; flex-direction: column; }
+    .amb-name { margin-top: 12px; }
+    .amb-bio { margin-top: 14px; }
+    .amb-focus {
+      margin-top: auto; padding-top: 24px;
+      font-size: var(--text-caption);
+      letter-spacing: var(--tracking-caption);
+      color: var(--ash);
     }
 
-    .ambassadors-grid {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      column-gap: 48px;
-      row-gap: 56px;
+    /* ── RESPONSIVE ───────────────────────────────────────────── */
+    /* Three columns need room for a 28px name and a five-line bio, and
+       below 1080px they stop having it — so this grid drops to a single
+       column earlier than the shared breakpoint would take it. */
+    @media (max-width: 1080px) {
+      .advisors .spec-row { grid-template-columns: 1fr; }
+      .advisors .spec {
+        padding: 32px 0;
+        border-left: none;
+        border-bottom: 1px solid var(--hairline);
+      }
+      .advisors .spec:last-child { border-bottom: none; }
     }
 
-    /* ── ADVISOR CARD ───────────────────────────────────────── */
-    .amb-card {
-      padding-top: 32px;
-      border-top: 2px solid var(--black);
-      opacity: 0; transform: translateY(24px);
-      transition: opacity 0.8s var(--ease), transform 0.8s var(--ease),
-                  border-top-color 0.3s;
-      cursor: default;
-    }
-    .amb-card:hover { border-top-color: var(--red); }
-    .amb-card.visible { opacity: 1; transform: translateY(0); }
-
-    .amb-index {
-      font-size: 11px; font-weight: 700;
-      letter-spacing: 0.2em; color: var(--red);
-      margin-bottom: 24px;
-    }
-
-    .amb-discipline {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.28em; text-transform: uppercase;
-      color: var(--grey-light); margin-bottom: 8px;
-    }
-
-    .amb-name {
-      font-size: clamp(20px, 2vw, 28px);
-      font-weight: 900; letter-spacing: -0.03em;
-      text-transform: uppercase; line-height: 1.05;
-      margin-bottom: 16px;
-    }
-
-    .amb-bio {
-      font-size: 13px; font-weight: 400;
-      color: var(--grey); line-height: 1.75;
-    }
-
-    .amb-tag {
-      display: inline-block;
-      margin-top: 20px;
-      font-size: 10px; font-weight: 600;
-      letter-spacing: 0.16em; text-transform: uppercase;
-      color: var(--grey-light);
-      border: 1px solid var(--rule);
-      padding: 5px 12px;
-    }
-
-    /* ── CONTACT SECTION ────────────────────────────────────── */
-    .contact-section {
-      position: relative; z-index: 1;
-      padding: 100px 56px;
-      background: var(--bg-section);
-      border-top: 1px solid var(--rule);
-      text-align: center;
-    }
-    .contact-section .section-label {
-      font-size: 10px; font-weight: 700;
-      letter-spacing: 0.34em; text-transform: uppercase;
-      color: var(--red); margin-bottom: 24px;
-      display: block;
-    }
-    .contact-headline {
-      font-size: clamp(28px, 3.4vw, 40px);
-      font-weight: 800; letter-spacing: -0.03em;
-    }
-    .contact-sub {
-      margin-top: 16px;
-      font-size: 14px; color: var(--grey);
-    }
-    .contact-link {
-      display: inline-block; margin-top: 28px;
-      font-size: 13px; font-weight: 700;
-      letter-spacing: 0.06em; color: var(--red);
-      text-decoration: none;
-      border-bottom: 1px solid rgba(196,30,58,0.3);
-      padding-bottom: 3px;
-      transition: border-color 0.2s;
-    }
-    .contact-link:hover { border-color: var(--red); }
-
-    /* ── FOOTER ─────────────────────────────────────────────── */
-    footer {
-      position: relative; z-index: 1;
-      background: var(--white);
-      border-top: 2px solid var(--red);
-    }
-    .footer-inner {
-      display: flex; align-items: center;
-      justify-content: space-between;
-      padding: 24px 56px;
-    }
-    .footer-logo {
-      font-size: 12px; font-weight: 800;
-      letter-spacing: 0.26em; text-transform: uppercase;
-      color: var(--black); text-decoration: none;
-      display: inline-flex; align-items: center; gap: 9px;
-    }
-    .footer-links { display: flex; gap: 32px; list-style: none; }
-    .footer-links a {
-      font-size: 11px; font-weight: 500;
-      letter-spacing: 0.05em; color: #999;
-      text-decoration: none; transition: color 0.2s;
-    }
-    .footer-links a:hover { color: var(--black); }
-    .footer-copy { font-size: 11px; color: #999; letter-spacing: 0.06em; }
-
-    /* ── RESPONSIVE ─────────────────────────────────────────── */
     @media (max-width: 960px) {
-      nav { padding: 0 28px; }
-      .nav-links, .nav-cta { display: none; }
-      .hamburger { display: flex; }
-
-      .hero              { padding: 0 28px 64px; padding-top: 110px; min-height: auto; }
-      .ambassadors-section { padding: 72px 28px 96px; }
-      .ambassadors-grid  { grid-template-columns: repeat(2, 1fr); column-gap: 28px; row-gap: 40px; }
-      .footer-inner      { flex-direction: column; gap: 20px; padding: 24px 28px; text-align: center; }
-      .footer-links      { flex-wrap: wrap; justify-content: center; gap: 18px; }
+      .hero { padding: 128px 24px 64px; }
     }
-
-    @media (max-width: 560px) {
-      .ambassadors-grid { grid-template-columns: 1fr; column-gap: 0; row-gap: 32px; }
-    }
-
-    .sr-only {
-      position: absolute; width: 1px; height: 1px;
-      padding: 0; margin: -1px; overflow: hidden;
-      clip: rect(0,0,0,0); white-space: nowrap; border: 0;
-    }
-
   </style>
 </head>
 <body>
 
-  <div class="bg-glow" id="bg-glow" aria-hidden="true"></div>
+  <a class="skip-link" href="#advisors">Skip to the advisors</a>
 
   <!-- Mobile nav -->
   <div class="mobile-nav" id="mobile-nav" aria-hidden="true" role="dialog" aria-label="Navigation">
     <ul class="mobile-nav-links">
-      <li><a href="index.html"        class="mnl">Home</a></li>
-      <li><a href="product.html"      class="mnl">Product</a></li>
-      <li><a href="ambassadors.html"  class="mnl">Advisors</a></li>
-      <li><a href="index.html#gyms"   class="mnl">Gyms</a></li>
+      <li><a href="index.html"          class="mnl">Home</a></li>
+      <li><a href="product.html"        class="mnl">Product</a></li>
+      <li><a href="ambassadors.html"    class="mnl">Advisors</a></li>
+      <li><a href="index.html#gyms"     class="mnl">Gyms</a></li>
       <li><a href="index.html#founders" class="mnl">Team</a></li>
       <li><a href="index.html#waitlist" class="mnl">Waitlist</a></li>
     </ul>
@@ -390,117 +118,112 @@
     <ul class="nav-links" aria-label="Primary navigation">
       <li><a href="index.html">Home</a></li>
       <li><a href="product.html">Product</a></li>
-      <li><a href="ambassadors.html" class="active">Advisors</a></li>
+      <li><a href="ambassadors.html" class="active" aria-current="page">Advisors</a></li>
       <li><a href="index.html#gyms">Gyms</a></li>
       <li><a href="index.html#founders">Team</a></li>
     </ul>
-    <a href="index.html#waitlist" class="nav-cta">Request Access</a>
+    <a href="index.html#waitlist" class="nav-cta">Request access</a>
     <button class="hamburger" id="hamburger"
       aria-label="Open navigation" aria-expanded="false" aria-controls="mobile-nav">
       <span></span><span></span><span></span>
     </button>
   </nav>
 
+  <main id="main">
+
   <!-- ── HERO ──────────────────────────────────────────────── -->
-  <section class="hero">
-    <div class="hero-eyebrow" id="hero-eyebrow">
-      <span class="hero-eyebrow-i">Advisory Board</span>
+  <section class="hero" aria-label="Introduction">
+    <div class="hero-inner">
+      <div class="hero-eyebrow" id="hero-eyebrow">
+        <span class="hero-eyebrow-inner">Impkt Band</span>
+      </div>
+      <h1 class="hero-headline h-display">
+        <span class="ru hero-line-1"><span class="ru-i">The people</span></span>
+        <span class="ru hero-line-2"><span class="ru-i">behind it.</span></span>
+      </h1>
+      <p class="hero-sub tagline rf">
+        Coaches, competitors and sports scientists who understand
+        combat sports from the inside — and who keep us honest.
+      </p>
     </div>
-    <h1 class="hero-headline">
-      <span class="ru" id="hl1"><span class="ru-i">The people</span></span>
-      <span class="ru" id="hl2"><span class="ru-i" style="transition-delay:0.15s; color:var(--red)">behind it.</span></span>
-    </h1>
-    <p class="hero-sub rf" style="transition-delay:0.35s">
-      Impkt Band is shaped by a group of advisors who understand combat sports from the inside — coaches, practitioners, and industry experts who keep us honest.
-    </p>
   </section>
 
-  <!-- ── ADVISORS GRID ─────────────────────────────────────── -->
-  <section class="ambassadors-section" aria-label="Advisors">
+  <!-- ── ADVISORS ──────────────────────────────────────────── -->
+  <section class="section section-frost advisors" id="advisors" aria-label="Advisors">
 
     <div class="grid-header rf">
-      <span class="grid-label">Advisory Board</span>
+      <span class="section-label">Advisory board</span>
       <span class="grid-count">6 advisors</span>
     </div>
 
-    <div class="ambassadors-grid">
+    <div class="spec-row spec-row-rows">
 
-      <!-- Card 1 -->
-      <article class="amb-card">
-        <div class="amb-index">01</div>
-        <div class="amb-discipline">Professional Boxing</div>
-        <h2 class="amb-name">Marcus Webb</h2>
-        <p class="amb-bio">Super-welterweight contender with 18 professional bouts. Advises on athlete experience and how data feedback integrates into a fighter's daily routine.</p>
-        <span class="amb-tag">Performance</span>
+      <article class="spec rf">
+        <div class="spec-kicker">Professional boxing</div>
+        <h2 class="amb-name h-small">Marcus Webb</h2>
+        <p class="amb-bio spec-desc">Super-welterweight contender with 18 professional bouts. Advises on athlete experience and how data feedback integrates into a fighter's daily routine.</p>
+        <div class="amb-focus">Performance</div>
       </article>
 
-      <!-- Card 2 -->
-      <article class="amb-card">
-        <div class="amb-index">02</div>
-        <div class="amb-discipline">Muay Thai</div>
-        <h2 class="amb-name">Zara Khalil</h2>
-        <p class="amb-bio">Three-time national Muay Thai champion. Guides product development from the perspective of elite striking sports and competition-level demands.</p>
-        <span class="amb-tag">Striking Sports</span>
+      <article class="spec rf">
+        <div class="spec-kicker">Muay Thai</div>
+        <h2 class="amb-name h-small">Zara Khalil</h2>
+        <p class="amb-bio spec-desc">Three-time national Muay Thai champion. Guides product development from the perspective of elite striking sports and competition-level demands.</p>
+        <div class="amb-focus">Striking sports</div>
       </article>
 
-      <!-- Card 3 -->
-      <article class="amb-card">
-        <div class="amb-index">03</div>
-        <div class="amb-discipline">MMA</div>
-        <h2 class="amb-name">Dani Torres</h2>
-        <p class="amb-bio">Featherweight MMA competitor and certified S&amp;C coach. Advises on multi-discipline training environments and cross-sport wearable use cases.</p>
-        <span class="amb-tag">Strength &amp; Conditioning</span>
+      <article class="spec rf">
+        <div class="spec-kicker">MMA</div>
+        <h2 class="amb-name h-small">Dani Torres</h2>
+        <p class="amb-bio spec-desc">Featherweight MMA competitor and certified S&amp;C coach. Advises on multi-discipline training environments and cross-sport wearable use cases.</p>
+        <div class="amb-focus">Strength &amp; conditioning</div>
       </article>
 
-      <!-- Card 4 -->
-      <article class="amb-card">
-        <div class="amb-index">04</div>
-        <div class="amb-discipline">Coaching</div>
-        <h2 class="amb-name">Tyler James</h2>
-        <p class="amb-bio">Former professional boxer, now head coach at a leading gym. Shapes how Impkt Band's dashboard is structured for gym-wide coaching workflows.</p>
-        <span class="amb-tag">Coach Experience</span>
+      <article class="spec rf">
+        <div class="spec-kicker">Coaching</div>
+        <h2 class="amb-name h-small">Tyler James</h2>
+        <p class="amb-bio spec-desc">Former professional boxer, now head coach at a leading gym. Shapes how Impkt Band's dashboard is structured for gym-wide coaching workflows.</p>
+        <div class="amb-focus">Coach experience</div>
       </article>
 
-      <!-- Card 5 -->
-      <article class="amb-card">
-        <div class="amb-index">05</div>
-        <div class="amb-discipline">Sports Science</div>
-        <h2 class="amb-name">Ayo Bankole</h2>
-        <p class="amb-bio">Kickboxing competitor and certified sports scientist. Advises on biomechanical accuracy and how sensor data maps to real-world athletic output.</p>
-        <span class="amb-tag">Biomechanics</span>
+      <article class="spec rf">
+        <div class="spec-kicker">Sports science</div>
+        <h2 class="amb-name h-small">Ayo Bankole</h2>
+        <p class="amb-bio spec-desc">Kickboxing competitor and certified sports scientist. Advises on biomechanical accuracy and how sensor data maps to real-world athletic output.</p>
+        <div class="amb-focus">Biomechanics</div>
       </article>
 
-      <!-- Card 6 -->
-      <article class="amb-card">
-        <div class="amb-index">06</div>
-        <div class="amb-discipline">Amateur Boxing</div>
-        <h2 class="amb-name">Priya Sen</h2>
-        <p class="amb-bio">Elite amateur boxer and national squad member. Provides insight into the development pathway — from club-level training to high-performance competition.</p>
-        <span class="amb-tag">Youth &amp; Development</span>
+      <article class="spec rf">
+        <div class="spec-kicker">Amateur boxing</div>
+        <h2 class="amb-name h-small">Priya Sen</h2>
+        <p class="amb-bio spec-desc">Elite amateur boxer and national squad member. Provides insight into the development pathway — from club-level training to high-performance competition.</p>
+        <div class="amb-focus">Youth &amp; development</div>
       </article>
 
     </div>
   </section>
 
-  <!-- ── CONTACT ────────────────────────────────────────────── -->
-  <section class="contact-section" id="contact" aria-label="Contact">
-    <span class="section-label rf">Get In Touch</span>
-    <h2 class="contact-headline rf">Questions before you apply?</h2>
-    <p class="contact-sub rf" style="transition-delay:0.12s">We reply to every message personally.</p>
-    <a class="contact-link rf" style="transition-delay:0.2s" href="mailto:hello@impktband.com">hello@impktband.com</a>
+  <!-- ── CONTACT ───────────────────────────────────────────── -->
+  <section class="section section-white contact-section" id="contact" aria-label="Contact">
+    <h2 class="h-heading ru"><span class="ru-i">Questions before you apply?</span></h2>
+    <p class="contact-sub rf">We reply to every message personally.</p>
+    <a class="contact-link rf" style="transition-delay:0.1s" href="mailto:hello@impktband.com">hello@impktband.com</a>
   </section>
 
-  <!-- ── FOOTER ─────────────────────────────────────────────── -->
+  </main>
+
+  <!-- ── FOOTER ────────────────────────────────────────────── -->
   <footer>
     <div class="footer-inner">
       <a href="index.html" class="footer-logo"><svg class="bolt-mark" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>IMPKT</a>
       <ul class="footer-links" aria-label="Footer navigation">
         <li><a href="index.html">Home</a></li>
         <li><a href="product.html">Product</a></li>
-        <li><a href="ambassadors.html">Advisors</a></li>
+        <li><a href="ambassadors.html" aria-current="page">Advisors</a></li>
         <li><a href="index.html#gyms">Gyms</a></li>
+        <li><a href="index.html#founders">Team</a></li>
         <li><a href="index.html#waitlist">Waitlist</a></li>
-        <li><a href="survey.html">Athlete Survey</a></li>
+        <li><a href="survey.html">Athlete survey</a></li>
         <li><a href="#contact">Contact</a></li>
       </ul>
       <p class="footer-copy">Impkt Band &copy; 2026</p>
@@ -510,79 +233,56 @@
   <script>
   'use strict';
 
-  /* ── REACTIVE GLOW ───────────────────────────────── */
-  const bgGlow     = document.getElementById('bg-glow');
-  const hasPointer = window.matchMedia('(hover: hover)').matches;
-
-  if (hasPointer) {
-    let tx = window.innerWidth / 2, ty = window.innerHeight / 2;
-    let cx = tx, cy = ty;
-    document.addEventListener('mousemove', e => {
-      tx = e.clientX; ty = e.clientY;
-      bgGlow.classList.add('active');
-    }, { passive: true });
-    document.addEventListener('mouseleave', () => bgGlow.classList.remove('active'));
-    document.addEventListener('mouseenter', () => bgGlow.classList.add('active'));
-    (function raf() {
-      cx += (tx - cx) * 0.07;
-      cy += (ty - cy) * 0.07;
-      document.documentElement.style.setProperty('--gx', cx + 'px');
-      document.documentElement.style.setProperty('--gy', cy + 'px');
-      requestAnimationFrame(raf);
-    })();
-  }
-
-  /* ── NAV FROST ───────────────────────────────────── */
+  /* ── 1. NAV FROST ────────────────────────────────── */
   const nav = document.getElementById('nav');
   window.addEventListener('scroll', () => {
-    nav.classList.toggle('frosted', window.scrollY > 48);
+    nav.classList.toggle('frosted', window.scrollY > 24);
   }, { passive: true });
 
-  /* ── MOBILE NAV ──────────────────────────────────── */
+  /* ── 2. MOBILE NAV ───────────────────────────────── */
   const hamburger = document.getElementById('hamburger');
   const mobileNav = document.getElementById('mobile-nav');
   let navOpen = false;
+
   function toggleNav(force) {
     navOpen = force !== undefined ? force : !navOpen;
     hamburger.classList.toggle('open', navOpen);
     mobileNav.classList.toggle('open', navOpen);
-    mobileNav.setAttribute('aria-hidden', !navOpen);
-    hamburger.setAttribute('aria-expanded', navOpen);
+    mobileNav.setAttribute('aria-hidden', String(!navOpen));
+    hamburger.setAttribute('aria-expanded', String(navOpen));
+    /* The bar lifts above the overlay so the X stays tappable. */
+    document.body.classList.toggle('nav-open', navOpen);
     document.body.style.overflow = navOpen ? 'hidden' : '';
   }
   hamburger.addEventListener('click', () => toggleNav());
   document.querySelectorAll('.mnl').forEach(l => l.addEventListener('click', () => toggleNav(false)));
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && navOpen) { toggleNav(false); hamburger.focus(); }
+  });
 
-  /* ── REVEAL ANIMATIONS ───────────────────────────── */
-  const ruObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); ruObs.unobserve(e.target); } });
-  }, { threshold: 0.05 });
+  /* ── 3. INTERSECTION OBSERVERS ───────────────────── */
+  const makeObs = (cb, opts) => new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) cb(e.target); });
+  }, opts);
 
-  const rfObs = new IntersectionObserver((entries) => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); rfObs.unobserve(e.target); } });
-  }, { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
+  const ruObs = makeObs(el => { el.classList.add('visible'); ruObs.unobserve(el); },
+                        { threshold: 0.05 });
+  const rfObs = makeObs(el => { el.classList.add('visible'); rfObs.unobserve(el); },
+                        { threshold: 0.08, rootMargin: '0px 0px -20px 0px' });
 
   document.querySelectorAll('.ru').forEach(el => ruObs.observe(el));
   document.querySelectorAll('.rf').forEach(el => rfObs.observe(el));
 
-  /* ── HERO FIRES ON LOAD ──────────────────────────── */
+  /* Hero fires on load rather than on scroll. */
   document.getElementById('hero-eyebrow').classList.add('visible');
 
-  /* ── AMBASSADOR CARDS — staggered ───────────────── */
-  const cardObs = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        const cards = [...document.querySelectorAll('.amb-card')];
-        const row   = Math.floor(cards.indexOf(entry.target) / 3);
-        const col   = cards.indexOf(entry.target) % 3;
-        entry.target.style.transitionDelay = `${col * 0.1 + row * 0.05}s`;
-        entry.target.classList.add('visible');
-        cardObs.unobserve(entry.target);
-      }
-    });
-  }, { threshold: 0.12 });
-
-  document.querySelectorAll('.amb-card').forEach(el => cardObs.observe(el));
+  /* ── 4. ADVISOR CELLS — staggered by column ──────────
+     Read left to right, one tenth of a second apart, with a smaller
+     offset per row so the second row follows rather than repeats. */
+  const cells = [...document.querySelectorAll('.advisors .spec')];
+  cells.forEach((el, i) => {
+    el.style.transitionDelay = `${(i % 3) * 0.1 + Math.floor(i / 3) * 0.05}s`;
+  });
 
   </script>
 
