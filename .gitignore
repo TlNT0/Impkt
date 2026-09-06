@@ -14,7 +14,16 @@ skills-lock.json
 # Screenshot probes written next to the pages so relative paths resolve
 .__shot.html
 
-# Prototypes. Holds the PCB model, which is derived from the board layout —
-# a patent disclosure that is still a draft. Nothing in here is publishable
-# until that call has been made deliberately.
-lab/
+# lab/ used to be excluded wholesale, because the PCB model is derived from a
+# board layout whose patent disclosure is still a draft. That call was taken
+# deliberately on 2026-09-07 and went the other way: the product page's hero is
+# the sequence, and the sequence cannot ship without the model it is built from.
+#
+# So lab/ is published, with two exceptions. Each pattern is on its own line
+# because .gitignore has no inline comments — a trailing "# why" is read as part
+# of the pattern, which is how NOTES.md got staged the first time.
+#
+# Internal reasoning about the model, not an asset of it:
+lab/model/NOTES.md
+# Nothing matches this today, but a source file is not a deliverable:
+lab/model/*.blend*

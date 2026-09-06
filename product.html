@@ -1290,13 +1290,14 @@
 
     /* Fail closed if the assets are not there.
 
-       Both the sequence and its poster live in lab/, which .gitignore
-       excludes, because the model is derived from a board layout whose
-       patent disclosure is still a draft. So on a deploy made before that
-       call is taken deliberately, this section's two files are simply
-       absent — and the visible result of that would be a broken-image icon
-       on four and a half screens of dark, which is a worse outcome than the
-       page not having the section at all.
+       lab/ is published now, so on a complete deploy this branch never
+       fires. It is kept because the reason it was written has not gone
+       away: the sequence and its poster are 8 MB of model, loader and
+       still that the rest of the page does not need, and the day anything
+       excludes them again — a partial deploy, a CDN rule, a decision to
+       pull the model back — the visible result would be a broken-image
+       icon on five and a half screens of dark. That is a worse outcome
+       than the page not having the section at all.
 
        The poster is the canary rather than the frame: it is one request,
        it either 200s or it does not, and an iframe pointing at a missing
@@ -1306,8 +1307,8 @@
        omission is silent because there is nothing a reader could do about
        it.
 
-       This is a guard, not a plan. Publishing the sequence means deciding
-       to publish the model. */
+       That decision has been taken: publishing the sequence meant deciding
+       to publish the model, and it was. */
     if (still) {
       still.addEventListener('error', () => sec.remove());
       if (still.complete && still.naturalWidth === 0) { sec.remove(); return; }

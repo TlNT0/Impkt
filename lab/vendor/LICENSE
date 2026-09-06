@@ -1,0 +1,36 @@
+The files in this directory are three.js r160, vendored unmodified:
+
+  three.module.js      the core library
+  OBJLoader.js         addons/loaders/OBJLoader.js
+  MTLLoader.js         addons/loaders/MTLLoader.js
+  RoomEnvironment.js   addons/environments/RoomEnvironment.js
+
+Vendored rather than loaded from a CDN so the sequence has no third-party
+runtime dependency and cannot break because someone else's host did.
+
+three.js is MIT licensed. Its licence follows in full; it is not the licence
+of the rest of this repository.
+
+---
+
+The MIT License
+
+Copyright © 2010-2023 three.js authors
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
