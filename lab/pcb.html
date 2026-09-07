@@ -6700,7 +6700,22 @@
          curved part photographed from the one direction that hides the curve,
          under a caption that says "curved cell". */
       const late = p >= CELL_END;
-      const t = ease(seg(p, late ? CELL_END : BOARD_END, late ? 1.0 : CELL_END));
+      /* ^0.62 on the rotation, and it is the other half of the "clearer views"
+         note. The framing arriving early is no use if the *angle* arrives late:
+         at 60% of the cell act, a linear-in-ease tumble is only 60% of the way
+         from the board's exit pose to the one that shows the cell's curve, so
+         the render there is a 40 mm part seen three-quarters edge-on with the
+         board still leaning across it. The pose that was solved to show the arc
+         is only held for the last screen of five.
+         A power below 1 does not change either endpoint — the join with pose(1)
+         and the join with the coda are both untouched — it only front-loads the
+         swing. 0.62 puts the tumble 75% round by the act's midpoint and leaves
+         the remaining quarter as the slow drift the shot is meant to have. Not
+         a clamp: stopping the rotation dead would make the last third of each
+         act a still frame, which is the fault this whole sequence exists to
+         avoid. */
+      const t = Math.pow(ease(seg(p, late ? CELL_END : BOARD_END,
+                                     late ? 1.0 : CELL_END)), 0.62);
       /* The charger act's end pose is not a taste call either — it is solved,
          and rev 7 re-solved it because the part turned round.
 
@@ -6738,12 +6753,23 @@
       spin = late ? mix(-1.32, -0.35, t) : mix(exit.spin, -1.32, t);
 
       /* The migration is on its own schedule, front-loaded: the framing has
-         arrived by 45% of the act and the rest of it is the part being turned in
+         arrived by 30% of the act and the rest of it is the part being turned in
          a steady shot. A mix that ran the whole way would mean the camera never
          stops moving, and a part that is still being approached at the moment
-         its caption ends has not been shown. */
+         its caption ends has not been shown.
+
+         0.30 rather than the 0.45 it was tuned at, because "slightly more clear
+         angles throughout the scroll animation" is a complaint about the middle
+         of these two acts specifically, and the renders say why. At the settled
+         end both are clean: the subject is the target, so lookAt puts it dead
+         centre and the caption reads against it. In the middle it is neither
+         subject — a target lerped between the cell and the connector lands on
+         nothing, which on screen is the part shoved up into a corner with the
+         rest of the assembly leaning across it. 0.45 of a five-screen act is
+         over a screen and a half of that. 0.30 spends a screen arriving and
+         leaves the other two thirds on the shot that was worth building. */
       const k = ease(seg(late ? (p - CELL_END) / (1.0 - CELL_END)
-                              : (p - BOARD_END) / (CELL_END - BOARD_END), 0.0, 0.45));
+                              : (p - BOARD_END) / (CELL_END - BOARD_END), 0.0, 0.30));
       const fromC = late ? cellC : null;
       const toC   = late ? pogoC : cellC;
       poseM.makeRotationFromEuler(poseE.set(tilt, spin, 0));
@@ -6772,13 +6798,48 @@
          tuned to have. The floor on the port is the bore: at 1.0 the lens is
          inside the strap, which is what the note below is about. 1.26 leaves it
          outside with the hem out of frame. */
+      /* 1.26 on the cell now, not 1.34, and written once as CELL_DOLLY because
+         it appears on both sides of the handover — the cell act arrives at it
+         and the charger act departs from it, and the two have to be the same
+         number or the join is a jump. Copying it twice is how the -0.48 above
+         went stale.
+         The floor is measured, not chosen. 1.20 was the first try and it clips:
+         frameDistance re-solves every frame, and the widest the cell ever reads
+         is the very end of its act, where the tumble has brought it broadside —
+         at 1.20 its far end is outside the right edge there. 1.26 clears it.
+         That lands on the same multiplier as the port, which is a coincidence
+         of two different constraints and not a pair to keep in step: the port's
+         1.26 is set by the bore. */
+      const CELL_DOLLY = 1.26;
       const dFrom = late
-        ? frameDistance(tilt, spin, CELLPTS) * 1.34
+        ? frameDistance(tilt, spin, CELLPTS) * CELL_DOLLY
         : frameDistance(tilt, spin, CORNERS) * exit.dolly;
       const dTo = late
         ? frameDistance(tilt, spin, POGOPTS) * 1.26
-        : frameDistance(tilt, spin, CELLPTS) * 1.34;
+        : frameDistance(tilt, spin, CELLPTS) * CELL_DOLLY;
       dist = mix(dFrom, dTo, k);
+
+      /* And the cell's framing is offset upward, which no other shot in the
+         file is. The reason is that the cell is the only subject with the whole
+         rest of the assembly hanging off one side of it: lookAt centres the
+         *cell*, and what the frame then contains is a diagonal running from the
+         cell up to the connector clipping the top edge, over a third of the
+         canvas empty along the bottom. Centring the subject and centring the
+         picture are not the same thing when the subject is at one end of the
+         picture.
+         Raising the target lowers everything on screen, so the diagonal comes
+         down into the space and the connector — which is not this act's subject
+         and gets a whole act of its own next — leaves the frame at the top. In
+         frame heights, because the shot dollies: half the frame's height at the
+         camera's distance is dist·tan(vFov/2), and 0.11 of that reads the same
+         at every distance the act passes through.
+         Weighted so it belongs to the cell framing rather than to the clock —
+         it rises with the migration onto the cell and falls with the migration
+         off it, which makes it exactly zero at both act boundaries, where the
+         subject is the board (centred on the origin) or the connector (composed
+         already, and by its own cables, which fill the bottom). */
+      const cellWeight = late ? 1 - k : k;
+      tgt.y += 0.11 * cellWeight * dist * Math.tan(camera.fov * Math.PI / 360);
       bandFade(1);
     }
 
