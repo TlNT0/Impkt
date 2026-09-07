@@ -694,46 +694,6 @@ body.nav-open .hamburger span { background: var(--white); }
 .hero-photo img { width: 100%; height: auto; display: block; }
 @keyframes band-in { to { opacity: 1; } }
 
-/* ── THE HERO'S LIVE CANVAS ────────────────────────────────────
-   lab/pcb.html?scene=explode, laid over the still it is a frame of, so the
-   band comes apart as the hero scrolls away. See the block in index.html for
-   when it is created and what drives it.
-
-   The four numbers are measured, not chosen, and they are the whole reason
-   this works. The still is a *tight crop* of the render — the band's silhouette
-   and nothing else — while the canvas is the whole render, in which the band
-   fills 0.616 of the width and 0.627 of the height and sits slightly off
-   centre. So the frame has to be sized and offset until the band inside it
-   lands exactly on the band in the still:
-
-     width  100 / 0.61617 = 162.29%      left -0.21706 / 0.61617 = -35.23%
-     height 100 / 0.62664 = 159.58%      top  -0.18122 / 0.62664 = -28.92%
-
-   Those fractions were read off the alpha bounding box of a 1571 × 1832 render
-   of the very frame images/band-model.webp is a crop of, and the ratio of the
-   two percentages puts the frame back at that render's own aspect — which
-   matters, because frameDistance() solves the subject into the frame it is
-   given, so a canvas with a different aspect would draw the band at a
-   different size and a perspective camera at a different distance would draw
-   it a slightly different shape. Re-crop the still and these move.
-
-   The still stays underneath and is switched off at the end of the fade rather
-   than cross-faded with it. At the opening pose the two are the same pixels,
-   so a fade of one over the other is invisible; fading both at once would take
-   the pair to 75% opacity in the middle and read as a blink. */
-.hero-frame {
-  position: absolute; border: 0; display: block;
-  left: -35.23%; top: -28.92%;
-  width: 162.29%; height: 159.58%;
-  opacity: 0;
-  /* The canvas is decoration over a still that is already in the document, and
-     it is inert — no scrolling, no links, nothing focusable. */
-  pointer-events: none;
-  transition: opacity 0.6s var(--ease);
-}
-.hero-photo.is-ready .hero-frame { opacity: 1; }
-.hero-photo.is-ready img { opacity: 0; transition: opacity 0s linear 0.6s; }
-
 /* Below 1160px the copy column can no longer hold a 15ch headline beside a
    photo, so the photo drops under it and the hero stops being a split. */
 @media (min-width: 1161px) and (max-width: 1320px) {

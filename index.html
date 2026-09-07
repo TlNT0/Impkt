@@ -379,19 +379,13 @@
          the fade keeps the composition and adds only the logo.
 
          WebP because alpha rules out JPEG and the PNG was six times the size. -->
-    <div class="hero-photo" id="hero-photo">
+    <div class="hero-photo">
       <!-- fetchpriority, because this is the largest thing above the fold and
            therefore the paint the score is measured on. An <img> in the markup
            is fetched at Low until layout proves it visible; saying so up front
            lets it share the wire with the stylesheet instead of queueing
            behind it. -->
-      <!-- 968 × 1148, re-cropped on 2026-09-07. The still is now shot through
-           the same query string the live canvas below it uses, at the same
-           aspect, so that the two agree on the band's size and shape to the
-           pixel — see .hero-frame in css/impkt.css. The old crop came off a
-           landscape render and was 1.5% out in one axis, which is invisible in
-           a still and is exactly the sort of thing a cross-fade finds. -->
-      <img src="images/band-model.webp" width="968" height="1148" fetchpriority="high"
+      <img src="images/band-model.webp" width="968" height="1129" fetchpriority="high"
         alt="The Impkt Band shown as a see-through shell, with the circuit board,
              the battery and the magnetic charge connector visible inside the
              wall of the strap.">
@@ -769,143 +763,6 @@
 
   wireWaitlistForm('wl-form-hero', 'wl-name-hero', 'wl-email-hero', 'wl-confirm-hero');
   wireWaitlistForm('wl-form', 'wl-name', 'wl-email', 'wl-confirm');
-
-  /* ── 7. THE HERO'S EXPLODED VIEW ──────────────────────
-     The still in the hero is one frame of lab/pcb.html. This lays the live
-     document over it and hands it a number, and the band comes apart as the
-     hero scrolls away — the shell expanding off its contents, the cell and the
-     charge connector separating along the arc, the board holding still. What
-     that number *means* is entirely pcb.html's business, the same division as
-     the product page's teardown; the difference is only which axis it drives,
-     and ?scene=explode is what says so.
-
-     Nothing here moves the page. The hero is still one screen, the form stays
-     where it is, and the animation happens in the space the still already
-     occupies.
-
-     ── When the frame is created, which is the whole design of this block ──
-
-     The teardown is five screens down, so it can be created on an
-     IntersectionObserver two screens out and a reader who stops at the hero
-     never pays for it. This is the hero. It is on screen at load, so there is
-     no distance to observe and the same pattern would mean opening a WebGL
-     context, fetching 630 KB and spending half a second on procedural textures
-     *while the first paint is being measured* — against a note that asked for
-     this page to load faster, not slower.
-
-     So it waits for load and then for the main thread to be idle. By that
-     point the still is painted, the type has swapped, the forms are wired and
-     the score is already taken; the model arrives during a gap the reader does
-     not have anything else in. A bounce costs the bytes and nothing that shows.
-
-     1800 ms is the fallback for Safari, which has no requestIdleCallback. It is
-     deliberately later than any idle callback would fire: a timer cannot tell
-     whether the thread is busy, so the only safe thing it can do is be late. */
-  (function() {
-    const photo = document.getElementById('hero-photo');
-    if (!photo) return;
-    const still = photo.querySelector('img');
-
-    /* Same three gates as the teardown, and one more.
-
-       Reduced motion is a stated preference. WebGL has to be tested rather
-       than assumed, because a context is refused for reasons that have nothing
-       to do with the browser's identity. A missing still means lab/ is not
-       deployed and there is nothing to animate.
-
-       The fourth is the viewport. Below 1161px the hero is not a split — the
-       still drops under the copy, at 320px wide, where it is an illustration
-       rather than the subject — and that is also where the connection is most
-       likely to be metered. A 3D document is the wrong thing to send there. */
-    if (!still || matchMedia('(prefers-reduced-motion: reduce)').matches) return;
-    if (!matchMedia('(min-width: 1161px)').matches) return;
-    let gl = false;
-    try {
-      const c = document.createElement('canvas');
-      gl = !!(c.getContext('webgl2') || c.getContext('webgl'));
-    } catch (e) { gl = false; }
-    if (!gl) return;
-
-    let frame = null, ready = false;
-
-    /* p is the still's own exit, measured from the still: 0 where it sits at
-       rest and 1 by the time it has most of the way left the top of the
-       viewport. Its bottom edge starts `travel` below the top of the document,
-       and scrollY is how much of that has been spent.
-
-       0.72 of it rather than all of it, so the band is fully apart while it is
-       still on screen. Running the last of the move as the last of the element
-       disappears would put the frame the whole thing is built for behind the
-       top edge of the window. */
-    function post() {
-      if (!frame || !ready) return;
-      const travel = Math.max(1, (photo.getBoundingClientRect().bottom
-                                  + scrollY) * 0.72);
-      const p = Math.max(0, Math.min(1, scrollY / travel));
-      frame.contentWindow.postMessage({ type: 'pcb:p', p: p }, '*');
-    }
-
-    /* One post per animation frame. A trackpad fires scroll faster than the
-       frame can draw, and every extra message is a structured clone across a
-       document boundary that the receiver discards unrendered. */
-    let ticking = false;
-    function request() {
-      if (ticking) return;
-      ticking = true;
-      requestAnimationFrame(() => { ticking = false; post(); });
-    }
-
-    addEventListener('message', e => {
-      if (!frame || e.source !== frame.contentWindow) return;
-      if (!e.data || e.data.type !== 'pcb:ready') return;
-      ready = true;
-      /* Immediately, not on the next scroll. The reader may already have
-         scrolled while it was loading, and fading in at p = 0 would then be
-         visibly wrong for as long as they held still. */
-      post();
-      photo.classList.add('is-ready');
-    });
-
-    function open() {
-      frame = document.createElement('iframe');
-      frame.className = 'hero-frame';
-      /* aria-hidden, and the still keeps its alt text. The frame is a canvas
-         no screen reader can describe and the alt text is the description;
-         exposing both would announce an empty frame and then the words. */
-      frame.setAttribute('aria-hidden', 'true');
-      frame.setAttribute('tabindex', '-1');
-      frame.setAttribute('scrolling', 'no');
-      /* Every parameter is load-bearing and none is a default. still and
-         stage=clear strip the lab's own furniture and background so the canvas
-         is a cut-out on the hero's white; ink=dark swaps the shell's white
-         edges for Carbon, which on a white page is the difference between
-         faint and absent; mark=keep pins the embroidered bolt, which this pose
-         is otherwise one frame past; scene=explode is the burst. The same
-         string the still was rendered from — that is not a coincidence to be
-         tidied up, it is what makes the cross-fade exact. */
-      frame.src = 'lab/pcb.html?embed=1&still=1&stage=clear&ink=dark'
-                + '&mark=keep&scene=explode';
-      photo.appendChild(frame);
-
-      /* If it never draws — a context lost on creation, a stalled fetch, a
-         module that throws — the still simply stays. There is nothing to clean
-         up but the frame itself, and no state to unwind, because is-ready is
-         the only thing that reveals it. */
-      setTimeout(() => {
-        if (ready) return;
-        frame.remove();
-        frame = null;
-      }, 12000);
-
-      addEventListener('scroll', request, { passive: true });
-      addEventListener('resize', request);
-    }
-
-    addEventListener('load', () => {
-      if (window.requestIdleCallback) requestIdleCallback(open, { timeout: 3000 });
-      else setTimeout(open, 1800);
-    });
-  })();
 
   </script>
 

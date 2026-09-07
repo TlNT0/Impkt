@@ -118,8 +118,6 @@
     body.clear .stage { background: transparent; }
     body.clear .depth,
     body.clear .depth-wave { display: none; }
-    /* ?scene=explode — see burstScene. */
-    body.burst .anno { display: none; }
 
     #dbg {
       position: fixed; left: 0; bottom: 0; z-index: 500;
@@ -699,40 +697,6 @@
      re-shooting at p=0 would have got the bolt back and changed the framing to a
      more edge-on ring at the same time. */
   const markKeep = params.get('mark') === 'keep';
-
-  /* ?scene=explode — the home page's hero, which is a different thing from the
-     product page's sequence and shares everything with it but the clock.
-
-     The product page's five acts stay exactly as they are. This mode pins the
-     whole of that sequence at POSTER_P and spends the host's scroll on one new
-     axis instead: the parts move *radially* out of the strap. So it is the same
-     model, the same materials, the same load path and the same camera solve —
-     one parameter and forty lines, rather than a second scene to keep in step
-     with this one.
-
-     POSTER_P is not a taste call, it is the number images/band-model.webp was
-     rendered at. The home page paints that still first and fades this canvas in
-     over the top of it once the model has drawn, so the two have to agree on
-     the opening frame to the pixel — and the only way to guarantee that is for
-     the opening frame to *be* it, pose, fade schedule, mark and all. Anything
-     re-derived here would agree to about a pixel, which is exactly the kind of
-     agreement a crossfade makes visible. */
-  const burstScene = params.get('scene') === 'explode';
-  /* The callouts go with it, and not because they would be badly placed. Their
-     anchors are read from the board's own coordinates and setBurst() does not
-     move them — see its header — so on the second screen the labels would be
-     pointing at where the parts used to be. Suppressing them is also the right
-     call on its own terms: this hero has one claim to make and the page's own
-     type is making it, whereas the product page's labels are the content. */
-  if (burstScene) document.body.classList.add('burst');
-  const POSTER_P = 0.072;
-  /* Same reasoning as embedP: progress() and draw() close over it. */
-  /* ?b= is this mode's ?p=. It cannot reuse ?p=, because ?p= sets the page
-     clock and the page clock is exactly what this mode holds fixed — forcing
-     it would move the camera off the poster's pose, which is the one thing
-     that must not move. Authoring only, and how the frames in this rev's
-     notes were shot. */
-  let burstP = Math.max(0, Math.min(1, Number(params.get('b')) || 0));
 
   /* ── 1. SCENE ──────────────────────────────────────────────── */
   const canvas   = document.getElementById('gl');
@@ -5541,17 +5505,6 @@
       const CELL_Y = 25.8 + CELL.L / 2, POGO_Y = -6.3;
       const CELL_Z = -BOARD_T + CELL.T / 2;
 
-      /* Each part's outward radial, for setBurst(). Taken here, from the same
-         two arc positions the parts are seated at, rather than measured off the
-         built meshes: the direction a part leaves the strap by is a property of
-         where it sits on the arc and of nothing else, and reading it back out of
-         a bounding box would make it depend on the part's shape. x is zero
-         because the bend is entirely in y and z — see bendPoint(). */
-      const radial = y => new THREE.Vector3(
-        0, Math.sin((y - BAND.cy) / BEND_R), Math.cos((y - BAND.cy) / BEND_R));
-      cellRad = radial(CELL_Y);
-      pogoRad = radial(POGO_Y);
-
       /* Built flat, refined to a 1.5 mm edge, then bent — in that order, and the
          middle step is not optional. ExtrudeGeometry gives the pouch's two big
          faces no interior vertices at all, so bending the part as built would
@@ -5768,19 +5721,7 @@
          the assembly group for the centre shift, same as everything else that
          is written in the board's own corner-origin millimetres. */
       mark('assembly');
-      /* On a wrapper whose origin is the band's axis, which is the only place a
-         scale can be applied from — buildBand() positions its meshes at
-         (BAND.cx, BAND.cy, BAND.cz), so scaling the group it returns would move
-         the ring as well as widen it. Same two-group trick as axle() and seat(),
-         and it is inert until setBurst() touches it: a Group with an identity
-         transform costs one matrix multiply that three.js was doing anyway. */
-      bandRing = new THREE.Group();
-      bandRing.position.set(0, BAND.cy, BAND.cz);
-      const bandInner = new THREE.Group();
-      bandInner.position.set(0, -BAND.cy, -BAND.cz);
-      bandInner.add(buildBand());
-      bandRing.add(bandInner);
-      assembly.add(bandRing);
+      assembly.add(buildBand());
       mark('band');
 
       /* Sixteen points on the fabric — two rings of eight at the hems — which
@@ -6160,62 +6101,6 @@
      and this rig has no way to say so. */
   const EX = 0.22;
   let cellAxle = null, pogoAxle = null;
-
-  /* ── THE RADIAL EXPLODE ────────────────────────────────────────
-     Only ?scene=explode drives these. It runs *with* setExplode() rather than
-     instead of it, and that is the correction the first renders forced.
-
-     The first version put the whole 18 mm of travel on the parts and only 1.34
-     on the strap, and both halves of that were wrong. Every internal sits at
-     very nearly the same radius, so moving them all outward by the same amount
-     separates them from the strap and not from each other — at b = 1 the cell,
-     the board and the connector were still in exactly the formation they start
-     in, only further out. And 18 mm crosses a wall that has grown by 9, so the
-     middle of the move had the cell halfway through the fabric, which does not
-     read as an exploded view. It reads as clipping.
-
-     So the two axes are split by what each one is for. The strap carries the
-     opening: 1.40 about its own axis, which lifts the whole shell off its
-     contents in every direction at once and leaves a 5 mm gap of daylight
-     between the fabric and the internals. The parts keep 6 mm, just enough to
-     stand off the bore instead of lying against it, and stay inside the shell
-     the whole way. What actually separates the parts from one another is the
-     arc explode that was already here — the cell to increasing arc, the
-     connector to decreasing, the board fixed between them. Radially outward
-     for the shell, along the arc for the contents.
-
-     A scale on the strap rather than a split, and that is deliberate. A real
-     split would mean building the shells as halves, which changes buildBand()
-     for every caller including the product page's five acts; expanding the
-     ring about its axis gives the same reading for one wrapper group. The wall
-     goes from 0.8 mm to 1.12 in the process, which at this framing is under
-     half a pixel.
-
-     What the scale cannot carry is the embroidery. The mark and the stitching
-     lie on the fabric, so scaling y and z stretches them round the
-     circumference while leaving them alone along the arm — a 40% wider bolt of
-     the same height, which is the one thing in the frame anyone would
-     recognise as wrong. It fades out over the first third instead. */
-  /* BURST_ARC is a multiplier on setExplode()'s own argument, not a new angle,
-     and passing it more than 1 is deliberate rather than an abuse of the range.
-     EX was chosen for a shot that is *inside* the bore looking at the board,
-     where 0.22 rad is already most of the frame. This shot is outside the whole
-     ring, where the same angle is a few millimetres and reads as the parts
-     having shifted rather than come apart. 1.8 puts the cell and the connector
-     ten millimetres of arc each side of where they started — a fifth of the
-     bore's circumference between them — and nothing in setExplode() is
-     normalised, so the leads, the framing points and the callout anchors all
-     follow at that angle exactly as they do at any other. */
-  const BURST_R = 6.0, BURST_BAND = 1.40, BURST_ARC = 1.8;
-  let bandRing = null;
-  let cellRad = null, pogoRad = null;
-  /* Two, because setBurst() composes with setExplode() and setExplode() re-routes
-     the same four leads with no radial term. Guarding on b alone means a frame
-     where the arc moved and the burst did not silently drops the radial shift. */
-  let burstD = -1, burstEx = -1;
-  /* Its own scratch vector rather than the shared `v`. setBurst() is called from
-     draw(), and draw() holds a live value in `v` across the target migration. */
-  const burstV = new THREE.Vector3();
   /* Every lead that has to follow a part. `sign` is which way its part goes:
      the cell to increasing arc, the port to decreasing. */
   const LEADS = [];
@@ -6307,27 +6192,20 @@
     v.z = y * s + z * c;
   }
 
-  /* Re-route one lead for an arc shift of `da` and a radial shift of `dz`. Both
-     are applied in unrolled millimetres and tapered from the part's end to the
-     pad, so the first control point moves with the part exactly and the last
-     does not move at all — the solder joint stays where it was soldered.
-
-     `dz` is the whole reason the radial explode is forty lines rather than a
-     rewrite. In this file's unrolled space the radius that goes with a point is
-     `z + 24` (see UNROLLED SPACE), so moving a part straight out of the strap is
-     adding to z and nothing else — no cylindrical coordinates, no per-point
-     direction vector, and the same taper that keeps a soldered end soldered
-     works unchanged on it.
+  /* Re-route one lead for an arc shift of `da`. The shift is applied in
+     unrolled millimetres and tapered from the part's end to the pad, so the
+     first control point moves with the part exactly and the last does not move
+     at all — the solder joint stays where it was soldered.
 
      pow(w, 1.6) rather than a straight taper: a linear weight spreads the whole
      5.5 mm evenly down a lead whose last three points are the tuned arc across
      the board's edge, and that arc is what keeps the insulation off a routed
      edge. Biasing the movement into the first half leaves it alone. */
-  function reflow(l, da, dz) {
+  function reflow(l, da) {
     const n = l.pts.length;
     const pts = l.pts.map((q, i) => {
       const w = Math.pow(1 - i / (n - 1), 1.6);
-      return bendPoint(q[0], q[1] + da * BEND_R * w, q[2] + (dz || 0) * w);
+      return bendPoint(q[0], q[1] + da * BEND_R * w, q[2]);
     });
     l.mesh.geometry.dispose();
     /* Same three constants wireGeom() builds with. It cannot call wireGeom()
@@ -6371,53 +6249,6 @@
       a.point.copy(a.point0);
       turnPos(a.point, a.ex > 0 ? -da : +da);
     });
-  }
-
-  /* b in 0..1. The radial explode, and it moves four things.
-
-     The cell and the connector translate straight out of the strap along their
-     own outward radials. The four leads follow, tapered, so each one keeps the
-     pad it is soldered to and lets go at the end that flew away — which is what
-     an exploded assembly drawing does with a cable and is the reason they are
-     not simply hidden. And the fabric expands about the axis.
-
-     The board does not move, and that is the composition rather than an
-     omission. It is the piece the four solder joints and the two pad clusters
-     belong to, so holding it still leaves eight small fixed things for the eye
-     to read the movement against; explode it as well and every object in the
-     frame is travelling, which reads as a zoom out.
-
-     Guarded on the same 0.002 and for the same reason — it rebuilds the same
-     four tubes. 0.002 of BURST_R is 36 microns.
-
-     What it deliberately does not touch is cellC, pogoC, CELLPTS, POGOPTS or
-     the callout anchors, all of which setExplode() is careful to keep in step.
-     None of them is read in this mode: the camera holds POSTER_P's pose, which
-     is solved against the band's own hull, and ?still hides the callouts. If
-     the burst ever gets a beat that frames the cell, those five come with it. */
-  function setBurst(b) {
-    if (!cellAxle || (Math.abs(b - burstD) < 0.002 && exD === burstEx)) return;
-    burstD = b;
-    burstEx = exD;
-    const dr = BURST_R * b;
-    /* The axle's own position is on the band's axis, and its rotation happens
-       inside it, so adding to that position is a rigid translation of the part
-       and nothing else. The direction is the part's outward radial, turned by
-       whatever arc explode is also running — zero, in this mode. */
-    const da = EX * Math.max(0, exD);
-    burstV.copy(cellRad); turnDir(burstV, -da);
-    cellAxle.position.set(0, BAND.cy, BAND.cz).addScaledVector(burstV, dr);
-    burstV.copy(pogoRad); turnDir(burstV, +da);
-    pogoAxle.position.set(0, BAND.cy, BAND.cz).addScaledVector(burstV, dr);
-
-    /* Both parts go out by dr, so one radial shift covers all four leads; the
-       taper decides how much of it each control point takes. */
-    for (const l of LEADS) reflow(l, l.sign * da, dr);
-
-    if (bandRing) {
-      const s = 1 + (BURST_BAND - 1) * b;
-      bandRing.scale.set(1, s, s);
-    }
   }
 
   function frameDistance(tilt, spin, pts) {
@@ -6646,13 +6477,6 @@
     /* × SEQ_END because this function returns page progress and the expression
        is in the sequence's clock. Without it the still would land 25% further
        through the sequence than the pose it was chosen for. */
-    /* Before the reduced-motion branch, not after. In this mode the pose is
-       fixed for everyone; what reduced motion turns off is the burst, and
-       that is decided in draw() where burstP is read. Returning the board's
-       still here instead would give the reduced-motion reader a frame the
-       host's poster does not match, which is the one thing this mode is
-       built to prevent. */
-    if (burstScene) return POSTER_P;
     if (reduced) return (ACT + 0.25 * (BOARD_END - ACT)) * SEQ_END;
     /* Embedded, this document does not scroll and offsetTop is 0 for the
        whole of its life, so the branch below would return 0 forever. The
@@ -6736,18 +6560,7 @@
        the reverse of the opening, where the parts spring apart only once the
        camera is inside. A diagram that shuts its own lid is the wrong last
        frame; the last frame is the product. */
-    /* In ?scene=explode the arc explode is the half of the burst that separates
-       the parts from each other, so it runs on the host's clock instead. Here
-       rather than in the burst block below, because setExplode() rebuilds four
-       tubes and calling it twice in a frame — once with the pinned sequence's
-       0 and once with the burst's value — would pay for that twice.
-       0.05–0.75 rather than the whole span: the parts start moving a beat after
-       the strap does, so the shell is seen to open and the contents are then
-       seen to come apart inside it, and they are done before the strap is, so
-       the move settles rather than stopping. */
-    setExplode(burstScene
-      ? BURST_ARC * ease(seg(burstP, 0.05, 0.75))
-      : ease(seg(p, 0.16, 0.30)) * (1 - ease(seg(co, 0.00, 0.55))));
+    setExplode(ease(seg(p, 0.16, 0.30)) * (1 - ease(seg(co, 0.00, 0.55))));
 
     /* Rev 8 deletes the line that used to sit here:
            if (chargeSide) chargeSide.visible = p < ACT || p >= BOARD_END;
@@ -7122,67 +6935,6 @@
                1 - easeS(seg(co, 0.00, 0.42)));
     }
 
-    /* ── THE HOME PAGE'S BURST ───────────────────────────────────
-       An override, and last, for the same reason the coda is one: at
-       burstP = 0 every line below either adds nothing or multiplies by one,
-       so the opening frame is the band act at POSTER_P untouched — which is
-       the frame images/band-model.webp already holds. Anything here that
-       changed the branch above would need that file re-rendered to match, and
-       the crossfade on the home page would show the difference.
-
-       One eased number drives all of it. The parts, the camera and the mark
-       on three separate curves would read as three animations of the same
-       object rather than one thing coming apart. */
-    if (burstScene) {
-      const u = reduced ? 0 : ease(burstP);
-      setBurst(u);
-
-      /* Derived, and the first attempt derived the wrong thing. Backing off by
-         the full ratio of the hull radii — 1.40, since the strap is the widest
-         thing here — keeps the strap exactly the size it was on screen and
-         therefore shrinks everything inside it by a third. What that renders as
-         is the internals receding into a ring that has not moved, which is a
-         zoom out with extra steps and the opposite of the note it answers.
-
-         So the camera gives back only the headroom the opening frame is
-         holding. The band act arrives at this frame with a dolly of 1.17 — see
-         mix(1.24, 1.00, ease(t)) — so the strap is filling 1/1.17 of the frame
-         and 1.40/1.17 = 1.196 of pull-back is the most that can be spent before
-         it starts being cropped. 1.22 takes almost all of that and leaves two
-         per cent for the drift below, which turns the ring toward its own
-         widest projection as it goes. The result is the strap growing by a
-         sixth on screen while the internals hold their size — the shell opens
-         away from parts that stay where they are and stay legible, which is
-         what an exploded view is. */
-      const BURST_DOLLY = 1.22;
-      dist *= 1 + (BURST_DOLLY - 1) * u;
-
-      /* A tenth of a radian each, and deliberately no more. The assembly has
-         to be turning while it opens or the parts read as sliding around on a
-         flat drawing; much past this and the opening pose — which is the
-         poster, and the only pose on this page that has been agreed — is gone
-         by the second screen of scroll. */
-      tilt += 0.11 * u;
-      spin += 0.16 * u;
-
-      /* The mark, written straight rather than through bandFade(), because
-         ?mark=keep pins it at 1 in there and this mode needs both halves of
-         that: the bolt is on the strap in the opening frame and gone by the
-         time the strap has grown. It cannot just ride along. bandRing scales
-         in y and z, which is radius *and* arc length, so a 34% wider bore is
-         a 34% wider bolt in one direction only. A logo that stretches is
-         worse than a logo that leaves. */
-      /* On burstP rather than on u, and it is the one thing here that is not on
-         the shared curve. u is eased, so it is slow at the start and the mark
-         would still be half up at a third of the scroll — by which point the
-         ring has grown enough for the stretch to be what you are looking at.
-         The fade has to lead the growth, not track it. */
-      const off = easeS(seg(burstP, 0.02, 0.26));
-      THREAD.opacity = 1 - off;
-      THREAD.depthWrite = off < 0.005;
-      THREAD.visible = off < 0.996;
-    }
-
     pivot.rotation.set(tilt, spin, 0);
     camera.position.set(tgt.x, tgt.y, tgt.z + dist);
     camera.lookAt(tgt);
@@ -7258,12 +7010,7 @@
       if (!d || d.type !== 'pcb:p') return;
       const n = Number(d.p);
       if (!Number.isFinite(n)) return;
-      /* Same channel, different axis. The host does not need to know which
-         mode it is driving — it sends "how far through my section am I" and
-         this file decides whether that number moves the camera along the
-         five acts or opens the shell. */
-      const c = Math.max(0, Math.min(1, n));
-      if (burstScene) burstP = c; else embedP = c;
+      embedP = Math.max(0, Math.min(1, n));
       request();
     });
   }
