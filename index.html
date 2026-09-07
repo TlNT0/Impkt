@@ -20,6 +20,13 @@
   <meta name="twitter:description" content="Precision wearable technology for combat sports athletes and elite gyms.">
   <meta name="twitter:image" content="images/band-impkt.jpg">
 
+  <!-- The latin subset carries every glyph these pages use. Without this
+       the browser cannot know it needs the font until it has fetched and
+       parsed impkt.css, so the first paint is fallback type and the swap
+       lands a round trip later. crossorigin is required on font preloads
+       even same-origin, or the fetch is made twice. -->
+  <link rel="preload" href="fonts/ibm-plex-sans-latin.woff2" as="font"
+    type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/impkt.css">
 
   <style>
@@ -373,7 +380,12 @@
 
          WebP because alpha rules out JPEG and the PNG was six times the size. -->
     <div class="hero-photo">
-      <img src="images/band-model.webp" width="968" height="1129"
+      <!-- fetchpriority, because this is the largest thing above the fold and
+           therefore the paint the score is measured on. An <img> in the markup
+           is fetched at Low until layout proves it visible; saying so up front
+           lets it share the wire with the stylesheet instead of queueing
+           behind it. -->
+      <img src="images/band-model.webp" width="968" height="1129" fetchpriority="high"
         alt="The Impkt Band shown as a see-through shell, with the circuit board,
              the battery and the magnetic charge connector visible inside the
              wall of the strap.">

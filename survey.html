@@ -17,6 +17,13 @@
   <meta name="twitter:title" content="Athlete survey — Impkt Band">
   <meta name="twitter:description" content="Eleven questions. Three minutes. Your answers decide what we build first.">
 
+  <!-- The latin subset carries every glyph these pages use. Without this
+       the browser cannot know it needs the font until it has fetched and
+       parsed impkt.css, so the first paint is fallback type and the swap
+       lands a round trip later. crossorigin is required on font preloads
+       even same-origin, or the fetch is made twice. -->
+  <link rel="preload" href="fonts/ibm-plex-sans-latin.woff2" as="font"
+    type="font/woff2" crossorigin>
   <link rel="stylesheet" href="css/impkt.css">
   <style>
     /* ══════════════════════════════════════════════════════════
