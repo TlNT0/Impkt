@@ -631,7 +631,9 @@
 
   <script type="module">
   import * as THREE from 'three';
-  import { OBJLoader } from 'three/addons/OBJLoader.js';
+  /* No OBJLoader: the geometry arrives as model/pcb.bin now. MTLLoader stays,
+     because the 29 material definitions are still read from pcb.mtl — see
+     loadPacked(). */
   import { MTLLoader } from 'three/addons/MTLLoader.js';
   import { RoomEnvironment } from 'three/addons/RoomEnvironment.js';
 
@@ -1846,8 +1848,8 @@
      size if the board is re-exported with the component moved.
 
      Triangles are addressed by the position of their centroid, never by
-     index, for the same reason. The geometry is non-indexed — OBJLoader
-     writes three vertices per face — so a triangle is three consecutive
+     index, for the same reason. The geometry is non-indexed — loadPacked()
+     expands to three vertices per face — so a triangle is three consecutive
      entries, and the material groups are ranges over those. Rebuilding
      means walking the groups in order and emitting a new one per group
      with the survivors, so materialIndex still points where it did. */
@@ -5025,6 +5027,109 @@
 
   let culled = REBUILD.map(() => new THREE.Box3());   // for ?debug=1
 
+  /* Reads model/pcb.bin, which lab/model/pack.mjs writes from pcb.obj. The
+     format is documented at the top of that script; this is the other half of
+     it, and the two have to be edited together.
+
+     Why not OBJLoader: the OBJ is 6.6 MB and 152 ms of main-thread parsing,
+     measured, and this page's first screen is the model. Almost none of that
+     work survives — the normals are recomputed after cull(), there are no UVs
+     in the file, and the material definitions come from the .mtl. So the bin
+     carries positions, indices, and the names of the 206 usemtl runs, and
+     getting it into a BufferGeometry is two typed-array views over the
+     response and one gather loop. Around 10 ms, and 370 KB on the wire against
+     1.62 MB gzipped.
+
+     What comes back is deliberately shaped like OBJLoader's output — a Group
+     holding one Mesh, materials in an array, one geometry group per run —
+     because six hundred lines below this depend on that shape, and several of
+     them depend on the run *ordering* too. Every note in NOTES.md that says
+     "mtl14 is the sensor package" is a statement about the order of usemtl in
+     the export, so the packer preserves it and this does not reorder.
+
+     Non-indexed on arrival, which throws away the indexing the file just saved
+     bytes with, and that is the point: cull() rebuilds every geometry it walks
+     as a triangle soup, three vertices per face, and an indexed geometry handed
+     to it comes back as confetti. The saving was on the wire and in the parse,
+     not in memory.
+
+     No normal attribute at all. cull() guards on `nrm` everywhere and skips
+     interpolating them when it is absent, and computeVertexNormals() runs
+     immediately after it. */
+  async function loadPacked(url, materials) {
+    const res = await fetch(url);
+    if (!res.ok) throw new Error(`${url} — HTTP ${res.status}`);
+    const buf = await res.arrayBuffer();
+    const head = new DataView(buf);
+    /* Big-endian on the magic only, so that the four bytes read as 'IMPB' in a
+       hex dump rather than backwards. Everything after it is little-endian. */
+    if (buf.byteLength < 24 || head.getUint32(0, false) !== 0x494d5042) {
+      throw new Error(`${url} is not a packed model`);
+    }
+    const version = head.getUint32(4, true);
+    if (version !== 1) throw new Error(`${url} is format ${version}, this page reads 1`);
+    const vertCount = head.getUint32(8, true);
+    const triCount  = head.getUint32(12, true);
+    const runCount  = head.getUint32(16, true);
+    const nameCount = head.getUint32(20, true);
+
+    const bytes = new Uint8Array(buf);
+    const names = [];
+    let o = 24;
+    for (let i = 0; i < nameCount; i++) {
+      const n = bytes[o++];
+      names.push(String.fromCharCode.apply(null, bytes.subarray(o, o + n)));
+      o += n;
+    }
+    o = (o + 3) & ~3;   // the packer pads the name block; see pack.mjs
+
+    const pos = new Float32Array(buf, o + runCount * 12, vertCount * 3);
+    const idx = new Uint16Array(buf, o + runCount * 12 + vertCount * 12, triCount * 3);
+
+    /* Expand. Straight indexed gather, and the only reason it is written out
+       rather than done with a three.js helper is that toNonIndexed() allocates
+       an index attribute first and then throws it away. */
+    const flat = new Float32Array(triCount * 9);
+    for (let i = 0, w = 0; i < idx.length; i++) {
+      const v = idx[i] * 3;
+      flat[w++] = pos[v];
+      flat[w++] = pos[v + 1];
+      flat[w++] = pos[v + 2];
+    }
+
+    const geo = new THREE.BufferGeometry();
+    geo.setAttribute('position', new THREE.BufferAttribute(flat, 3));
+
+    /* One material per name, in name-table order, so a run's name index is its
+       materialIndex. MTLLoader's create() caches, and its materials carry
+       .name — which cull() reads to find the lettering and upgrade() reads for
+       the marking alias, so a missing definition has to keep its name too
+       rather than fall back to something anonymous. */
+    const mats = names.map(n => materials.create(n) ||
+      new THREE.MeshPhongMaterial({ name: n, color: 0x808080 }));
+
+    for (let r = 0; r < runCount; r++) {
+      const at = o + r * 12;
+      geo.addGroup(head.getUint32(at, true) * 3,        // first triangle
+                   head.getUint32(at + 4, true) * 3,    // triangle count
+                   head.getUint32(at + 8, true));       // name index
+    }
+
+    const group = new THREE.Group();
+    group.add(new THREE.Mesh(geo, mats));
+    return group;
+  }
+
+  /* The model is the page. There is no version of this that degrades into
+     something worth looking at, so say what went wrong where the spinner was
+     and leave it there — a stuck "Loading board…" is the one outcome that
+     tells the reader nothing. */
+  function loadFailed(err) {
+    console.error(err);
+    const el = document.getElementById('loader');
+    if (el) el.textContent = 'The board model could not be loaded.';
+  }
+
   /* ── 3. LOAD ───────────────────────────────────────────────── */
   const pivot = new THREE.Group();
   scene.add(pivot);
@@ -5035,7 +5140,7 @@
   new MTLLoader().setPath('./model/').load('pcb.mtl', materials => {
     materials.preload();
     mark('mtl');
-    new OBJLoader().setMaterials(materials).setPath('./model/').load('pcb.obj', obj => {
+    loadPacked('./model/pcb.bin', materials).then(obj => {
       mark('obj');
       /* Measure first: upgrade() needs to know which materials are the
          board before it can decide what any of them should look like. */
@@ -5063,8 +5168,8 @@
 
          Cut before building, too, and not only for tidiness: cull()
          rebuilds every mesh it walks on the assumption that the geometry is
-         non-indexed, which is true of everything OBJLoader produces and
-         false of every primitive in three.js. Hand it a BoxGeometry and it
+         non-indexed, which is what loadPacked() hands it and is false of
+         every primitive in three.js. Hand it a BoxGeometry and it
          reads the index-less vertex list as triangles and hands back
          confetti. */
       /* Paint the package markings out, now that every material exists and
@@ -5585,7 +5690,7 @@
          readiness while the canvas is still empty would reveal exactly
          what it is there to cover. */
       if (embed && parent !== window) parent.postMessage({ type: 'pcb:ready' }, '*');
-    });
+    }, loadFailed);
   });
 
   /* ── 4. THE CAMERA PATH ────────────────────────────────────────

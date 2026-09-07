@@ -1,7 +1,6 @@
 The files in this directory are three.js r160, vendored unmodified:
 
   three.module.js      the core library
-  OBJLoader.js         addons/loaders/OBJLoader.js
   MTLLoader.js         addons/loaders/MTLLoader.js
   RoomEnvironment.js   addons/environments/RoomEnvironment.js
 

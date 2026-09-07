@@ -1424,6 +1424,44 @@
       post();
     });
 
+    /* Six screens out, start the two big downloads and nothing else.
+       The frame below is created two screens out, and by then the reader is
+       usually still scrolling — so the model and the library are fetched
+       while the section is arriving rather than after it has arrived, and on
+       a cold cache that is most of the wait. Measured over a mobile
+       connection those two are the whole of it: 370 KB for the geometry and
+       256 KB for three.js, against a few kilobytes for everything else.
+
+       Deliberately not a <link> in the head. The comment on the frame's own
+       observer is a decision, not a description — a reader who stops at the
+       hero should not pay for five screens they never saw — and a preload in
+       the head bills every visitor for 630 KB. Six screens is far enough to
+       cover the scroll and still means intent.
+
+       Bytes only. This does not create the frame, so no WebGL context, no
+       half a second of procedural textures, nothing that touches the main
+       thread — the point is to overlap the network with the scroll, and the
+       CPU cost is the frame's business.
+
+       <link> rather than fetch(): the browser owns the priority, an unused
+       one costs a console warning rather than a bug, and modulepreload warms
+       the module graph in a way a bare fetch of a module cannot. */
+    const warm = new IntersectionObserver(entries => {
+      if (!entries.some(en => en.isIntersecting)) return;
+      warm.disconnect();
+      for (const [rel, href, as] of [
+        ['modulepreload', 'lab/vendor/three.module.js', null],
+        ['preload', 'lab/model/pcb.bin', 'fetch']
+      ]) {
+        const l = document.createElement('link');
+        l.rel = rel;
+        l.href = href;
+        if (as) l.as = as;
+        document.head.appendChild(l);
+      }
+    }, { rootMargin: '600% 0px' });
+    warm.observe(sec);
+
     /* Two screens of margin. The sequence has a few megabytes of geometry
        and textures to fetch and a first frame to draw, and starting that
        when the section is already on screen means it arrives after it was
