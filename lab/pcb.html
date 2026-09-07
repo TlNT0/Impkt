@@ -42,6 +42,7 @@
                         needs since it cannot scroll
          ?debug=1       dump the loaded material table into the DOM,
                         readable with chrome --dump-dom
+         ?perf=1        time every stage of the load into document.title
          ?hi=mtl6       paint one named material emissive red
          ?lights=1      log the lighting rig per frame
          ?wide=1        frame on the whole assembly, not the board
@@ -346,22 +347,21 @@
       padding-bottom: 5px;
       border-bottom: 1px solid rgba(255,255,255,0.4);
     }
-    .anno-key {
+    /* There used to be a `.anno-key` here, set in solid white on the same line,
+       carrying the part's designator — U1, AE1, BT1, X1, J1, U6, U3, SWD. It is
+       gone as of rev 15, with the ANNOS table's `key` field kept as an internal
+       cross-reference to the pick-and-place and no longer rendered. See the note
+       there for why; the short version is "remove all lettering form the pcb".
+
+       The value takes the designator's weight now that it is alone. It was 0.62
+       white against a solid-white key, which is the right relationship when it is
+       the second half of a pair and the wrong one when it is the whole label —
+       a callout on its own at 0.62 over a mid-grey package is a caption nobody
+       reads. 0.86 keeps it below the section type and clear of the board. */
+    .anno-val {
       font-size: var(--text-caption); font-weight: 500;
       letter-spacing: var(--tracking-caption);
-      color: var(--white);
-    }
-    /* Key and value sit on one line, which is how a callout on a drawing
-       reads. The gap is a left margin, not a top one — these are inline,
-       so a vertical margin would silently do nothing. */
-    /* Lighter than the designator but not by as much as a caption on a
-       flat surface would be: this one is read against the board, and
-       0.5 white over a dark component package is not a contrast at all. */
-    .anno-val {
-      margin-left: 7px;
-      font-size: var(--text-caption);
-      letter-spacing: var(--tracking-caption);
-      color: rgba(255,255,255,0.62);
+      color: rgba(255,255,255,0.86);
     }
     /* Mirrored, for anchors near the right edge — the same callout thrown
        the other way rather than a label allowed to run off the frame. */
@@ -637,6 +637,34 @@
 
   const params  = new URLSearchParams(location.search);
   const forcedP = params.has('p') ? parseFloat(params.get('p')) : null;
+
+  /* ── PERF ──────────────────────────────────────────────────────
+     ?perf=1 times the load and writes the table into document.title, which
+     is the one channel a `chrome --headless --dump-dom` can read out of a
+     module that never touches the DOM otherwise.
+
+     It exists because the first attempt at making this load faster went
+     straight for the 6.6 MB OBJ, and the OBJ is not obviously the problem:
+     served with gzip it is 1.6 MB, while the work done *after* it parses
+     includes clipping a hundred thousand triangles against a rectangle and
+     three passes of Sobel over a 1536² canvas. Neither of those is a
+     download, and neither of them shows up in a network panel. A stage that
+     is not measured is a stage that gets optimised by guesswork.
+
+     Marks are absolute milliseconds from navigation start, so the first one
+     is also the answer to "how long before anything happens at all". */
+  const PERF = [];
+  const mark = label => { if (params.has('perf')) PERF.push([label, performance.now()]); };
+  function perfDump() {
+    if (!params.has('perf')) return;
+    let out = [], prev = 0;
+    for (const [label, t] of PERF) {
+      out.push(`${label} ${(t - prev).toFixed(0)}/${t.toFixed(0)}`);
+      prev = t;
+    }
+    document.title = 'PERF ' + out.join(' | ');
+  }
+  mark('module');
   const embed   = params.has('embed');
   /* Declared up here rather than beside its listener at the foot of the file:
      progress() closes over it, and a `let` in temporal dead zone throws on
@@ -1657,15 +1685,65 @@
      OBJ on disk stays a faithful copy of the export and every
      reconstruction stays legible as a reconstruction. */
 
-  /* Above the 0.29 mm copper pour and below every component body, so a
-     footprint can be cleared without touching the board under it. Pads,
-     copper and the connectors' own legs inside the substrate all survive
-     — they are hidden by what replaces them. */
-  const CULL_FLOOR = 0.30;
+  /* The substrate's top face, so clearing a footprint takes everything that
+     stands on the board and leaves everything buried in it — the connectors'
+     own legs and vias, which the rebuilt slab is opaque over.
+
+     This was 0.30 for three revisions: above the 0.29 mm pour and below every
+     component body, on the reasoning that a footprint should be cleared
+     without touching the board under it, and that pads inside it survive
+     harmlessly because the stand-in covers them. Both halves stopped being
+     true. Rev 4 builds no stand-in — U2 and U7 are deleted, not replaced — so
+     a pad left inside a cleared footprint is a pad floating on bare board.
+     And measured against this export there is nothing to protect: inside the
+     two rectangles, within the trim window, below 0.30, there are exactly 34
+     triangles and every one of them is mtl14 or mtl19, which are U2's own
+     materials. No pad, no pour, no via.
+
+     Those 34 are what "there are triangle faces that are out of place" is.
+     Sixteen are U2's shell flanges — flat, at z = 0.04, four hundredths of a
+     millimetre above the mask, and up to eight millimetres long, running from
+     x 15.3 out to 23.6. The window clips them at 17.54 and leaves needles
+     lying on the board with the exporter's normals on them, which is why
+     something that thin renders as a bright hairline rather than as nothing:
+     it is the pale V near the right edge at page 0.30, and the spike past the
+     underside silhouette at 0.52.
+
+     A footprint is a box rather than a rectangle for the same reason. Two of
+     the three are top-side and the third is not, and the third one's rectangle
+     also contains two parts that are top-side and are staying — a 0402 at
+     x 15.8..16.8 and a larger package at 15.0..17.2 — so a rectangle alone
+     would take them with it. `z` is the range a triangle has to reach into to
+     be inside the footprint: from the substrate's top face upwards for a part
+     mounted on top, from its underside downwards for one mounted below. */
+  const STACK = { lo: -1.617, hi: 0.0 };
 
   const REBUILD = [
-    { key: 'U2', x: [14.6, 24.2], y: [-0.6,  7.4] },   // Type-C, opens -Y
-    { key: 'U7', x: [18.4, 25.3], y: [11.8, 18.4] }    // ZH 1.5, opens +X
+    { key: 'U2',  x: [14.6, 24.2], y: [-0.6,  7.4], z: [STACK.hi, Infinity] },
+    { key: 'U7',  x: [18.4, 25.3], y: [11.8, 18.4], z: [STACK.hi, Infinity] },
+    /* Bottom side, +x edge: one 3.0 × 2.8 × 1.2 mm package in mtl1, mtl20 and
+       mtl27, running x 15.23..18.18. Rev 4's board ends at 17.54, so a fifth of
+       it is off the edge — it is a rev 3 part in the two millimetres rev 4 gave
+       up, exactly like the other two, and it was only missed the first time
+       because it is underneath. Clipped, it rendered as the open shell hanging
+       below the board at the +x end of the side-on beat: a floor plate, two
+       interior walls and a pad in mid-air. */
+    { key: 'BOT', x: [15.1, 18.3], y: [12.5, 15.6], z: [-Infinity, STACK.lo] },
+    /* The antenna, and this one is a rebuild in the original sense of the word
+       rather than a deletion. It is a 3.2 × 1.6 × 1.3 mm block at x 5.11..8.29,
+       y 16.52..18.12 — so it runs 0.38 mm past a board that now ends at 17.74,
+       and every way of leaving the export's copy in place is wrong. Clipped, it
+       is an open shell: the +y wall is on the far side of the cut, so the beat
+       at page 0.20 looked into a torn box with its lid skewed across the top.
+       Kept whole under BODY_OVER, it stands a quarter of its own depth off the
+       edge and reads as a spike. Deleted outright, the board loses the one part
+       the "Antenna" callout points at.
+
+       So it is deleted and built, which is also a chance to fix what it was
+       doing to the frame: 707 triangles of pale ceramic, brighter than the gold,
+       on the part of the board nearest the camera at two of the beats. See
+       buildAntenna(). */
+    { key: 'AE1', x: [4.9, 8.5], y: [16.3, 18.4], z: [STACK.hi, Infinity] }
   ];
 
   /* rev 4 is 17 × 15 mm, down from rev 3's 25 × 19, and the two millimetres
@@ -1712,6 +1790,53 @@
      section, seen from the side. See `buildOutline()`. */
   const CUT_IN = 0.06;
   const EDGE_W = 0.06;
+
+  /* The board stack's ceiling and floor: above the tallest pad and below the
+     substrate's underside. A triangle that reaches past either is part of a
+     component body rather than of the board, which is what decides whether the
+     re-outline clips it or takes it whole. See cull(). */
+  const BODY_HI = 0.50;
+  const BODY_LO = -1.70;
+
+  /* How far a body is allowed to hang over the cut before it is dropped
+     instead. Real parts do overhang a routed edge, so a body that pokes out by
+     a hair should stay whole rather than be cut open; a body that is mostly off
+     the board is not on this board at all. */
+  const BODY_OVER = 0.15;
+
+  /* Package markings. The export carries them as geometry, not as artwork —
+     each character is an extruded outline standing a hundredth of a millimetre
+     proud of the face it is printed on — so no amount of not drawing text into
+     the silkscreen canvas removes them. They are the last lettering on this
+     board and they were found by rasterising every thin flat material in x and
+     y and reading the result.
+
+     mtl26 is one of them: 125 triangles at z -2.52, the marking on the
+     underside of the sensor package with its pin-1 dot beside it, legible at
+     the "Motion sensor" callout at page 0.52. Deleting it is the obvious move
+     and it is wrong, which cost a render to learn. The host face is mtl14 and
+     it is triangulated *around* the glyph outlines — the letters are an inlay,
+     not a decal — so dropping them leaves glyph-shaped holes into the dark
+     inside of the package and the marking comes out more legible than before,
+     as black text instead of grey.
+
+     So the letters are painted out instead of removed: mtl26 takes the host's
+     appearance and the ten microns of relief left behind is a third of a pixel
+     at every pose in this sequence. Aliasing beats retriangulating the face,
+     and it beats a decal texture, because the hole is exactly the shape of the
+     thing filling it. */
+  const MARKINGS = { mtl26: 'mtl14' };
+
+  /* mtl12 is different and does get deleted: 103 triangles at a single z of
+     0.009, spanning fifty microns, on no host face at all. Whatever it was
+     meant to be it is a zero-thickness sheet nine microns above the mask with
+     the exporter's non-unit normals on it, which is this file's worst case —
+     it z-fights the pour and flickers frame to frame.
+
+     Everything else that came up glyph-shaped in that scan — mtl18 at
+     y 0.19..2.54, the marking row inside mtl21 — is already outside the trim
+     window and needs no rule of its own. */
+  const LETTERING = new Set(['mtl12']);
 
   /* Drop every triangle standing above the board inside one of those
      footprints, and hand back the box of what went. Building the
@@ -1798,6 +1923,11 @@
       const mats = Array.isArray(child.material) ? child.material : [child.material];
 
       const P = [], N = [], out = [];
+      /* The cut, once, rather than per triangle: these four are constants of
+         TRIM and CUT_IN and were being recomputed a hundred thousand times. */
+      const nx = TRIM.x[0] + CUT_IN, mx = TRIM.x[1] - CUT_IN;
+      const ny = TRIM.y[0] + CUT_IN, my = TRIM.y[1] - CUT_IN;
+      const inside = v => v.x >= nx && v.x <= mx && v.y >= ny && v.y <= my;
       groups.forEach(g => {
         /* The substrate and the routed edge go, whole. Not because they were
            wrong for rev 3 but because they are rev 3: the export's board
@@ -1819,6 +1949,9 @@
 
            See buildSubstrate(). */
         if (mats[g.materialIndex] && mats[g.materialIndex].userData.mask) return;
+        /* And the two lettering materials, whole, for the same reason: there is
+           nothing to salvage from a glyph. See LETTERING. */
+        if (mats[g.materialIndex] && LETTERING.has(mats[g.materialIndex].name)) return;
         const start = P.length / 3;
         const end = Math.min(g.start + g.count, pos.count);
         for (let i = g.start; i + 2 < end; i += 3) {
@@ -1826,16 +1959,26 @@
           b.fromBufferAttribute(pos, i + 1);
           c.fromBufferAttribute(pos, i + 2);
           const cx = (a.x + b.x + c.x) / 3, cy = (a.y + b.y + c.y) / 3;
-          /* Footprints first, on the centroid, which is right for these two:
-             a component body is small next to its own footprint rectangle, so
-             no body triangle straddles the boundary in a way that matters, and
-             the whole part goes or stays together. The re-outline below is the
-             opposite case and gets clipped instead of tested. */
-          let hit = -1;
-          if ((a.z + b.z + c.z) / 3 > CULL_FLOOR) {
-            hit = REBUILD.findIndex(r =>
-              cx > r.x[0] && cx < r.x[1] && cy > r.y[0] && cy < r.y[1]);
-          }
+          /* Footprints first, on the centroid in x and y, which is right for
+             these three: a component body is small next to its own footprint
+             rectangle, so no body triangle straddles the boundary in a way that
+             matters, and the whole part goes or stays together. The re-outline
+             below is the opposite case and gets clipped instead of tested.
+
+             In z it is the triangle's *range* against the footprint's, not its
+             centroid against a threshold, and that is not a detail. A centroid
+             test keeps every triangle that straddles the boundary, and a
+             connector shell is made of exactly those: its walls run from a leg
+             buried at z = -1.10 up to the top of the shield at 2.03, so the mean
+             sits at -0.06 and a wall two millimetres tall reads as board. Four
+             survived that way and rendered as a pale blade standing off a board
+             whose tallest real part is 1.30 mm. Buried geometry, which is what a
+             cleared footprint has to leave behind, has its whole range inside
+             the substrate and is unaffected. */
+          const loZ = Math.min(a.z, b.z, c.z), hiZ = Math.max(a.z, b.z, c.z);
+          const hit = REBUILD.findIndex(r =>
+            cx > r.x[0] && cx < r.x[1] && cy > r.y[0] && cy < r.y[1] &&
+            hiZ > r.z[0] && loZ < r.z[1]);
           if (hit >= 0) {
             gone[hit].expandByPoint(a).expandByPoint(b).expandByPoint(c);
             continue;
@@ -1844,10 +1987,46 @@
           /* The re-outline. Cheap accept for the overwhelming majority —
              everything wholly inside the window, which is most of the board —
              then the clip for the rest. */
-          const nx = TRIM.x[0] + CUT_IN, mx = TRIM.x[1] - CUT_IN;
-          const ny = TRIM.y[0] + CUT_IN, my = TRIM.y[1] - CUT_IN;
-          const inside = v => v.x >= nx && v.x <= mx && v.y >= ny && v.y <= my;
           if (inside(a) && inside(b) && inside(c)) {
+            for (const v of [a, b, c]) P.push(v.x, v.y, v.z);
+            if (nrm) for (let k = 0; k < 3; k++) {
+              n.fromBufferAttribute(nrm, i + k); N.push(n.x, n.y, n.z);
+            }
+            continue;
+          }
+
+          /* Everything from here on straddles the cut, and what to do about
+             that depends on whether it is board or part. The cut is a cut
+             through the board, so clipping the board is exactly right: the mask
+             and the pour end at the new edge because that is where the router
+             went. A component is not board. Cutting a body in half opens the
+             shell — three revisions of this file clipped bodies and the result
+             was the second artefact behind "there are triangle faces that are
+             out of place": a bottom-side 0402 at x 17.51..17.75 kept the three
+             hundredths of a millimetre of itself that fell inside the window and
+             rendered it as a pale spike hanging past the underside silhouette
+             at page 0.52. So a body is kept whole or dropped whole, on its
+             centroid, and it is allowed to overhang.
+
+             BODY_HI is above every pad (0.48) and BODY_LO below the substrate's
+             own underside (-1.617), so "body" means the triangle reaches out of
+             the board stack at one end or the other. 92 triangles change
+             verdict, and BODY_OVER is what sorts them. The two 0402s poke over
+             by three hundredths of a millimetre and stay whole, which is the
+             case this rule exists for. AE1 does not: its body runs to y 18.12
+             against a window ending at 17.74, so it overhangs by 0.375 and its
+             straddling triangles are dropped. That was deliberate and it was
+             measured — kept whole instead, the antenna reads as a pale spike
+             standing off the underside silhouette at page 0.52, 177 px of it
+             against the 69 the sliver used to cost. An edge-fed antenna really
+             does overhang a routed edge, but not by a quarter of its own body,
+             and this one is drawn to the rev 3 outline. */
+          if (hiZ > BODY_HI || loZ < BODY_LO) {
+            if (cx < nx || cx > mx || cy < ny || cy > my) continue;
+            if (Math.max(a.x, b.x, c.x) > mx + BODY_OVER ||
+                Math.min(a.x, b.x, c.x) < nx - BODY_OVER ||
+                Math.max(a.y, b.y, c.y) > my + BODY_OVER ||
+                Math.min(a.y, b.y, c.y) < ny - BODY_OVER) continue;
             for (const v of [a, b, c]) P.push(v.x, v.y, v.z);
             if (nrm) for (let k = 0; k < 3; k++) {
               n.fromBufferAttribute(nrm, i + k); N.push(n.x, n.y, n.z);
@@ -2105,10 +2284,25 @@
      shading, and taking it away leaves nothing rather than less. What works is
      lowering the albedo instead and leaving enough env to shade with — p50 109,
      p90 129, under the gold's p90 151, which keeps the pads the brighter metal
-     they should be. */
+     they should be.
+
+     Rev 15 lowers the albedo again, and the reason is a geometry change rather
+     than a change of mind. Every number above was measured on rev 7's fillet,
+     which — see solderJoint() — was revolved about an axis lying *in* the board,
+     so what you saw of it was a curved wall standing on edge, catching the
+     environment sideways. Rev 15 turns the axis onto the board's normal, and a
+     dome facing up at a room environment collects far more of it: the same
+     material on the new shape measured p90 177 against pads reading p90 89, which
+     is exactly the "brightest thing in the act, on four objects the act is not
+     about" failure the old note was written to avoid. Halving the reflected
+     energy — albedo down about a third, env from 0.24 to 0.18 — puts it back
+     where it was relative to the gold. Roughness up to 0.54 with it, which is
+     spreading the specular rather than dimming it: the peak was 201 on a 255
+     scale, and a blown highlight on a hand joint is the one thing that reads as
+     plastic. */
   const SOLDER = new THREE.MeshStandardMaterial({
-    name: 'solder', color: 0x70727a, metalness: 0.86, roughness: 0.46,
-    envMapIntensity: 0.24
+    name: 'solder', color: 0x4a4c54, metalness: 0.86, roughness: 0.54,
+    envMapIntensity: 0.18
   });
 
   /* The connector's moulded body. Darker than the board's nylon housing —
@@ -2465,6 +2659,53 @@
     return g;
   }
 
+  /* Ceramic. The one dielectric in this scene that is genuinely a light
+     material — a chip antenna is a sintered white block — which makes it the
+     hardest thing here to place on the value ladder, since the ladder tops out
+     at the gold's p90 151 and white ceramic photographs above that.
+
+     Resolved the way the substrate's routed edge was: halve the albedo and let
+     the finish carry the material. The export's own copy of this part measured
+     as the brightest object in the board beats, competing with the pads for the
+     eye on a shot about a circuit board, and a sintered surface is not glossy
+     anyway — it is close to Lambertian with a very slight sheen, which is what
+     roughness 0.66 at a low env term describes. */
+  const CERAMIC = new THREE.MeshStandardMaterial({
+    name: 'ceramic', color: 0x55555a, metalness: 0.0, roughness: 0.66,
+    envMapIntensity: 0.30
+  });
+
+  /* The antenna, rebuilt: a 3.2 × 1.6 × 1.1 mm ceramic block with its feed and
+     ground metallisation wrapped round the two ends, sitting with its far face
+     0.1 mm inside the routed edge instead of 0.38 mm outside it.
+
+     A hair shorter than the export's 1.3 mm, deliberately — 1.3 was the tallest
+     thing on the top face and set the board's silhouette in the side-on beat,
+     which is a lot of prominence for the part that is meant to be invisible. It
+     is still the second tallest after the SoC.
+
+     Placed off the callout, not the other way round: the "Antenna" anchor is at
+     (6.703, 17.324) and has been since rev 5, so the block is centred on that x
+     and pushed back to the edge, and the leader still lands on its top face. */
+  function buildAntenna() {
+    const g = new THREE.Group();
+    const L = 3.2, W = 1.6, T = 1.1;
+    const y = TRIM.y[1] - CUT_IN - 0.1 - W / 2;
+    g.add(slab(roundRect(L, W, 0.12), T, 0.05, CERAMIC));
+    /* 0.5 mm of metallisation at each end, standing a hundredth proud so the
+       wrap catches the key: the same trick the bottom-side chips use, in the same
+       grey and for the same two reasons — at this scale a chip part is read by
+       its terminations and not by its body, and the terminations are tin, not
+       the pads' gold. */
+    for (const d of [-1, 1]) {
+      const e = new THREE.Mesh(new THREE.BoxGeometry(0.5, W + 0.02, T + 0.02), SOLDER);
+      e.position.set(d * (L / 2 - 0.25), 0, 0);
+      g.add(e);
+    }
+    g.position.set(6.703, y, T / 2);
+    return g;
+  }
+
   /* The re-outlined board's routed edge, and the reason it exists is that
      `cull()` leaves a raw cut: trimming triangle by triangle opens the
      substrate's 1.62 mm of laminate to the camera along all four new sides,
@@ -2590,6 +2831,160 @@
     for (const p of PADS) {
       const m = new THREE.Mesh(new THREE.BoxGeometry(p.s, p.s, 0.06), PIN);
       m.position.set(p.x, p.y, 0.03);
+      g.add(m);
+    }
+    return g;
+  }
+
+  /* The underside's second half, because rev 4's export only has a first.
+     Measured, not guessed at: below the substrate, inside the trim window,
+     what survives the cull is the sensor package and its two decoupling caps
+     around x 2..5.6, a small part at the +x edge near y 11, and four pads.
+     Nine parts and change on 250 mm² of board — and this session's BOT
+     footprint took one more of them, since it was a rev 3 part sitting a fifth
+     of the way off the rev 4 outline. So the beat that turns the board over to
+     say "six axes" was showing a sensor alone in the middle of an empty plane.
+
+     A real two-sided 17 × 15 assembly does not look like that. What goes here
+     is what has nowhere else to go once the top face is spoken for by the SoC,
+     the antenna and the four solder pads: the decoupling that has to sit within
+     a millimetre or two of the SoC's rails and therefore goes directly under
+     it, the power train fed by the charge pads at y 3.85, the timing reference,
+     the log memory, and the passives that follow all of those.
+
+     Two rules kept it honest. Every position was checked against the occupancy
+     scan above, so nothing lands on the sensor cluster, the edge part, or the
+     pads; and nothing carries a designator or a marking, which is the point of
+     item 8 — a part is identified by the callouts at the side of the frame, in
+     the vague language those use, and not by anything printed on it.
+
+     Two meshes, not ninety. Each part is a body and two terminations, and at
+     thirty-odd parts that is a hundred draw calls for objects a millimetre
+     across; merged by material it is two, and flex() has two more geometries to
+     bend rather than ninety. That matters for the load budget, not the frame
+     rate — see the notes on item 11. */
+  const BOT_CHIPS = [
+    /* Power in from the charge pads at (2.30, 3.85) and (5.10, 3.85), running
+       +x along the bottom edge: bulk input capacitance, the inductor, then the
+       output side. All in the strip below the sensor cluster, which starts at
+       y 6.6. */
+    { x:  7.10, y:  4.10, l: 1.6, w: 0.8, t: 0.80, r: 0 },
+    { x:  7.10, y:  5.35, l: 1.6, w: 0.8, t: 0.80, r: 0 },
+    { x:  9.40, y:  4.60, l: 2.0, w: 1.6, t: 1.00, r: 0 },
+    { x: 11.50, y:  4.10, l: 1.6, w: 0.8, t: 0.80, r: 0 },
+    { x: 11.50, y:  5.35, l: 1.0, w: 0.5, t: 0.50, r: 0 },
+    { x: 13.30, y:  4.35, l: 1.0, w: 0.5, t: 0.50, r: Math.PI / 2 },
+    /* Rail decoupling, directly under the SoC's 7 × 7 footprint at
+       x 4.75..11.75, y 4.57..11.57 — which is where it belongs and the only
+       place it fits. */
+    { x:  6.60, y:  7.60, l: 1.0, w: 0.5, t: 0.50, r: Math.PI / 2 },
+    { x:  6.60, y:  9.10, l: 1.0, w: 0.5, t: 0.50, r: Math.PI / 2 },
+    { x:  6.60, y: 10.60, l: 1.0, w: 0.5, t: 0.50, r: Math.PI / 2 },
+    { x:  8.20, y:  7.30, l: 0.6, w: 0.3, t: 0.30, r: 0 },
+    { x:  9.60, y:  7.30, l: 0.6, w: 0.3, t: 0.30, r: 0 },
+    { x: 11.90, y:  7.40, l: 1.0, w: 0.5, t: 0.50, r: Math.PI / 2 },
+    { x: 11.90, y:  8.90, l: 1.0, w: 0.5, t: 0.50, r: Math.PI / 2 },
+    { x: 11.90, y: 10.40, l: 1.0, w: 0.5, t: 0.50, r: Math.PI / 2 },
+    { x:  8.40, y: 11.40, l: 1.0, w: 0.5, t: 0.50, r: 0 },
+    { x: 10.20, y: 11.40, l: 1.0, w: 0.5, t: 0.50, r: 0 },
+    /* Timing reference, and the pair of load capacitors that a timing
+       reference is never without. */
+    { x: 14.10, y:  6.90, l: 2.0, w: 1.6, t: 0.55, r: 0 },
+    { x: 14.10, y:  8.40, l: 0.6, w: 0.3, t: 0.30, r: 0 },
+    { x: 15.30, y:  8.40, l: 0.6, w: 0.3, t: 0.30, r: 0 },
+    /* Log memory, in the window the BOT cull cleared, plus its own bypass. */
+    { x: 16.10, y: 14.20, l: 2.0, w: 2.0, t: 0.60, r: 0 },
+    { x: 16.10, y: 12.70, l: 0.6, w: 0.3, t: 0.30, r: 0 },
+    /* The strip along the top edge, above the sensor cluster's y 13.3 and
+       clear of the two pads at y 13.1. */
+    { x:  7.40, y: 14.30, l: 1.0, w: 0.5, t: 0.50, r: 0 },
+    { x:  9.00, y: 14.30, l: 1.0, w: 0.5, t: 0.50, r: 0 },
+    { x: 10.60, y: 14.30, l: 0.6, w: 0.3, t: 0.30, r: 0 },
+    { x: 12.10, y: 14.30, l: 1.0, w: 0.5, t: 0.50, r: 0 },
+    { x:  7.40, y: 16.30, l: 1.6, w: 0.8, t: 0.80, r: 0 },
+    { x:  9.90, y: 16.30, l: 1.0, w: 0.5, t: 0.50, r: 0 },
+    { x: 12.10, y: 16.30, l: 0.6, w: 0.3, t: 0.30, r: 0 },
+    { x: 13.60, y: 12.20, l: 1.0, w: 0.5, t: 0.50, r: Math.PI / 2 },
+    { x: 13.60, y: 10.70, l: 0.6, w: 0.3, t: 0.30, r: Math.PI / 2 }
+  ];
+
+  /* Bare copper, flush: probe points and the odd exposed via. Cheap detail,
+     and the honest kind — a board this dense is drilled far more than it is
+     populated, and a 0.44 mm disc of gold on the underside is a thing every
+     assembly has and nothing has to explain. */
+  const BOT_DOTS = [
+    [15.90, 4.30], [16.40, 5.60], [15.90, 10.10], [14.90, 16.70],
+    [ 6.20, 12.60], [ 8.90, 9.40], [10.80, 9.40], [ 8.90, 5.90],
+    [12.90, 16.90], [ 6.10, 5.90], [13.10, 8.20], [16.60, 16.60]
+  ];
+
+  function buildBottom() {
+    const body = { pos: [], nrm: [] },
+          term = { pos: [], nrm: [] },
+          dots = { pos: [], nrm: [] };
+
+    /* Bake each primitive's placement into its vertices and append it to one
+       of the two buckets. Non-indexed on the way in because that is what
+       cull() and flex() both assume of everything in this group, and a merge
+       of indexed geometries would need the indices renumbered anyway. */
+    const bake = (into, geo, x, y, z, rot) => {
+      if (rot) geo.rotateZ(rot);
+      geo.translate(x, y, z);
+      const g = geo.index ? geo.toNonIndexed() : geo;
+      into.pos.push(...g.attributes.position.array);
+      into.nrm.push(...g.attributes.normal.array);
+      if (g !== geo) g.dispose();
+      geo.dispose();
+    };
+
+    for (const c of BOT_CHIPS) {
+      /* Standing on the underside, so the body's centre is half its own height
+         below it. -BOARD_T and not thin(-1.62): these are built parts and skip
+         thin() entirely, which is what the `built` flag below is for. */
+      const z = -BOARD_T - c.t / 2;
+      bake(body, new THREE.BoxGeometry(c.l, c.w, c.t), c.x, c.y, z, c.r);
+      /* Metallised ends, a fifth of the length each and a hair proud of the
+         body on the other two axes so the wrap is a visible band rather than a
+         coplanar seam. A chip resistor and a chip capacitor are the same shape
+         at this scale and both are read by the terminations.
+
+         SOLDER and not PIN, which is both the accurate choice and the necessary
+         one. Accurate because a chip termination is tin over nickel and the gold
+         on this board is ENIG on the pads only — PIN is named for the pogo pins
+         and is a gold. Necessary because thirty parts' worth of gold is not a
+         detail at the far end of the sequence: with PIN on the ends, the board
+         sitting at the edge of frame during the charger beat, twenty millimetres
+         behind its subject, came back as a bright gold ladder in the corner of a
+         shot about a connector. The grey reads as metal at every beat that is
+         about the board and disappears at the ones that are not, which is what
+         a termination should do. */
+      const e = c.l * 0.20;
+      for (const d of [-1, 1]) {
+        const o = d * (c.l - e) / 2;
+        bake(term, new THREE.BoxGeometry(e, c.w + 0.03, c.t + 0.03),
+             c.x + o * Math.cos(c.r), c.y + o * Math.sin(c.r), z, c.r);
+      }
+    }
+
+    /* The one place the gold belongs down here: exposed copper with a finish on
+       it, which is what a probe point is. Twelve of them against thirty parts
+       is the right ratio for a board whose terminations are grey. */
+    for (const [x, y] of BOT_DOTS) {
+      const g = new THREE.CylinderGeometry(0.22, 0.22, 0.05, 14);
+      g.rotateX(Math.PI / 2);
+      bake(dots, g, x, y, -BOARD_T - 0.024, 0);
+    }
+
+    const mesh = bucket => {
+      const g = new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(bucket.pos, 3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(bucket.nrm, 3));
+      return g;
+    };
+    const g = new THREE.Group();
+    for (const [bucket, mat] of [[body, PACKAGE], [term, SOLDER], [dots, PIN]]) {
+      const m = new THREE.Mesh(mesh(bucket), mat);
+      m.userData.built = true;   // already thin — see flex()
       g.add(m);
     }
     return g;
@@ -3393,24 +3788,85 @@
      no registry. */
   function lead(points, mat, sign) {
     const m = wire(points, mat);
-    LEADS.push({ mesh: m, pts: points, sign });
-    return m;
+    /* A hemisphere's worth of sphere at the cut end, and it is a bug fix rather
+       than a detail. `TubeGeometry` with `closed: false` is an open pipe — not a
+       tube with flat caps, which is what every comment in this file written
+       before rev 15 assumed, but a surface with two holes in it. From outside you
+       are looking at the *inside* of the far wall, unlit and back-faced, so the
+       end of every lead was a dark ellipse that read as a bore.
+
+       Rev 6 and rev 7 both went after that by growing the solder fillet until it
+       swallowed the hole, which is why the fillet ended up 0.54 mm tall on a
+       1.24 mm base and read as a grommet: the mound was sized by what it had to
+       hide rather than by what solder does. Cap the tube instead and the fillet
+       is free to be the low, wide thing it should have been all along.
+
+       A sphere and not a disc, because a disc has the same problem one dimension
+       down — you see it edge-on as a line and three-quarters-on as a flat. A
+       stripped lead's end is a cut, so strictly this is 0.22 mm rounder than the
+       truth, and at 0.44 mm across the difference is a fifth of a pixel at every
+       framing in this sequence. One geometry, shared by all eight caps. */
+    const cap = new THREE.Mesh(CAP_GEOM, mat);
+    const last = points[points.length - 1];
+    cap.position.copy(bendPoint(last[0], last[1], last[2]));
+    LEADS.push({ mesh: m, cap, pts: points, sign });
+    const g = new THREE.Group();
+    g.add(m); g.add(cap);
+    return g;
+  }
+
+  /* 0.22 mm of radius, cut from 0.45 in rev 7 because the leads "look
+     extremly thick". They were: 0.9 mm across the insulation is a 26 AWG
+     hook-up wire, and this assembly's largest part is now a 1.5 mm cell — the
+     leads read as two lengths of garden hose lashed to a postage stamp. The
+     replacement is 0.44 mm overall, which is 32 AWG with a thin PVC wall, and
+     it is what a 30 mAh pouch is actually terminated in.
+
+     WIRE_RAD stays at 0.22. WIRE_SIDES does not: rev 15 takes it from 8 to 16,
+     and the reasoning that put it at 8 was wrong in a way worth writing down
+     rather than quietly fixing. It ran: a facet on an 8-sided 0.44 mm tube is
+     0.17 mm wide, which is under a pixel at every framing here, so 8 is enough.
+     The arithmetic is right and the conclusion does not follow, because a
+     cylinder's facets are not what you see — its *silhouette* is, and the
+     silhouette of an 8-gon is eight straight segments joined at 45°. At the
+     board framings a lead crosses 300 px of screen, so each of those segments is
+     tens of pixels of dead-straight edge on something the eye knows is round,
+     and the corners between them catch the light as bands. That is the whole of
+     "the cable connections ... look mega blocky": not the diameter, not the
+     routing, the polygon count on the outline. 16 sides halve the segment and
+     halve the angle, and the shading term with it — the normal now turns 22.5°
+     per step instead of 45°, which is what stops the tube reading as a strip of
+     flats.
+
+     It is also free. Eight tubes at 64 x 16 is about 16k triangles in a scene
+     whose board is 107k, and the tube is rebuilt only on an explode step.
+
+     TUBE_SEGS 48 to 64 for the same reason applied along the length: these
+     curves turn through most of a right angle in 3 mm at the pads, and 48
+     samples over a 25 mm route left the tightest bends visibly chorded.
+
+     One place to change all of it, because there are five call sites — four
+     lead() builds and reflow()'s rebuild — and a scene where the explode step
+     rebuilds a tube at a different resolution than it was built at is a scene
+     where the wires change thickness when you scroll. See SOLDER_PROFILE, whose
+     radii are tied to WIRE_RAD. */
+  const WIRE_RAD = 0.22, WIRE_SIDES = 16, TUBE_SEGS = 64;
+
+  /* The end cap lead() puts on every tube. Declared here rather than up beside
+     lead() so it can be WIRE_RAD and not a second copy of 0.22 — the function is
+     above but does not run until the assembly step, so there is no TDZ to trip
+     over. 16 x 8 on a 0.44 mm ball is a facet under a twentieth of a millimetre,
+     and unlike the tube this one has no long silhouette to give itself away. */
+  const CAP_GEOM = new THREE.SphereGeometry(WIRE_RAD, 16, 8);
+
+  function wireGeom(points) {
+    return new THREE.TubeGeometry(
+      new THREE.CatmullRomCurve3(points.map(q => bendPoint(q[0], q[1], q[2]))),
+      TUBE_SEGS, WIRE_RAD, WIRE_SIDES, false);
   }
 
   function wire(points, mat) {
-    const curve = new THREE.CatmullRomCurve3(
-      points.map(q => bendPoint(q[0], q[1], q[2])));
-    /* 0.22 mm of radius, cut from 0.45 in rev 7 because the leads "look
-       extremly thick". They were: 0.9 mm across the insulation is a 26 AWG
-       hook-up wire, and this assembly's largest part is now a 1.5 mm cell — the
-       leads read as two lengths of garden hose lashed to a postage stamp. The
-       replacement is 0.44 mm overall, which is 32 AWG with a thin PVC wall, and
-       it is what a 30 mAh pouch is actually terminated in.
-       The radial segment count comes down with it: 10 sides on a 0.9 mm tube
-       gave a facet 0.28 mm wide, worth smoothing, and on a 0.44 mm tube 8 sides
-       give one 0.17 mm wide, which at every distance this scene uses is under a
-       pixel. See SOLDER_PROFILE, whose radii had to come down with these. */
-    return new THREE.Mesh(new THREE.TubeGeometry(curve, 48, 0.22, 8, false), mat);
+    return new THREE.Mesh(wireGeom(points), mat);
   }
 
   /* The joint at the end of one, added in rev 6 because the leads "don't look
@@ -3430,40 +3886,104 @@
      bulb standing 0.7 mm proud on its own, and the render is unambiguous — two
      dark bulbs on the gold, which is a bead threaded onto a wire and not a joint.
 
-     So: a lathe about +Y, and +Y after seat() at y = BAND.cy is the radial
-     direction, which is the board's normal. `r` is the radius at height `z`, and
-     the profile is concave — wide and shallow at the copper, narrowing as it
-     climbs. That concavity is the whole reason a real joint reads as liquid that
-     froze; a straight-sided cone reads as a blob of putty.
+     Rev 7 got the intent right and the axis wrong, and rev 15 is mostly the
+     correction. Rev 7's note reads "a lathe about +Y, and +Y after seat() at
+     y = BAND.cy is the radial direction, which is the board's normal". The first
+     clause is true — LatheGeometry revolves about local +Y — and the second is
+     false. Work it out from seat(): a child at (x, BAND.cy, 0) is offset from the
+     band's axis at (·, BAND.cy, BAND.cz = -24) by (Δy, Δz) = (0, +24), so the
+     radial direction there is +Z and +Y is *tangential* — the arc direction, the
+     board's own y.
 
-     The base at 0.62 is set by the pad, not by the wire: 1.24 mm across covers
-     four fifths of the 1.6 mm BT1 pads and nearly all of the 1.4 mm J1 ones, so
-     the joint's footprint is the pad's footprint. The top at 0.245 is set by the
-     wire — barely over the tube's 0.22, so the lead emerges from solder rather
-     than from a hole in it. Height 0.54, which is a third of the base: solder
-     surface tension on a wetted pad gives a low dome, and anything taller is a
-     cold joint or a photograph of one.
+     So every one of these joints was revolved about an axis lying in the board's
+     surface, which makes the fillet a cone on its side with its lower half sunk
+     under the mask. What stands proud of the copper is the top half of that cone:
+     a bell with a dead-straight bottom edge where the board cuts it, a hard
+     circular lip 1.24 mm across standing perpendicular to the pad, and the lead
+     entering not the side of a mound but the mouth of a tunnel. The rendered
+     result is a grey rubber grommet with a wire threaded through it, and it is
+     the single most unconvincing object in the board act. The axis also put the
+     mound's base ring *at* padY with the whole 0.54 mm of it growing off toward
+     +y, so it was not even centred on the land it was meant to be wetting.
 
-     The lead itself is buried here, and deliberately. Its last two control points
-     lie level at z = 0.28 across the pad, so a mound reaching 0.54 swallows the
-     cut end whole — which is what a joint does, and it means the tube's flat end
-     cap no longer has to be hidden by being turned side-on.
+     Rev 15 rotates the mesh by +90° about X, which maps local +Y onto world +Z —
+     the board's normal, which is what rev 7's sentence meant — and maps local +Z
+     onto world -Y, which is the arc direction all four of these leads approach
+     along and therefore exactly the axis the elongation below wants. `r` is now
+     genuinely a radius at a height above the copper, the profile is concave, and
+     the concavity is the whole reason a real joint reads as liquid that froze: a
+     straight-sided cone reads as a blob of putty.
 
      `sign` is now unused as an orientation input, because a surface of revolution
      about the board normal has no handedness. It is kept in the signature and
      ignored, with the callers left as they were: the direction each lead
      approaches from is still a real fact about the assembly, and the next person
-     to want an asymmetric fillet will need it. */
+     to want an asymmetric fillet will need it.
+
+     Two numbers change with the axis, and both of them were wrong on their own
+     terms as well.
+
+     The base was 0.62, chosen as four fifths of the 1.6 mm BT1 land on the idea
+     that a fillet should be a little smaller than the pad. That is backwards.
+     Solder wets the whole pad and stops at the mask, so the fillet's footprint
+     *is* the land, and a mound that stops short leaves a ring of bare gold around
+     it — which is precisely how the render read, a bung sitting on a pad rather
+     than a pad with solder on it. 0.72 is 1.44 mm across, which is just inside the
+     1.6 mm BT1 lands and just over the 1.4 mm J1 ones — the pad plus a whisker,
+     which is where solder stops because the mask stops it.
+
+     The height goes the other way, 0.54 down to 0.34, and it can only go that way
+     because lead() now caps its tubes. Every previous version of this number was
+     set by the hole in the end of the tube: the lead's axis is at z = 0.28 with a
+     radius of 0.22, so its crown is at 0.50, and a mound that was the only thing
+     hiding the open end had to reach past 0.50 whatever that did to its shape.
+     With a sphere on the end of the tube there is nothing left to hide, and the
+     fillet can be sized by the physics instead — solder surface tension on a
+     wetted land gives a low dome, and 0.34 on a 1.44 mm footprint is what a
+     0.44 mm lead on a 1.5 mm pad actually pulls up.
+
+     The consequence is the read that was missing through three revisions: at 0.34
+     the mound comes up to just past the lead's own axis, so the top half of the
+     lead stays visible lying *in* the solder rather than emerging from a summit
+     or a throat. You can see what is soldered to what.
+
+     The profile closes at r = 0 rather than at a crown radius, and that is not
+     cosmetic either. LatheGeometry is an open surface — it has no cap at
+     top or bottom — so a profile ending at r = 0.26 leaves a 0.52 mm annulus of
+     nothing at the summit, and the render showed exactly that: a grey blob with a
+     ring of gold visible down a hole in the top of it. Ending at zero closes the
+     dome. The open bottom is fine and stays open, because it is face down on the
+     mask.
+
+     SOLDER_ELONG is the last of it: 1.4x in local z, which the rotation maps onto
+     the board's arc direction, which is the direction all four of these leads
+     approach from. So the joint is an oval 2.02 mm along the lead and 1.44 mm
+     across it, highest at the terminus and falling away as it goes back — a
+     meniscus that has wicked along a wire rather than a dot centred on a pad. */
   const SOLDER_PROFILE = [
-    [0.620, 0.00], [0.585, 0.06], [0.505, 0.14], [0.410, 0.24],
-    [0.330, 0.34], [0.275, 0.44], [0.245, 0.54]
+    [0.720, 0.00], [0.700, 0.05], [0.650, 0.11], [0.560, 0.18],
+    [0.440, 0.25], [0.280, 0.31], [0.000, 0.34]
   ];
+  const SOLDER_ELONG = 1.40;
 
   function solderJoint(x, padY, sign) {
     const m = new THREE.Mesh(
+      /* 32 rather than 24. The lathe is 1.56 mm wide and these joints are
+         within a couple of millimetres of the camera in the board act, where 24
+         sides put a visible corner on the mound's outline for the same reason 8
+         did on the tube. */
       new THREE.LatheGeometry(
-        SOLDER_PROFILE.map(([r, z]) => new THREE.Vector2(r, z)), 24),
+        SOLDER_PROFILE.map(([r, z]) => new THREE.Vector2(r, z)), 32),
       SOLDER);
+    /* The axis correction. Rx(+90°) maps local +Y to world +Z, so the lathe now
+       revolves about the board's normal, and maps local +Z to world -Y, so the
+       elongation lands on the arc direction. Order matters and three.js gives the
+       right one for free: the matrix is T·R·S, so the scale is applied in the
+       mesh's own axes and then rotated with them. Scaling after the rotation
+       would stretch the mound along the board's *normal* and give a 0.78 mm
+       spike. */
+    m.rotation.x = Math.PI / 2;
+    m.scale.set(1, 1, SOLDER_ELONG);
     /* Authored at the arc origin and seated, like every other rigid part: at
        y = BAND.cy a point's distance from the band's axis is z + 24, which is
        precisely the radius bendPoint() would have given it, so seat() and
@@ -3823,9 +4343,12 @@
       /* thin() rewrites the export's coordinates, and the substrate and its
          routed edge are not the export's — they were built at BOARD_T on
          purpose, so passing them through would take 0.4 mm down to 0.1 and
-         leave the board thinner than the pads standing on it. Everything else
-         built into this group sits at z >= 0, where thin() is the identity, so
-         the flag is only needed on these two. */
+         leave the board thinner than the pads standing on it. The same applies
+         to the bottom-side parts buildBottom() adds, which are placed against
+         the rebuilt substrate's underside at -0.4 rather than the export's at
+         -1.62: run through thin() they would be scaled by a quarter and end up
+         buried in the board they are standing on. Everything else built into
+         this group sits at z >= 0, where thin() is the identity. */
       const asBuilt = m.userData.built === true;
       const v = new Float64Array(24);
       const at = (i, o) => {
@@ -4511,10 +5034,13 @@
 
   new MTLLoader().setPath('./model/').load('pcb.mtl', materials => {
     materials.preload();
+    mark('mtl');
     new OBJLoader().setMaterials(materials).setPath('./model/').load('pcb.obj', obj => {
+      mark('obj');
       /* Measure first: upgrade() needs to know which materials are the
          board before it can decide what any of them should look like. */
       const stats = measure(obj);
+      mark('measure');
 
       obj.traverse(child => {
         if (!child.isMesh) return;
@@ -4541,8 +5067,55 @@
          false of every primitive in three.js. Hand it a BoxGeometry and it
          reads the index-less vertex list as triangles and hands back
          confetti. */
+      /* Paint the package markings out, now that every material exists and
+         each host can be found by name. Colour, both PBR terms and the tint
+         gain, because a marking lit differently from the face it sits on is
+         still a marking — a matte inlay in a satin body reads as text even
+         with the hue matched. See MARKINGS. */
+      Object.entries(MARKINGS).forEach(([ink, host]) => {
+        const a = upgraded.get(ink), b = upgraded.get(host);
+        if (!a || !b) return;
+        a.color.copy(b.color);
+        a.metalness = b.metalness;
+        a.roughness = b.roughness;
+        a.envMapIntensity = b.envMapIntensity;
+        a.userData.gain = b.userData.gain;
+      });
+
+      mark('upgrade');
       const gone = cull(obj);
       culled = gone;
+      mark('cull');
+
+      /* Recompute every normal the export shipped, and this is the single
+         largest lever on "it all looks really cartoony".
+
+         The exporter's normals are not unit length. `vn 0 0 0.9499909736217415`
+         is a real line from pcb.obj and it is one of the better ones; some are
+         effectively zero. A shading normal that is 0.95 long is a surface that
+         reflects 95% of what it should at every angle, so the whole board was
+         being lit through a per-vertex gain of somewhere between 0 and 1 that
+         has nothing to do with its geometry — which is exactly the flat,
+         posterised, unphysical look, and it is why a sub-pixel sliver renders as
+         a bright hairline instead of as nothing.
+
+         Non-indexed, so this is per-face: three vertices of a triangle get that
+         triangle's own normal and nothing is averaged across an edge. That is
+         the right answer for this subject rather than a compromise. Everything
+         in the export is either a machined board or a moulded package, so every
+         edge on it is a real crease, and smoothing across a crease is what makes
+         a chip look inflated. The one thing it costs is faceting on the fillets,
+         which are tessellated fine enough here that at 28 px/mm the facets land
+         under a pixel.
+
+         After cull() and not before: cull() rewrites every geometry it walks, so
+         normals computed above this line would be thrown away, and the two
+         hundred thousand it would compute for triangles about to be deleted are
+         two hundred thousand nobody needs. */
+      obj.traverse(child => {
+        if (child.isMesh) child.geometry.computeVertexNormals();
+      });
+      mark('normals');
 
       /* The rebuilt substrate, in before the UVs rather than with the other
          stand-ins after them, and that ordering is the whole trick. planarUV()
@@ -4560,6 +5133,7 @@
       obj.add(subGroup);
       subGroup.add(buildSubstrate());
       subGroup.add(buildOutline());
+      mark('substrate');
 
       /* Copper before the stand-ins go in, and before the recentring. Both
          the UVs and the routing are in the export's own corner-origin
@@ -4592,7 +5166,9 @@
           a.x > TRIM.x[0] && a.x < TRIM.x[1] &&
           a.y > TRIM.y[0] && a.y < TRIM.y[1]);
         planarUV(obj, bounds);
+        mark('uv');
         const maps = copperMaps(pads, bounds);
+        mark('copper');
         if (face && maps) {
           face.normalMap = maps.normal;
           /* Low, and low on purpose. The step being described is about a
@@ -4626,14 +5202,21 @@
       obj.add(stand);
       stand.add(buildU1());
       stand.add(buildPads());
-      /* No stand-ins for U2 and U7 any more: rev 4 deletes both parts, which is
-         what let the board come down to 17 × 15 in the first place. `REBUILD`
-         stays, and stays named that, because its two rectangles are still doing
-         a job — clearing the footprints out of the export, which is the only
-         copy of rev 3 there is. What has gone is the second half of the trade,
-         the primitives that stood where the crates were. `gone` is still
-         collected so `?debug=1` can print the boxes and so a future part
-         landing in one of those windows has somewhere to be built. */
+      stand.add(buildAntenna());
+      stand.add(buildBottom());
+      mark('standins');
+      /* No stand-ins for U2 and U7: rev 4 deletes both parts, which is what let
+         the board come down to 17 × 15 in the first place, and nothing stands
+         where those two crates were. `REBUILD` keeps its name because two of
+         its four windows are still only doing the clearing half of the job —
+         taking rev 3's connectors out of the export, which is the only copy of
+         rev 3 there is.
+
+         The other two do both halves, which is what the name always meant.
+         AE1's window is cleared and buildAntenna() puts a clean block back in
+         it; BOT's is cleared and stays empty, since what was there was a part
+         a fifth of the way off the board. `gone` is still collected so
+         `?debug=1` can print the boxes. */
 
       /* Thin the substrate to 0.4 mm and wrap the whole board round the bore.
          Here, last of everything that is written in the export's own flat
@@ -4643,6 +5226,7 @@
          the coordinates mean. Everything upstream of this line still gets to
          reason about the board as a flat rectangle. */
       flex(obj);
+      mark('flex');
 
       /* Recentre on the bounding box, so rotation happens about the
          middle of the board rather than about the export's origin
@@ -4955,7 +5539,9 @@
          nothing about the existing sequence's framing has changed. It goes in
          the assembly group for the centre shift, same as everything else that
          is written in the board's own corner-origin millimetres. */
+      mark('assembly');
       assembly.add(buildBand());
+      mark('band');
 
       /* Sixteen points on the fabric — two rings of eight at the hems — which
          is a tight hull for a cylinder in any pose. The assembly's own corners
@@ -4992,6 +5578,8 @@
       document.getElementById('loader').classList.add('gone');
       resize();
       draw();
+      mark('firstdraw');
+      perfDump();
       /* After the first draw, not before. The host fades the frame in on
          this, and the point of the fade is to hide the load — announcing
          readiness while the canvas is still empty would reveal exactly
@@ -5042,8 +5630,31 @@
        leg's -0.55 can be retuned now without silently taking the flat beat off
        flat with it, which is how it drifted in the first place. */
     const FLAT = -Math.PI / 2;
-    const tilt = mix(0, -0.55, ease(seg(p, 0.00, 0.30)))
-               + mix(0, FLAT + 0.55, easeS(seg(p, 0.28, 0.52)))  // to -90°, edge on
+    /* How far off square the top face is held while it is being read, which is
+       the whole of "slightly more clear angles throughout the scroll animation
+       where we can have clearer views".
+
+       The six top-face callouts are open across board-act 0.00 to 0.28, and
+       0.28 is exactly where the flip to edge-on starts — so the reading beat
+       already has the whole of the first leg to itself and none of the second,
+       which is the part of this that was right. What was oblique is the leg
+       itself: it ran to -0.55 rad and +0.20, so by the time the last callout
+       opens the board is 31° over and 11° round, and six leaders are being read
+       off a face at 0.79 of its own area with the near edge a third larger than
+       the far one. 23° and 8° still reads as a solid seen in space — this is not
+       a plan view — and gives back most of the foreshortening.
+
+       Both are named because both have to be undone exactly by the next leg,
+       and hand-tuning that pair is how the edge-on beat came off flat once
+       already. Note that neither number can reach any later beat: legs one and
+       two of tilt sum to FLAT and legs one and two of spin sum to zero, whatever
+       these are set to, so the edge-on landing, the tumble to the underside and
+       the hand-over to the cell act are all algebraically untouched. */
+    const READ_TILT = -0.40;
+    const READ_SPIN =  0.14;
+
+    const tilt = mix(0, READ_TILT, ease(seg(p, 0.00, 0.30)))
+               + mix(0, FLAT - READ_TILT, easeS(seg(p, 0.28, 0.52)))  // to -90°, edge on
                /* Past flat, not up to it. The environment is a room, so it
                   is brighter overhead than underfoot, and a face left
                   tilted downward at the end of the flip picks up the dark
@@ -5098,8 +5709,8 @@
        where the charger act expected it. With the middle at zero, the two back
        legs just carry spin to -0.30, and the charger act now reads pose(1)
        instead of being told a number — see its hand-over. */
-    const spin = mix(-0.22, 0.20, ease(seg(p, 0.00, 0.30)))
-               + mix(0, -0.20, easeS(seg(p, 0.28, 0.52)))   // dead level, exactly
+    const spin = mix(-0.22, READ_SPIN, ease(seg(p, 0.00, 0.30)))
+               + mix(0, -READ_SPIN, easeS(seg(p, 0.28, 0.52)))   // dead level, exactly
                + mix(0, -0.22, easeS(seg(p, 0.56, 0.92)))
                + mix(0, -0.08, ease(seg(p, 0.78, 1.00)));
     /* A fraction of the distance that just frames the board in its current
@@ -5405,12 +6016,21 @@
       return bendPoint(q[0], q[1] + da * BEND_R * w, q[2]);
     });
     l.mesh.geometry.dispose();
+    /* Same three constants wireGeom() builds with. It cannot call wireGeom()
+       itself, because the whole point of this function is a different point
+       transform — the arc offset goes in before bendPoint(), not after. */
     l.mesh.geometry = new THREE.TubeGeometry(
-      new THREE.CatmullRomCurve3(pts), 48, 0.22, 8, false);
+      new THREE.CatmullRomCurve3(pts), TUBE_SEGS, WIRE_RAD, WIRE_SIDES, false);
+    /* The cap follows the last control point. In practice it never moves — the
+       taper is pow(1 - i/(n-1), 1.6), which is exactly 0 at i = n-1, because the
+       whole point of the taper is that a soldered end stays soldered. Setting it
+       anyway costs nothing and means the cap cannot be left behind if anyone ever
+       changes the weighting. */
+    l.cap.position.copy(pts[pts.length - 1]);
   }
 
   /* d in 0..1. Guarded on 0.002 because this rebuilds four tube geometries — at
-     48 x 8 that is 3,456 vertices a call, which is cheap once and not something
+     64 x 16 that is 17,680 vertices a call, which is cheap once and not something
      to do on every animation frame of a scroll that has stopped moving. 0.002
      of EX is 0.011 mm of arc, an order of magnitude under a pixel at every
      framing in this sequence. */
@@ -5488,9 +6108,22 @@
      to where they went — a comment saying which file still holds them is the
      same leak one hop further out.
 
-     The designators stay, because they are printed on the silkscreen of any
-     board anyone can photograph and they are what makes the labels feel like
-     they came off a drawing. */
+     The designators used to stay, on the grounds that they are printed on the
+     silkscreen of any board anyone can photograph and that they are what makes a
+     label feel as though it came off a drawing. Rev 15 drops them from the
+     screen — "remove all lettering form the pcb it should just be the components
+     we can specify specific tech specs" — and the reasoning that kept them was
+     answering a question nobody asked. "U1" tells a viewer nothing. It is a
+     reference into a schematic they do not have, and eight of them across a
+     sequence is eight little codes competing for attention with the eight phrases
+     that actually say what the parts do. What made the callouts feel like a
+     drawing was never the designator; it is the dot, the hairline leader and the
+     rule under the text, all of which are still here.
+
+     `key` stays in this table and is no longer rendered. It is the cross-
+     reference that lets a row be checked against the pick-and-place, which is the
+     whole reason the table is trustworthy, and a field that exists for the person
+     maintaining the file is not lettering on the board. See annoEls below. */
   const ANNOS = [
     { x:  8.252, y:  8.071, z:  0.9, key: 'U1',        val: 'Wireless processor',    from: 0.04, to: 0.28 },
     { x:  6.703, y: 17.324, z:  1.0, key: 'AE1',       val: 'Antenna',               from: 0.09, to: 0.28 },
@@ -5590,10 +6223,12 @@
   const annoEls = ANNOS.map(a => {
     const el = document.createElement('div');
     el.className = a.low ? 'anno low' : 'anno';
+    /* `a.key` is deliberately not in here. It is data about the board, kept so
+       the table can be checked against the pick-and-place, and it is no longer
+       type on the screen. */
     el.innerHTML = `<span class="anno-dot"></span>
       <span class="anno-leader"></span>
       <span class="anno-body">
-        <span class="anno-key">${a.key}</span>
         <span class="anno-val">${a.val}</span>
       </span>`;
     frameEl.appendChild(el);
