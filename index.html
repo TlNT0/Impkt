@@ -148,14 +148,66 @@
       display: grid; grid-template-columns: 1fr 1fr;
       gap: 64px; max-width: 900px; margin-top: 56px;
     }
-    /* No card, no border, no shadow — the portrait and the type carry it.
-       8px rounded squares rather than avatar circles. */
+    /* No card and no shadow — the portrait and the type carry it. 8px rounded
+       squares rather than avatar circles.
+
+       There is a border now, and it is the one place on the site where red is
+       not a flat fill. The ring is a gradient rather than a colour because a
+       2px line of solid --red round a photograph reads as a sticker: the eye
+       has nothing to tell it the rim has a surface. What says glass is that
+       the sheen *travels* — near-white where the light lands at the top left,
+       through --red-lift and --red, down to --red-deep on the shaded side and
+       back up to a faint bounce at the bottom right. Five stops, one light
+       source, and it is the same 150° the rest of the page's glass is lit from.
+
+       Drawn with the transparent-border + mask-composite technique rather than
+       as an inset shadow, and that is not a stylistic preference: an inset
+       box-shadow can only be one colour, so a gradient ring is the one thing it
+       cannot do. The border box carries the gradient, the padding box is masked
+       out of it, and what is left is the 2.5px frame. `xor` is Safari's spelling
+       of `exclude`; both are declared and the unprefixed one wins where it is
+       understood.
+
+       The bloom is on the photo and not on the ring, because a glow needs
+       something opaque to come off — put it on the masked pseudo-element and it
+       gets masked away with everything else inside the frame. */
     .founder-photo {
+      position: relative;
       width: 128px; height: 128px;
       border-radius: var(--radius-card);
       background-color: var(--pebble);
       background-size: cover; background-position: center;
       margin-bottom: 24px;
+      box-shadow: 0 1px 2px rgba(196, 30, 58, 0.10),
+                  0 8px 22px rgba(196, 30, 58, 0.11);
+    }
+    .founder-photo::after {
+      content: ''; position: absolute; inset: 0;
+      border-radius: inherit;
+      border: 2.5px solid transparent;
+      background: linear-gradient(150deg,
+                    rgba(255, 255, 255, 0.94)  0%,
+                    var(--red-lift)           24%,
+                    var(--red)                50%,
+                    var(--red-deep)           74%,
+                    rgba(255, 255, 255, 0.58) 100%) border-box;
+      -webkit-mask: linear-gradient(#000 0 0) padding-box,
+                    linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+              mask: linear-gradient(#000 0 0) padding-box,
+                    linear-gradient(#000 0 0);
+              mask-composite: exclude;
+      pointer-events: none;
+    }
+    /* Without the composite there is no ring at all — the pseudo-element would
+       be a red rectangle over the face. A flat rim is the right thing to lose
+       the gradient to. */
+    @supports not ((mask-composite: exclude) or (-webkit-mask-composite: xor)) {
+      .founder-photo::after {
+        border: none;
+        background: none;
+        box-shadow: inset 0 0 0 2.5px var(--red);
+      }
     }
     .founder-name {
       font-size: var(--text-subheading); font-weight: 600;

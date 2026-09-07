@@ -66,52 +66,58 @@
        white text on it, so --red works on either surface. */
 
     /* ── STAT STACK ─────────────────────────────────────────── */
-    /* Five hardware facts as centred display lines in the accent, directly
-       after the sequence that just showed you the hardware they describe.
-       Nothing here is a new claim — every line is already in the specs
-       table further down; this is the same information at the size the
-       thing deserves, and the table is the detail behind it.
+    /* Five hardware facts in the accent, directly after the sequence that just
+       showed you the hardware they describe. Nothing here is a new claim —
+       every line is already in the specs table further down; this is the same
+       information at the size the thing deserves, and the table is the detail
+       behind it.
 
        Type in the accent is a deliberate exception to the one rule this
        site has kept everywhere else ("red is a fill, never type"). It is
        allowed here and nowhere else, on the grounds that these lines are
        the accent carrying meaning rather than decorating a surface. The
        value is --red-lift and not --red, because --red on Carbon is
-       2.86:1 — see the token's own note. */
-    .stats {
-      background: var(--carbon); color: var(--white);
-      padding: 136px 40px 144px;
-      text-align: center;
-    }
-    .stats .section-label { color: rgba(255,255,255,0.42); }
-    /* A px measure and not a ch one. `ch` on the <ul> resolves against the
-       <ul>'s own 17px body size, not against the 56px the items are set at,
-       so 26ch came out as 220px and every line broke after two words. 820px
-       is the width of the longest line ("0.4 mm flexible substrate", 25
-       characters at about 0.52em) with a little to spare, so all five hold
-       one line each on a desktop and wrap only once the clamp has already
-       brought the size down. */
-    .stats-list { list-style: none; margin: 40px auto 0; max-width: 820px; }
+       2.86:1 — see the token's own note.
+
+       This was a full-width centred section of its own until rev 15. It is now
+       Avalon's right-hand column, so every rule that centred a block against
+       the viewport has become a left-aligned rule inside a column, and the type
+       has come down from 56px to 30px.
+
+       The type coming down is the real cost of the move and it is not just a
+       matter of fitting. Two lists side by side, one at 56px and one at 29px,
+       do not read as a pair — they read as a heading with a caption stranded
+       beside it. Peers have to be set as peers. 30px is also, as it happens,
+       about the largest size at which "0.4 mm flexible substrate" still holds
+       one line in half of a 1200px measure, so the two constraints agree and no
+       copy had to change.
+
+       What separates the two lists now is colour rather than size: Avalon's is
+       a clipped white-to-red gradient because it is the exclusive claim, these
+       are hardware facts and they stay a flat --red-lift. At 30px and 600 they
+       are still large text and clear the 3:1 floor at 3.82. */
+    .stats-col .section-label { color: rgba(255,255,255,0.42); }
+    .stats-list { list-style: none; margin: 36px 0 0; }
     .stats-list li {
-      font-size: clamp(28px, 4.2vw, var(--text-display));
+      font-size: clamp(22px, 2.4vw, 30px);
       font-weight: 600;
-      letter-spacing: var(--tracking-display);
-      line-height: 1.14;
+      letter-spacing: -0.015em;
+      line-height: 1.22;
       color: var(--red-lift);
       /* Each line reveals on its own, which is what makes it read as a list
          being counted off rather than a paragraph arriving. */
-      opacity: 0; transform: translateY(16px);
+      opacity: 0; transform: translateY(14px);
       transition: opacity 0.7s var(--ease-smooth), transform 0.7s var(--ease-smooth);
     }
-    .stats-list li + li { margin-top: 6px; }
+    .stats-list li + li { margin-top: 4px; }
     .stats-list li.visible { opacity: 1; transform: none; }
     .stats-note {
-      margin: 48px auto 0; max-width: 44ch;
+      margin: 40px 0 0; max-width: 40ch;
       font-size: var(--text-body-sm); font-weight: 300;
       letter-spacing: var(--tracking-body);
       color: rgba(255,255,255,0.56);
     }
-    .stats-actions { margin-top: 40px; }
+    .stats-actions { margin-top: 36px; }
 
     /* ── AVALON ─────────────────────────────────────────────── */
     /* The brief is an Apple silicon block: "add something like this but instead
@@ -134,39 +140,66 @@
        3. The lines under it are the accent at a size and weight that is almost
           display. They are not body copy that happens to be coloured.
 
-       Placed between the sequence and the numbers, which is the page's dark
-       chapter: the object, then the intelligence in it, then the figures, and
-       the CTA at the foot of the numbers is still the way out of the dark run.
-       Two columns rather than the reference's single stack, deliberately — a
-       centred stack directly above the centred red stats list would read as one
-       block with two lists in it, and the numbers are hardware facts, not
-       Avalon's. */
+       This is the page's dark chapter, and since rev 15 it is one section
+       rather than two: the intelligence on the left, the figures on the right,
+       and the CTA at the foot of the figures still the way out of the dark run.
+       Asked for directly — "our avalon software should be side by side with the
+       tech specs of the band which are currently below".
+
+       The columns are 1fr and 1fr, not the 360/560 split this had when the left
+       column was only a chip tile. Two lists of five lines each are the same
+       kind of object and an unequal split would rank one of them. The tile moves
+       inside the left column, above its own copy, which is where the Apple
+       reference had it in the first place.
+
+       What made the old two-section arrangement necessary was that both lists
+       were centred: a centred stack directly above a centred red list read as
+       one block with two lists in it. Side by side and left-aligned against a
+       shared hairline, the ownership is unambiguous — the numbers are hardware
+       facts, not Avalon's, and the rule between them says so. */
     .avalon {
       background: var(--carbon); color: var(--white);
-      /* 104 at the foot rather than 136. Avalon and the numbers are both
-         Carbon with no rule between them, so their two paddings read as one
-         gap: 136 + 136 was 272px of empty dark between the last Avalon line and
-         "In numbers", which at that value reads as a missing section rather
-         than as a chapter break. */
-      padding: 128px 40px 104px;
+      /* Symmetric now. The 104 at the foot existed because the numbers section
+         followed on the same Carbon with no rule between, so the two paddings
+         summed into one 272px void; there is no second section to abut any
+         more. */
+      padding: 120px 40px 128px;
       display: grid;
-      /* Both tracks bounded, and the second one especially. With `1fr` on the
-         copy the grid always filled the 1200px cap, so at 1440 the block sat
-         360 + 80 + 760 with the text using about 470 of its 760 — a composition
-         weighted hard to the left with an empty third on the right. Bounded, the
-         whole thing is 1000px wide and `justify-content: center` actually has
-         something to centre. */
-      grid-template-columns: minmax(260px, 360px) minmax(0, 560px);
-      gap: 80px; align-items: center;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      /* No `gap`, because the gap is the two columns' own padding either side
+         of the divider — a gap plus a border-left would put the rule hard
+         against the right column's text instead of between the two. */
+      gap: 0;
+      /* `start`, not the `center` this had as a tile beside a paragraph.
+         Centring two columns of unequal height floats both off the top of the
+         section and strands the shorter one in the middle of its own space. The
+         two are within a line or so of each other and the only thing that reads
+         correctly is both starting at the same baseline. */
+      align-items: start;
       justify-content: center;
       max-width: 1200px; margin: 0 auto;
+    }
+    .avalon-copy { padding-right: 72px; }
+    /* The divider is a border on the second column rather than a pseudo-element
+       on the section, so it is exactly as tall as the taller column and
+       disappears by itself when the grid collapses to one. */
+    .stats-col {
+      padding-left: 72px;
+      border-left: 1px solid rgba(255,255,255,0.10);
     }
     /* The section's own surface has to be Carbon edge to edge while its
        contents are capped — so the cap is on this grid and the colour comes
        from a wrapper. */
     .avalon-band { background: var(--carbon); }
 
-    .avalon-chip-wrap { position: relative; }
+    /* Capped, and capped in px. As a grid column of its own the tile took its
+       width from the track; stacked inside the copy it would otherwise run the
+       full measure, and a 560px die is a poster rather than a part. 260 is the
+       width it was designed at. */
+    .avalon-chip-wrap {
+      position: relative;
+      width: 260px; max-width: 100%;
+    }
     /* The halo. A large, heavily blurred red radial *behind* the tile, at an
        opacity where it is a change in the black rather than a visible shape.
        This is the whole of "exclusive": the reference's tile sits in a faint
@@ -262,6 +295,7 @@
     }
 
     .avalon-copy .section-label { color: rgba(255,255,255,0.42); }
+    .avalon-copy .avalon-chip-wrap { margin-bottom: 44px; }
     .avalon-h { margin-top: 6px; }
     .avalon-sub {
       margin-top: 24px; max-width: 46ch;
@@ -599,16 +633,22 @@
          the ratio to the desktop budget it had before the coda. */
       .teardown { height: 380svh; }
       .teardown-copy { left: 24px; bottom: 32px; }
-      .stats { padding: 96px 24px 104px; }
       /* One column, and the tile capped rather than left to fill the width: a
-         360px die is a graphic and a 700px one is a wall. */
+         360px die is a graphic and a 700px one is a wall. Both columns lose
+         their side padding and the divider goes with them — a horizontal rule
+         between the stacks would be doing the job the vertical one did, but the
+         56px gap already reads as a break and a second rule inside a Carbon
+         run is noise. */
       .avalon {
-        grid-template-columns: 1fr; gap: 56px;
+        grid-template-columns: 1fr; gap: 64px;
         padding: 96px 24px 104px;
       }
       .avalon-chip-wrap { width: 100%; max-width: 300px; margin: 0 auto; }
-      .avalon-copy { text-align: center; }
-      .avalon-sub, .avalon-list { margin-left: auto; margin-right: auto; }
+      .avalon-copy { text-align: center; padding-right: 0; }
+      .stats-col   { text-align: center; padding-left: 0; border-left: none; }
+      .avalon-sub, .avalon-list,
+      .stats-list, .stats-note { margin-left: auto; margin-right: auto; }
+      .stats-list { max-width: 480px; }
       .demo-card  { padding: 28px; }
       .demo-grid  { grid-template-columns: 1fr; gap: 36px; }
       .split-section { grid-template-columns: 1fr; }
@@ -715,20 +755,21 @@
        benchmark behind "most advanced" or "per milliwatt" and none is quoted,
        which is the difference between a claim and a number. -->
   <div class="avalon-band">
-  <section class="avalon" id="avalon" aria-label="Avalon firmware">
-
-    <div class="avalon-chip-wrap rf">
-      <div class="avalon-bloom" aria-hidden="true"></div>
-      <div class="avalon-chip">
-        <div class="avalon-chip-face">
-          <svg class="bolt-mark avalon-bolt" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>
-          <span class="avalon-chip-name">Avalon</span>
-          <span class="avalon-chip-sub">Firmware</span>
-        </div>
-      </div>
-    </div>
+  <section class="avalon" id="avalon" aria-label="Avalon firmware and the hardware in numbers">
 
     <div class="avalon-copy">
+
+      <div class="avalon-chip-wrap rf">
+        <div class="avalon-bloom" aria-hidden="true"></div>
+        <div class="avalon-chip">
+          <div class="avalon-chip-face">
+            <svg class="bolt-mark avalon-bolt" viewBox="0 0 48 44" aria-hidden="true"><polygon points="30.8,0 47.2,0 24.6,22.5 8.2,22.5"/><polygon points="22.6,21.1 39,21.1 16.4,43.6 0,43.6"/></svg>
+            <span class="avalon-chip-name">Avalon</span>
+            <span class="avalon-chip-sub">Firmware</span>
+          </div>
+        </div>
+      </div>
+
       <span class="section-label rf">On the band</span>
 
       <h2 class="h-heading">
@@ -756,26 +797,30 @@
       </ul>
     </div>
 
+    <!-- The numbers, which were a full-width section of their own below this
+         one until rev 15. Still a <section> and still carrying id="numbers", so
+         the landmark and any deep link survive the move; it is only its box that
+         changed. -->
+    <section class="stats-col" id="numbers" aria-label="The hardware in numbers">
+      <span class="section-label rf">In numbers</span>
+      <ul class="stats-list">
+        <li>17 × 15 mm mainboard</li>
+        <li>0.4 mm flexible substrate</li>
+        <li>9-axis inertial sensing</li>
+        <li>1,000 Hz sampling</li>
+        <li>Up to 8 hours per charge</li>
+      </ul>
+      <p class="stats-note rf">
+        No port, no buttons, no screen. It charges by magnetic contact and
+        otherwise there is nothing to operate.
+      </p>
+      <div class="stats-actions rf">
+        <a href="#waitlist" class="btn btn-red">Request access</a>
+      </div>
+    </section>
+
   </section>
   </div>
-
-  <section class="stats" id="numbers" aria-label="The hardware in numbers">
-    <span class="section-label rf">In numbers</span>
-    <ul class="stats-list">
-      <li>17 × 15 mm mainboard</li>
-      <li>0.4 mm flexible substrate</li>
-      <li>9-axis inertial sensing</li>
-      <li>1,000 Hz sampling</li>
-      <li>Up to 8 hours per charge</li>
-    </ul>
-    <p class="stats-note rf">
-      No port, no buttons, no screen. It charges by magnetic contact and
-      otherwise there is nothing to operate.
-    </p>
-    <div class="stats-actions rf">
-      <a href="#waitlist" class="btn btn-red">Request access</a>
-    </div>
-  </section>
 
   <!-- ── HOW IT WORKS ───────────────────────────────────────── -->
   <section class="section section-frost" id="how-it-works" aria-label="How it works">
@@ -1121,19 +1166,26 @@
      if a section were removed, whereas this reads false.
 
      This used to watch #teardown and nothing else, which was a bug and not a
-     scope decision: the page has four Carbon surfaces and the bar went light
-     over three of them. It was survivable while the dark run was one section
+     scope decision: the page has several Carbon surfaces and the bar went light
+     over all but one. It was survivable while the dark run was one section
      long, because you scroll past a 550svh sequence quickly enough at the
      boundary that the wrong bar is on screen for a moment. Avalon put a second
      full-height dark section directly under it and made the moment several
      seconds long.
+
+     The list was `#teardown, .stats, .avalon-band, .waitlist-section` until the
+     numbers moved inside Avalon in rev 15. `.stats` no longer exists as an
+     element and `.avalon-band` already wraps everything that was in it, so
+     dropping it changes no behaviour — but a selector that matches nothing is
+     indistinguishable from a selector that has silently stopped matching, so it
+     goes rather than staying as a comment.
 
      `.bottom > 56 && .top < 56` rather than just the bottom test the old
      version used, because with more than one candidate an unbounded test is
      true for every section still below the fold — the waitlist would have
      inverted the bar from the top of the page. 56 is the bar's own height. */
   const darks = document.querySelectorAll(
-    '#teardown, .stats, .avalon-band, .waitlist-section');
+    '#teardown, .avalon-band, .waitlist-section');
   if (darks.length) {
     const syncNav = () => {
       let on = false;
