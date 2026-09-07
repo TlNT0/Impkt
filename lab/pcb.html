@@ -3160,14 +3160,23 @@
      All three from the same `h`, so a valley in one is a valley in all three
      — three independently generated maps is how you get a surface that
      shimmers instead of one that reads. */
+  /* `normalOnly` skips the other two, for a caller that wants the slope and
+     nothing else. The foil is that caller and has been since rev 14 — its tint
+     and roughness were the patchiness the brief asked to be rid of — and it was
+     still paying for all three, which is two thirds of 85 ms on the load path
+     spent filling two arrays that get dropped on the next line. Nothing about
+     the three-from-one-field rule changes: the fields are still the same `h`,
+     and a caller that asks for the tint gets the tint that belongs to that
+     normal. */
   function clothMaps(o) {
     const N = o.N || 512;
     const { h, slope } = noiseField(o);
     const step = 1 / N;
+    const full = !o.normalOnly;
 
     const nrm  = new Uint8Array(N * N * 4);
-    const tint = new Uint8Array(N * N * 4);
-    const rgh  = new Uint8Array(N * N * 4);
+    const tint = full ? new Uint8Array(N * N * 4) : null;
+    const rgh  = full ? new Uint8Array(N * N * 4) : null;
 
     for (let y = 0; y < N; y++) {
       for (let x = 0; x < N; x++) {
@@ -3180,6 +3189,8 @@
         nrm[i + 1] = ((-gy / len) * 0.5 + 0.5) * 255;
         nrm[i + 2] = (1 / len) * 0.5 * 255 + 127.5;
         nrm[i + 3] = 255;
+
+        if (!full) continue;
 
         const t = h(u, v);
         /* `ao` is how deep the valleys go, as a fraction. 0.26 sounds
@@ -3200,6 +3211,8 @@
         rgh[i + 3] = 255;
       }
     }
+
+    if (!full) return { normal: tileTex(nrm, N, o), tint: null, rough: null };
 
     const tt = tileTex(tint, N, o);
     tt.colorSpace = THREE.SRGBColorSpace;
@@ -3402,9 +3415,13 @@
        halving the tile at fixed height would double the crease angle — the same
        trap in reverse that took 0.35 to 0.90 when the lattice went from 16 to 5.
        Halving both keeps the flanks at the six degrees they were tuned to. */
+    /* `ao` and `rough` are dead now that this asks for the normal only. Left in
+       place because they are the tuned values for this field and the day the
+       cell wants its tint back — the note in FOIL says why it does not — is a
+       day when deleting them would mean re-deriving them. */
     return clothMaps({ seed: 4009351, lat: 5, oct: 2, gain: 0.351,
                        tile: 11, aspect: 0.5, height: 0.45,
-                       ao: 0.14, rough: [0.52, 0.72] });
+                       ao: 0.14, rough: [0.52, 0.72], normalOnly: true });
   }
 
   /* Terry cloth, and it is the opposite end of the same instrument. Towelling
@@ -3584,28 +3601,8 @@
     const g = new THREE.Group();
     const { L, W, T } = CELL;
 
-    /* Here rather than at the material, because the map needs the renderer's
-       anisotropy limit and the renderer does not exist yet when FOIL is
-       declared. Called once — buildCell is called once. */
-    if (!FOIL.normalMap) {
-      /* Normal only, as of rev 14. foilMaps() still builds all three because
-         it is one call into clothMaps() and the two it returns unused cost a
-         canvas each at build time and nothing per frame; the tint and roughness
-         fields are the patchiness the brief asked to be rid of. See FOIL. */
-      const { normal: fn } = foilMaps();
-      fn.anisotropy = renderer.capabilities.getMaxAnisotropy();
-      FOIL.normalMap = fn;
-      /* 1.0, because the map now encodes a real slope — a 0.10 mm fold over a
-         40 mm tile — rather than an arbitrary one. Overridable, because "the
-         wrinkle map is too strong" got assumed three times and measured once,
-         and the once is what found the actual bug: `?foil=0` showed the cell
-         flat at p50 142 with sd 5.2, which proved the map was responsible for
-         all of the mottling and sent the search to the map's construction
-         instead of to its scale. */
-      const fs = params.has('foil') ? parseFloat(params.get('foil')) : 0.35;
-      FOIL.normalScale.set(fs, fs);
-      FOIL.needsUpdate = true;
-    }
+    /* The foil's wrinkle map used to be built here. It is in dressLate() now,
+       which runs after the first frame — see the note there. */
 
     /* Body, inset from the flange on the two long sides so the lip is proud
        of it, and bevelled hard: 0.44 of a 2.5 mm thickness is most of the way
@@ -4685,8 +4682,88 @@
      not one closed tube is the fly-through: the outer skin has to fade
      independently of the inner one, so they cannot share a material, and the
      moment they are separate meshes the cheapest thing is also the clearest. */
-  function buildBand() {
-    const g = new THREE.Group();
+  /* Every noise-field map on the page, built after the first frame is on screen
+     rather than before it. Three surfaces: the cell's foil, and the band's cloth
+     and embroidery.
+
+     These are pure pixel loops on the main thread, so until they finish nothing
+     else happens — not the first draw, and not the pcb:ready that tells the host
+     to fade the frame in. Measured in node on this machine: foil 85 ms, terry
+     257, satin 65. Only the foil is on the default path — the band is the glass
+     outline unless `?band=terry` — so the default page gets its 85 ms back and
+     `?band=terry` gets 407.
+
+     The foil also stopped building the two maps it discards, which is a smaller
+     saving than it sounds: the normal needs four field evaluations per texel to
+     the tint's one, so it is a fifth of that 85, not two thirds of it.
+
+     Nothing is lost by waiting, because none of the three is legible in the
+     opening frames. The band is a transparent shell for the first thirteen
+     hundredths of the sequence, and the cell inside it is 20 mm seen through
+     that shell at a fifth of the size it reaches by its own beat, with a 0.45 mm
+     crease field on it. The maps land one frame later, which at 30 ms is the
+     same frame as far as anyone can tell, and long before either surface is the
+     subject.
+
+     Called from an animation frame after the draw rather than from the draw, so
+     that the frame just rendered is presented first. Then draw() again, because
+     at p = 0 nothing else will ask for one until the reader scrolls.
+
+     Every block is guarded and idempotent, so calling this twice is free, and
+     outline mode still never builds the cloth. */
+  /* What the routing needs, handed over by the loader: the soldermask's face
+     material, and the pad anchors and frame in the coordinates they were
+     measured in. Null until the board is built, and null for good if the export
+     turns out to have no soldermask material to route on. */
+  let copper = null;
+
+  function dressLate() {
+    if (copper) {
+      const maps = copperMaps(copper.pads, copper.bounds);
+      const face = copper.face;
+      if (maps) {
+        face.normalMap = maps.normal;
+        /* Low, and low on purpose. The step being described is about a
+           pixel tall on screen; a normal map that shouts about it turns
+           soldermask into hammered metal.
+
+           This is *not* the knob for how strongly the traces read, which is
+           the intuitive assumption and is wrong. Isolating the trace pixels
+           — rendering at 0.30 and at 0.16 and diffing — puts them at
+           p50 62 / p90 83 against 60 of open substrate at 0.30, and
+           67 / 82 at 0.16. Halving the scale moves the level by about one
+           value: the traces are visible because of the roughnessMap's sheen
+           shift, and the normal map is doing something else, which is giving
+           the ridge an edge that turns as the light rakes across it during
+           the scroll. A still cannot show that, so tune it against the
+           animation, not against a screenshot. Turn the roughnessMap's
+           0.14 up or down if the traces themselves are too strong. */
+        face.normalScale.set(0.30, 0.30);
+        face.roughnessMap = maps.rough;
+        face.map = maps.tint;
+        face.needsUpdate = true;
+      }
+      copper = null;
+      mark('copper');
+    }
+
+    /* Not at the material, because the map wants the renderer's anisotropy
+       limit and the renderer does not exist when FOIL is declared. */
+    if (!FOIL.normalMap) {
+      const { normal: fn } = foilMaps();
+      fn.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      FOIL.normalMap = fn;
+      /* 1.0 would be the map as described — it encodes a real slope, a 0.45 mm
+         fold over an 11 mm tile, rather than an arbitrary one. Overridable,
+         because "the wrinkle map is too strong" got assumed three times and
+         measured once, and the once is what found the actual bug: `?foil=0`
+         showed the cell flat at p50 142 with sd 5.2, which proved the map was
+         responsible for all of the mottling and sent the search to the map's
+         construction instead of to its scale. */
+      const fs = params.has('foil') ? parseFloat(params.get('foil')) : 0.35;
+      FOIL.normalScale.set(fs, fs);
+      FOIL.needsUpdate = true;
+    }
 
     /* Same reason as the foil map — the texture wants the renderer's
        anisotropy limit and the renderer does not exist when the material is
@@ -4746,6 +4823,10 @@
       THREAD.roughnessMap = sm.rough;
       THREAD.needsUpdate = true;
     }
+  }
+
+  function buildBand() {
+    const g = new THREE.Group();
 
     /* One number for everything that goes round the band, so the hem and the
        two walls cannot drift apart again.
@@ -5272,34 +5353,29 @@
           a.y > TRIM.y[0] && a.y < TRIM.y[1]);
         planarUV(obj, bounds);
         mark('uv');
-        const maps = copperMaps(pads, bounds);
-        mark('copper');
-        if (face && maps) {
-          face.normalMap = maps.normal;
-          /* Low, and low on purpose. The step being described is about a
-             pixel tall on screen; a normal map that shouts about it turns
-             soldermask into hammered metal.
+        /* The routing is the other 159 ms on the load path, and it goes the same
+           way the wrinkle maps did — generated after the first frame, from
+           dressLate(). The UVs stay here, because they are geometry.
 
-             This is *not* the knob for how strongly the traces read, which is
-             the intuitive assumption and is wrong. Isolating the trace pixels
-             — rendering at 0.30 and at 0.16 and diffing — puts them at
-             p50 62 / p90 83 against 60 of open substrate at 0.30, and
-             67 / 82 at 0.16. Halving the scale moves the level by about one
-             value: the traces are visible because of the roughnessMap's sheen
-             shift, and the normal map is doing something else, which is giving
-             the ridge an edge that turns as the light rakes across it during
-             the scroll. A still cannot show that, so tune it against the
-             animation, not against a screenshot. Turn the roughnessMap's
-             0.14 up or down if the traces themselves are too strong. */
-          face.normalScale.set(0.30, 0.30);
-          face.roughnessMap = maps.rough;
+           The tone does not wait, though, and that distinction is the whole
+           reason this is two pieces rather than one. TINT_GAIN darkens the mask
+           by a third to make room for the trace field's own brightness, so a
+           board that arrived gained and then acquired traces looks right at both
+           ends, while a board that arrived ungained would flash a third too
+           bright for one frame and then settle. A missing texture is a board
+           without traces; a missing gain is a mistake.
+
+           `pads` and `bounds` are closed over rather than recomputed: both are
+           in the export's corner-origin millimetres, and by the time dressLate()
+           runs the mesh has been recentred out of that space. */
+        if (face) {
           /* The tone half of the routing. Gain on the material, base in the
              map — see TINT_GAIN — and applyMask() reapplies the gain after
              every colour toggle. */
-          face.map = maps.tint;
           face.userData.gain = TINT_GAIN;
           face.color.multiplyScalar(TINT_GAIN);
           face.needsUpdate = true;
+          copper = { face: face, pads: pads, bounds: bounds };
         }
       }
 
@@ -5684,12 +5760,23 @@
       resize();
       draw();
       mark('firstdraw');
-      perfDump();
       /* After the first draw, not before. The host fades the frame in on
          this, and the point of the fade is to hide the load — announcing
          readiness while the canvas is still empty would reveal exactly
          what it is there to cover. */
       if (embed && parent !== window) parent.postMessage({ type: 'pcb:ready' }, '*');
+
+      /* Last, and after a frame has been presented. See dressLate(). */
+      requestAnimationFrame(() => {
+        dressLate();
+        mark('dress');
+        draw();
+        /* Here rather than after the first draw, so that ?perf=1 reports the
+           cloth as the cost it still is — moving work off the critical path is
+           not the same as removing it, and the next person to look at this
+           needs to see both numbers. */
+        perfDump();
+      });
     }, loadFailed);
   });
 
