@@ -357,30 +357,54 @@
     }
 
     /* ── DASHBOARD DEMO ─────────────────────────────────────── */
-    /* The only card on the site: 8px radius, one hairline, white on
-       Frost, no shadow. It earns the container because its contents are
-       interactive and need to read as one instrument. */
+    /* The only card on the site, and the only place that borrows the app's
+       material rather than the site's. Everywhere else a container has to earn
+       itself; here the point of the block is "this is what the app shows you",
+       so it is set as an app screen — the warm off-white live-session canvas,
+       with the readouts on it as the app's own floating tiles. The site's flat
+       8px-and-a-hairline card is deliberately not used inside it: a screenshot
+       of the app that is styled like the website is a worse screenshot. */
     .demo-card {
       margin-top: 64px;
-      padding: 40px;
-      background: var(--white);
-      border: 1px solid var(--hairline);
-      border-radius: var(--radius-card);
+      padding: 36px;
+      /* The app's session canvas: near-white, warmed at the top-left by the
+         accent and at the top-right by cream, so the tiles have something to
+         float on. Radius is the app's 28px, not --radius-card. */
+      background:
+        radial-gradient(120% 90% at 4% -10%, rgba(196,30,58,0.075) 0%, rgba(196,30,58,0) 46%),
+        radial-gradient(110% 80% at 96% -6%, rgba(214,196,160,0.20) 0%, rgba(214,196,160,0) 52%),
+        linear-gradient(180deg, #FBFAF9 0%, #F4F2F1 100%);
+      border: 1px solid rgba(0,0,0,0.05);
+      border-radius: 28px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03),
+                  0 18px 50px -28px rgba(29,29,31,0.14);
     }
     .demo-head {
-      display: flex; align-items: baseline; justify-content: space-between;
+      display: flex; align-items: center; justify-content: space-between;
       flex-wrap: wrap; gap: 12px;
-      padding-bottom: 24px; margin-bottom: 32px;
-      border-bottom: 1px solid var(--hairline);
+      margin-bottom: 30px;
     }
     .demo-title {
       font-size: var(--text-body); font-weight: 600;
       letter-spacing: var(--tracking-body);
     }
+    /* The app marks a live session with a red dot and one word. Same device
+       here, on the disclaimer that has to be in this spot anyway. */
     .demo-badge {
+      display: inline-flex; align-items: center; gap: 8px;
       font-size: var(--text-caption); font-weight: 400;
       letter-spacing: var(--tracking-caption);
       color: var(--ash);
+    }
+    .demo-badge::before {
+      content: ''; flex: none;
+      width: 7px; height: 7px; border-radius: 50%;
+      background: var(--red);
+      animation: demo-live 2s var(--ease-smooth) infinite;
+    }
+    @keyframes demo-live {
+      0%, 100% { opacity: 1;    transform: scale(1); }
+      50%      { opacity: 0.35; transform: scale(0.82); }
     }
     .demo-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 48px; }
 
@@ -393,7 +417,16 @@
        glass belongs on controls — the track is a recess and the selection is a
        thing sitting in it, and that reading needs the two surfaces to differ in
        material rather than only in lightness. */
+    /* Rev 16: the selection is one pill that slides between segments instead of
+       four pills that swap their backgrounds. It is the same control either way
+       when it is still, but the movement is the whole point of the block now —
+       the eye follows the pill across and arrives on the new label already
+       looking at it, and the numbers on the right retime themselves to the same
+       350ms so the card reads as one state change rather than four. The pill is
+       a real element (.punch-ind) placed by script, because a CSS-only version
+       has to hard-code four widths and "Uppercut" is not as wide as "Jab". */
     .punch-types {
+      position: relative;
       display: inline-flex; gap: 4px;
       padding: 4px;
       background: var(--glass-tint);
@@ -403,7 +436,27 @@
       box-shadow: inset 0 1px 2px var(--glass-shade),
                   inset 0 0   0 1px var(--glass-rim);
     }
+    /* Opaque white, not glass. The selected pill is what the track is holding,
+       so it is the one element here that should not let anything through — and
+       a specular top edge plus the shadow it casts on the track is what makes it
+       read as lifted. Apple's own selected segment does exactly this. */
+    .punch-ind {
+      position: absolute; top: 4px; left: 0;
+      height: calc(100% - 8px);
+      border-radius: var(--radius-pill);
+      background: var(--white);
+      box-shadow: inset 0 1px 0 var(--glass-spec),
+                  0 1px 3px rgba(0,0,0,0.10),
+                  0 0 0 0.5px rgba(0,0,0,0.04);
+      /* Springy on the way across — overshoot of about 4% of the travel, which
+         is what stops a 350ms slide reading as a mechanical tween. Width eases
+         flat, because a pill that overshoots its width looks like it stretched. */
+      transition: transform 0.42s cubic-bezier(0.34, 1.4, 0.5, 1),
+                  width     0.42s var(--ease-smooth);
+      pointer-events: none;
+    }
     .punch-btn {
+      position: relative; z-index: 1;
       padding: 8px 18px;
       background: transparent; border: none;
       border-radius: var(--radius-pill);
@@ -412,63 +465,100 @@
       letter-spacing: var(--tracking-body-sm);
       color: var(--ash);
       cursor: pointer;
-      transition: background 0.2s, color 0.2s;
+      transition: color 0.28s var(--ease-smooth);
     }
     .punch-btn:hover { color: var(--carbon); }
-    /* Opaque white, not glass. The selected pill is what the track is holding,
-       so it is the one element here that should not let anything through — and
-       a specular top edge plus the shadow it casts on the track is what makes it
-       read as lifted. Apple's own selected segment does exactly this. */
-    .punch-btn.active {
-      background: var(--white); color: var(--carbon); font-weight: 500;
-      box-shadow: inset 0 1px 0 var(--glass-spec),
-                  0 1px 3px rgba(0,0,0,0.10),
-                  0 0 0 0.5px rgba(0,0,0,0.04);
-    }
+    .punch-btn.active { color: var(--carbon); font-weight: 500; }
+    .punch-btn:active { transform: scale(0.97); }
 
     .force-row { margin-top: 32px; }
     .force-label {
       display: flex; align-items: baseline; justify-content: space-between;
-      font-size: var(--text-caption); font-weight: 600;
-      letter-spacing: var(--tracking-caption);
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
       color: var(--ash);
       margin-bottom: 14px;
     }
-    .force-label strong { color: var(--carbon); }
+    .force-label strong {
+      color: var(--carbon); font-size: 15px; font-weight: 500;
+      letter-spacing: -0.01em; text-transform: none;
+      font-variant-numeric: tabular-nums;
+    }
 
-    /* Pebble track, Carbon thumb — the accent stays off this control for
-       the same reason it stays off the segmented buttons above. */
+    /* The app fills the travelled part of a slider in the accent, the same red
+       it uses for the intensity bars and the primary button, so the control
+       shows its value without being read. --slider-fill is set by script. */
     .force-slider {
       width: 100%; -webkit-appearance: none; appearance: none;
-      height: 3px; border-radius: var(--radius-pill);
-      background: var(--pebble); outline: none;
+      height: 6px; border-radius: var(--radius-pill);
+      background: linear-gradient(90deg,
+        var(--red) 0 var(--slider-fill, 50%),
+        rgba(0,0,0,0.10) var(--slider-fill, 50%) 100%);
+      outline: none;
     }
     .force-slider::-webkit-slider-thumb {
       -webkit-appearance: none; appearance: none;
-      width: 18px; height: 18px; border-radius: 50%;
-      background: var(--carbon); cursor: pointer;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--white); cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.18),
+                  0 3px 10px -2px rgba(0,0,0,0.16),
+                  0 0 0 0.5px rgba(0,0,0,0.06);
+      transition: transform 0.18s var(--ease-smooth);
     }
     .force-slider::-moz-range-thumb {
-      width: 18px; height: 18px; border-radius: 50%;
-      background: var(--carbon); border: none; cursor: pointer;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--white); border: none; cursor: pointer;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.18),
+                  0 3px 10px -2px rgba(0,0,0,0.16),
+                  0 0 0 0.5px rgba(0,0,0,0.06);
     }
+    .force-slider:active::-webkit-slider-thumb { transform: scale(1.12); }
 
+    /* The app's tiles: white, 18px, label over value, on the warm canvas with a
+       shadow soft enough that it reads as height rather than as an outline. */
     .demo-stats {
       display: grid; grid-template-columns: repeat(3, 1fr);
-      gap: 24px; align-content: start;
+      gap: 14px; align-content: start;
+    }
+    .demo-stat {
+      padding: 16px 18px 18px;
+      background: var(--white);
+      border-radius: 18px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04),
+                  0 8px 22px -14px rgba(29,29,31,0.28);
+      transition: transform 0.35s var(--ease-smooth),
+                  box-shadow 0.35s var(--ease-smooth);
+    }
+    /* Lifts for the length of a punch change, so the numbers are seen to be
+       recomputed rather than found to have quietly differed. */
+    .demo-stat.pulse {
+      transform: translateY(-3px);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04),
+                  0 14px 30px -14px rgba(196,30,58,0.30);
     }
     .demo-stat-val {
       display: block;
-      font-size: clamp(28px, 3vw, 40px);
-      font-weight: 600; letter-spacing: var(--tracking-heading);
-      line-height: 1.14;
+      font-size: clamp(30px, 3.2vw, 42px);
+      font-weight: 400; letter-spacing: -0.03em;
+      line-height: 1.05;
       font-variant-numeric: tabular-nums;
     }
+    /* Label above the value, as in the app — the tile is read top to bottom as
+       "this is the quantity, here is its size". */
     .demo-stat-lbl {
-      display: block; margin-top: 10px;
-      font-size: var(--text-caption); font-weight: 600;
-      letter-spacing: var(--tracking-caption);
+      display: block; margin: 0 0 8px;
+      font-size: 11px; font-weight: 600;
+      letter-spacing: 0.12em; text-transform: uppercase;
       color: var(--ash);
+    }
+    /* The unit is not part of the name of the quantity, so it does not get the
+       name's weight — it sits inside the label at the same size, lighter. */
+    .demo-stat-unit { font-weight: 400; letter-spacing: 0.06em; }
+
+    @media (prefers-reduced-motion: reduce) {
+      .demo-badge::before { animation: none; }
+      .punch-ind, .demo-stat { transition: none; }
+      .demo-stat.pulse { transform: none; }
     }
 
     /* ── HARDWARE TABLE ─────────────────────────────────────── */
@@ -664,10 +754,16 @@
     }
 
     @media (max-width: 560px) {
-      .demo-stats { grid-template-columns: 1fr; }
-      /* A wrapped 980px track reads as a blob, so the segmented control
-         falls back to the system's other radius. */
-      .punch-types { display: flex; flex-wrap: wrap; border-radius: var(--radius-card); }
+      /* Two up, then one: three tiles across a phone leaves "Peak force" on
+         three lines. This is the app's own 2×2 tile grid, one short. */
+      .demo-stats { grid-template-columns: 1fr 1fr; }
+      .demo-stats > :last-child { grid-column: 1 / -1; }
+      /* The track fills the width and the four segments share it equally, rather
+         than wrapping: the selection is one sliding pill now, and a pill cannot
+         slide onto a second row. Equal segments also keep it from having to
+         travel a different distance for each label. */
+      .punch-types { display: flex; width: 100%; }
+      .punch-btn   { flex: 1 1 0; padding: 8px 6px; }
       .hardware-detail-row { flex-direction: column; align-items: flex-start; gap: 6px; }
       .hw-val { text-align: left; }
     }
@@ -868,6 +964,7 @@
       <div class="demo-grid">
         <div>
           <div class="punch-types" role="group" aria-label="Punch type">
+            <span class="punch-ind" aria-hidden="true"></span>
             <button type="button" class="punch-btn active" data-mult="1.0">Jab</button>
             <button type="button" class="punch-btn" data-mult="1.35">Cross</button>
             <button type="button" class="punch-btn" data-mult="1.6">Hook</button>
@@ -879,17 +976,17 @@
           </div>
         </div>
         <div class="demo-stats">
-          <div>
+          <div class="demo-stat">
+            <span class="demo-stat-lbl">Peak force <span class="demo-stat-unit">(N)</span></span>
             <span class="demo-stat-val" id="stat-force">420</span>
-            <span class="demo-stat-lbl">Peak force (N)</span>
           </div>
-          <div>
+          <div class="demo-stat">
+            <span class="demo-stat-lbl">Velocity <span class="demo-stat-unit">(m/s)</span></span>
             <span class="demo-stat-val" id="stat-velocity">6.2</span>
-            <span class="demo-stat-lbl">Velocity (m/s)</span>
           </div>
-          <div>
+          <div class="demo-stat">
+            <span class="demo-stat-lbl">Reaction <span class="demo-stat-unit">(s)</span></span>
             <span class="demo-stat-val" id="stat-reaction">0.18</span>
-            <span class="demo-stat-lbl">Reaction (s)</span>
           </div>
         </div>
       </div>
@@ -1264,24 +1361,81 @@
   (function() {
     const slider  = document.getElementById('force-slider');
     const readout = document.getElementById('force-readout');
-    const buttons = document.querySelectorAll('.punch-btn');
+    const track   = document.querySelector('.punch-types');
+    const ind     = document.querySelector('.punch-ind');
+    const buttons = [].slice.call(document.querySelectorAll('.punch-btn'));
     const statForce    = document.getElementById('stat-force');
     const statVelocity = document.getElementById('stat-velocity');
     const statReaction = document.getElementById('stat-reaction');
     if (!slider) return;
 
-    let mult = 1.0;
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const TWEEN  = 380;   /* the numbers land as the pill settles */
 
-    function update() {
-      const force = +slider.value;
-      readout.textContent = force + '%';
-      statForce.textContent    = Math.round(180 + force * 6.2 * mult);
-      statVelocity.textContent = (2.5 + (force / 100) * 6.5 * mult).toFixed(1);
-      statReaction.textContent = (0.32 - (force / 100) * 0.14).toFixed(2);
+    /* Each readout knows how to compute and how to print itself, so the tween
+       below can be one loop over three of them instead of three loops. */
+    const stats = [
+      { el: statForce,    at: (f, m) => 180 + f * 6.2 * m,          fmt: v => String(Math.round(v)) },
+      { el: statVelocity, at: (f, m) => 2.5 + (f / 100) * 6.5 * m,  fmt: v => v.toFixed(1) },
+      { el: statReaction, at: f      => 0.32 - (f / 100) * 0.14,    fmt: v => v.toFixed(2) }
+    ];
+
+    let mult  = 1.0;
+    let tween = null;
+
+    function paintSlider() {
+      const pct = (slider.value - slider.min) / (slider.max - slider.min) * 100;
+      slider.style.setProperty('--slider-fill', pct + '%');
+      readout.textContent = slider.value + '%';
     }
 
-    slider.addEventListener('input', update);
+    /* Dragging is already continuous, so the stats are written straight from the
+       slider — a tween on top of live input only adds lag. */
+    function write(force) {
+      stats.forEach(s => { s.el.textContent = s.fmt(s.at(force, mult)); });
+    }
+
+    /* Changing punch type, by contrast, is a jump: three numbers would otherwise
+       swap in one frame and the change is easy to miss. Count them across
+       instead, on the same curve and in the same time as the pill's slide. */
+    function tweenTo(force) {
+      const from = stats.map(s => parseFloat(s.el.textContent) || 0);
+      const to   = stats.map(s => s.at(force, mult));
+      if (reduced) { write(force); return; }
+      if (tween) cancelAnimationFrame(tween);
+
+      const tiles = [].slice.call(document.querySelectorAll('.demo-stat'));
+      tiles.forEach(t => t.classList.add('pulse'));
+
+      const t0 = performance.now();
+      (function step(now) {
+        const p = Math.min((now - t0) / TWEEN, 1);
+        /* easeOutCubic: fast off the mark, no overshoot. A number that overshoots
+           and comes back reads as a correction, i.e. as a wrong reading. */
+        const e = 1 - Math.pow(1 - p, 3);
+        stats.forEach((s, i) => { s.el.textContent = s.fmt(from[i] + (to[i] - from[i]) * e); });
+        if (p < 1) { tween = requestAnimationFrame(step); }
+        else { tween = null; tiles.forEach(t => t.classList.remove('pulse')); }
+      })(t0);
+    }
+
+    /* The pill is placed off the button's own box, so it fits "Jab" and
+       "Uppercut" without either width being written down anywhere. */
+    function placeIndicator(btn, animate) {
+      if (!ind || !track) return;
+      if (!animate) ind.style.transition = 'none';
+      ind.style.width = btn.offsetWidth + 'px';
+      ind.style.transform = 'translateX(' + btn.offsetLeft + 'px)';
+      if (!animate) {
+        void ind.offsetWidth;          /* commit before the transition returns */
+        ind.style.transition = '';
+      }
+    }
+
+    slider.addEventListener('input', () => { paintSlider(); write(+slider.value); });
+
     buttons.forEach(b => b.addEventListener('click', () => {
+      if (b.classList.contains('active')) return;
       buttons.forEach(x => {
         x.classList.remove('active');
         x.setAttribute('aria-pressed', 'false');
@@ -1289,11 +1443,24 @@
       b.classList.add('active');
       b.setAttribute('aria-pressed', 'true');
       mult = +b.dataset.mult;
-      update();
+      placeIndicator(b, true);
+      tweenTo(+slider.value);
     }));
     buttons.forEach(b => b.setAttribute('aria-pressed', String(b.classList.contains('active'))));
 
-    update();
+    /* Fonts land after first paint and change every button's width with them,
+       so the pill is placed again once they have — without animating, since
+       nothing was selected by the user. */
+    function reposition() {
+      const active = document.querySelector('.punch-btn.active');
+      if (active) placeIndicator(active, false);
+    }
+    reposition();
+    window.addEventListener('resize', reposition);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(reposition);
+
+    paintSlider();
+    write(+slider.value);
   })();
 
   /* ── 6. WAITLIST FORM ────────────────────────────── */
