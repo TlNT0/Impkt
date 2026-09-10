@@ -30,10 +30,12 @@
  * not locked out, and a pilot whose email went to spam has the box.
  *
  *   node tools/pilots.mjs add "Marcus Webb" --gym "Third Ave Boxing" --serial 003
+ *   node tools/pilots.mjs edit ABCDEFGHJK --gym "Third Ave Boxing"
  *   node tools/pilots.mjs list
  *
  * `add` prints the code once and cannot print it again — only the ciphertext is
- * kept. If a pilot loses it, issue a new one.
+ * kept. If a pilot loses it, issue a new one. `edit` corrects a record while its
+ * code is still to hand, and leaves the code alone.
  */
 
 import { webcrypto as crypto } from 'node:crypto';
@@ -130,6 +132,52 @@ async function add(name, opts) {
   console.log(`  same code in the email. Not recoverable — send it now or reissue.\n`);
 }
 
+/* Correcting a record without changing the code, which is the difference
+   between fixing a spelling and making somebody's card wrong. It needs the code
+   handed to it, because that is the only way back into the record: the file
+   cannot be searched, and a record nobody can supply the code for is a record
+   nobody can read, including us. So this works while the code is still to hand
+   and not afterwards, which is the same rule as everything else in here.
+   The record is re-encrypted with a fresh iv and put back at a fresh random
+   position, so an amended record does not stand out by staying put. */
+async function edit(code, opts) {
+  if (!code) throw new Error('usage: pilots.mjs edit CODE [--name X] [--gym X] [--serial 003] [--note "..."]');
+  const store = load();
+  const key = await keyFrom(code, unb64(store.kdf.salt));
+
+  let at = -1, record = null;
+  for (let i = 0; i < store.records.length; i++) {
+    try {
+      const plain = await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: unb64(store.records[i].iv) }, key, unb64(store.records[i].ct));
+      record = JSON.parse(new TextDecoder().decode(plain));
+      at = i;
+      break;
+    } catch { /* not this pilot's record, which is the normal case */ }
+  }
+  if (!record) throw new Error('no record on the list answers to that code');
+
+  const was = record.name;
+  for (const field of ['name', 'gym', 'serial', 'note']) {
+    if (opts[field] !== undefined) record[field] = opts[field];
+  }
+  record.first = record.name.trim().split(/\s+/)[0];
+
+  const iv = crypto.getRandomValues(new Uint8Array(12));
+  const ct = await crypto.subtle.encrypt(
+    { name: 'AES-GCM', iv }, key, new TextEncoder().encode(JSON.stringify(record)));
+  store.records.splice(at, 1);
+  store.records.splice(
+    crypto.getRandomValues(new Uint32Array(1))[0] % (store.records.length + 1),
+    0, { iv: b64(iv), ct: b64(ct) });
+
+  writeFileSync(STORE, JSON.stringify(store, null, 2) + '\n');
+  console.log(`\n  ${was}${record.name === was ? '' : ' is now ' + record.name}`);
+  console.log(`  serial   ${record.serial || 'not set'}`);
+  console.log(`  gym      ${record.gym || 'not set'}`);
+  console.log(`  code     unchanged. The card and the email still work.\n`);
+}
+
 function list() {
   const store = load();
   console.log(`${store.records.length} pilot record(s) in pilots.json — names and codes are not stored.`);
@@ -141,8 +189,11 @@ const opts = {};
 rest.forEach((a, i) => { if (a.startsWith('--')) opts[a.slice(2)] = rest[i + 1]; });
 
 if (cmd === 'add')       await add(positional[0], opts);
+else if (cmd === 'edit') await edit(positional[0], opts);
 else if (cmd === 'list') list();
 else {
-  console.log('usage:\n  node tools/pilots.mjs add "Full Name" [--gym X] [--serial 003] [--note "..."]\n  node tools/pilots.mjs list');
+  console.log('usage:\n  node tools/pilots.mjs add "Full Name" [--gym X] [--serial 003] [--note "..."]'
+    + '\n  node tools/pilots.mjs edit CODE [--name X] [--gym X] [--serial 003] [--note "..."]'
+    + '\n  node tools/pilots.mjs list');
   process.exit(1);
 }
