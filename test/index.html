@@ -1029,10 +1029,10 @@
     .fit-art svg .g { stroke: var(--ash); stroke-width: 1.2; }
     .fit-art svg .f { fill: var(--red); stroke: none; }
     .fit-art svg .no { stroke: var(--pebble); stroke-width: 1.2; }
-    /* A drawing of a hand cannot say "palm side" on its own, and this is the one
-       step where being wrong is silent, so the third diagram labels its two
-       halves. Two words under each hand, in the caption size, is cheaper than
-       another sentence of body copy nobody reads with a wrap half on. */
+    /* A drawing cannot say "palm side" on its own, and this is the one step where
+       being wrong is silent, so the third diagram labels the two faces of the
+       section. A few words in the caption size is cheaper than another sentence
+       of body copy nobody reads with a wrap half on. */
     .fit-art svg text {
       fill: var(--ash); stroke: none;
       font-family: var(--font); font-size: 9px; letter-spacing: -0.006em;
@@ -2783,118 +2783,55 @@
      not announce itself. */
   const fitPane = document.getElementById('fit');
 
-  /* The third step's diagram is the same right hand drawn twice: the palm
-     towards you, and the back of it. One continuous outline per hand rather
-     than a pile of rounded rectangles, because the seams between a palm rect
-     and four finger rects are what made the first attempt read as a mitten.
-     The thumb is part of that outline and swaps sides between the two, which is
-     the anatomy: a right hand palm forward has the thumb on your left, and the
-     back of the same hand has it on your right.
+  /* The third step's diagram is a section of the wrist, looking down the forearm
+     from the hand end, with the wrap wound round it and the unit in the one
+     position this step exists to establish.
 
-     What the two views actually differ by is surface. The palm gets the two
-     creases and the pad at the base of the thumb; the back gets four knuckles
-     and three tendons. That, the thumb, and the label are the three cues, and
-     at this size no one of them carries it alone.
+     It was a drawing of a hand, twice, palm and back, and that is gone. The
+     hand cost several passes to stop reading as a mitten and it was answering a
+     question nobody asked: which face of the wrist the unit lies against is a
+     fact about a cross-section, and a hand is what you have to draw around it.
+     A section shows both faces at once, in a quarter of the strokes.
 
-     The unit is the only crimson thing, it sits across the wrist just behind
-     the heel of the hand, and the tick is beside it rather than floating over
-     the fingers, because the tick is a verdict on the unit's position and
-     nothing else. On the back it is drawn in pebble with a cross through it.
+     The reason the first attempt at a section failed is that an outline of a
+     wrist with turns of wrap round it reads as three rings. So the section is
+     hatched. Hatching is the drafting convention for a cut surface and it is
+     unmistakable: nothing hatched is a ring. That, and the section being a
+     flattened oval rather than a circle, which is both true of a wrist and the
+     reason the unit has a right face to be on at all.
 
-     Fingers are wrapped, so they are together and the separations are notches
-     in the outline rather than gaps. An earlier version of this whole thing was
-     a cross-section of the wrist, which is the correct drawing and reads as two
-     circles. */
-  function handArt(dx, back) {
-    /* The same right hand twice, palm towards you and then the back of it, each
-       as one continuous outline. Mirrored for the back view, which is the
-       anatomy rather than a saving: a right hand held palm forward has the thumb
-       on your left, and the back of the same hand has it on your right. So every
-       x goes through X, every arc's sweep flag flips with it or the fingertips
-       cave inwards, and every path is written in absolute coordinates because a
-       relative dx does not survive a mirror.
+     The unit is the only crimson thing and it lies in the gap between the
+     section and the first turn, which is where it lies in life: under the wrap,
+     against the skin. The same shape sits at the top in pebble with a cross
+     through it, because on the back of the wrist everything still works and
+     every punch arrives rotated, and that is the failure the step is for. */
+  function wristArt() {
+    const box = (x, y, w, h, r, cls) =>
+      `<rect class="${cls}" x="${x}" y="${y}" width="${w}" height="${h}" rx="${r}"/>`;
 
-       Two things took several tries and are worth not undoing. The web between
-       the thumb and the index finger has to be a real notch, turning back into
-       the hand before it turns out into the thumb, or the whole shape reads as a
-       mitten. And the thumb is a bar of even width with a semicircular tip
-       rather than a lobe of the palm: foreshortened correctly it is a stub, so
-       it is drawn a little longer and narrower than it would really look, which
-       is the one liberty in here. */
-    const X = x => (back ? 64 - x : x) + dx;
-    const sw = back ? 1 : 0;
-    const cap = x => `A4 4 0 0 ${sw} ${X(x)} `;
+    const skin = box(56, 45, 88, 54, 22, 'g');
 
-    const outline = [
-      `M${X(44)} 96`,
-      `Q${X(44)} 88 ${X(49)} 82`,
-      `Q${X(51)} 70 ${X(48)} 56`,
-      `L${X(48)} 32`, cap(40) + '32',
-      `L${X(40)} 55`, `L${X(39.6)} 26`, cap(31.6) + '26',
-      `L${X(31.8)} 54`, `L${X(31.5)} 24`, cap(23.5) + '24',
-      `L${X(23.7)} 54`, `L${X(23.3)} 27`, cap(15.3) + '27',
-      `L${X(15)} 52`,
-      `Q${X(19.5)} 58 ${X(15.4)} 63.4`,
-      `L${X(-0.6)} 79.4`,
-      `A6.5 6.5 0 0 ${sw} ${X(8.6)} 88.6`,
-      /* Back up the thumb's underside to where it meets the hand, and only then
-         down the heel to the wrist. Without that turn the thumb has the wrist for
-         a base and reads as a flap rather than a digit. */
-      `Q${X(14)} 85.5 ${X(17.5)} 80`,
-      `Q${X(19)} 88 ${X(20)} 96`,
-      /* The wrist. It narrows from the heel of the hand and then closes in a
-         cuff inside the frame. Left open at the bottom edge it read as a sleeve,
-         and there was nothing for the unit to sit on. The path runs
-         anticlockwise on the palm side, up the little-finger edge and back along
-         the bottom, so the two cuff corners take the same sweep flag as the
-         fingertips. */
-      `L${X(21)} 106`, `L${X(22)} 120`,
-      `A6 6 0 0 ${sw} ${X(28)} 126`,
-      `L${X(36)} 126`,
-      `A6 6 0 0 ${sw} ${X(42)} 120`,
-      `L${X(43)} 106`, `Z`
-    ].join(' ');
+    /* 45 degrees, 9 apart, clipped by the section. The lines run well past it on
+       both sides so the clip is what ends them and the spacing stays even. */
+    const lines = [];
+    for (let k = -60; k <= 140; k += 9) lines.push(`M${k} 130L${k + 130} 0`);
+    const hatch = '<clipPath id="wsec">'
+      + '<rect x="56" y="45" width="88" height="54" rx="22"/></clipPath>'
+      + `<g clip-path="url(#wsec)"><path class="no" d="${lines.join('')}"/></g>`;
 
-    const surface = back
-      /* Knuckles just below the finger bases, three tendons under them. */
-      ? `<path class="g" d="M${X(16)} 58Q${X(19.6)} 53 ${X(23.3)} 58`
-        + `M${X(23.9)} 57Q${X(27.6)} 52 ${X(31.4)} 57`
-        + `M${X(32)} 58Q${X(35.7)} 53 ${X(39.5)} 58`
-        + `M${X(40.3)} 60Q${X(44)} 55 ${X(47.8)} 60"/>`
-        + `<path class="g" d="M${X(25)} 65L${X(27)} 82`
-        + `M${X(32)} 64L${X(32)} 82M${X(39)} 65L${X(37)} 82"/>`
-      /* The two creases across the palm, the pad at the base of the thumb, and
-         one crease across the thumb itself, which is what keeps it a thumb. */
-      : `<path class="g" d="M${X(19)} 63Q${X(30)} 71 ${X(42)} 67`
-        + `M${X(21)} 73Q${X(30)} 79 ${X(41)} 75"/>`
-        + `<path class="g" d="M${X(17)} 64Q${X(27)} 76 ${X(24)} 92"/>`
-        + `<path class="g" d="M${X(4)} 76Q${X(8)} 80 ${X(7)} 85"/>`;
+    /* Two turns of the wrap, and no loose end trailing off them: at this size a
+       free end reads as a stray hair, and the hatch is already saying that the
+       thing inside these is a wrist and not a hole. */
+    const wrap = box(46, 32, 108, 80, 32, 'g') + box(42, 28, 116, 88, 36, 'g');
 
-    /* The unit, lying across the wrist just behind the heel of the hand, and the
-       only crimson thing in the drawing. It is wider than it is tall because
-       that is how it lies on a wrist, and it is written from its two edges
-       rather than from an x and a width, so it lands in the same place on the
-       mirrored hand. */
-    const ux = Math.min(X(23), X(41));
-    const unit = `<rect class="${back ? 'no' : 'f'}" x="${ux}" y="97"`
-               + ` width="18" height="14" rx="4"/>`;
-    /* The verdict goes beside the unit, because the unit's position is the only
-       thing being judged. On the back of the hand it goes through it. */
-    const mark = back
-      ? `<path class="no" d="M${ux + 4} 100l10 8M${ux + 14} 100l-10 8"/>`
-      : `<path d="M${X(48)} 103l4 5 9 -12"/>`;
+    const unit  = box(82, 100, 36, 11, 4, 'f');
+    const ghost = box(82, 33, 36, 11, 4, 'no')
+      + '<path class="no" d="M86 36l28 5M114 36l-28 5"/>';
 
-    /* Turns of the wrap across the wrist, one above the unit and two below it,
-       so the unit reads as held on by the wrap rather than stuck to the skin.
-       They stop short of the outline on both sides for the same reason a turn
-       does: it is on top of the wrist, not around the drawing. */
-    const turns = `<path class="g" d="M${X(21.4)} 93.5L${X(43.4)} 91.5`
-                + `M${X(21.6)} 115L${X(43.4)} 113`
-                + `M${X(22.4)} 121L${X(42.4)} 119"/>`;
-
-    return `<path class="g" d="${outline}"/>` + surface + turns + unit + mark
-      + `<text class="${back ? 'no' : 'k'}" x="${X(32)}" y="11"`
-      + ` text-anchor="middle">${back ? 'Back of the hand' : 'Palm side'}</text>`;
+    return hatch + skin + wrap + ghost + unit
+      + '<text class="no" x="100" y="22" text-anchor="middle">Back of the wrist</text>'
+      + '<text class="k" x="100" y="128" text-anchor="middle">'
+      + 'Palm side, the inside of your wrist</text>';
   }
 
   /* One diagram per step, 200x92, same two strokes as the drill icons: crimson
@@ -2915,8 +2852,9 @@
         + '<path class="g" d="M128 55h16"/><path class="g" d="M138 49l6 6-6 6"/>'
         + '<path d="M92 32a14 14 0 0 1 16 0"/><path d="M86 22a26 26 0 0 1 28 0"/>',
     /* The step is a choice between two positions, so the diagram is both of them
-       at once, side by side, right and wrong. */
-    wear: handArt(6, false) + handArt(110, true),
+       at once: one section, the right position on the palm side and the wrong one
+       crossed out on the back. */
+    wear: wristArt(),
     /* The page, a list in it, a wrap talking to it. */
     find: '<rect class="g" x="18" y="24" width="88" height="56" rx="8"/>'
         + '<path class="g" d="M32 42h48M32 54h60M32 66h34"/>'
