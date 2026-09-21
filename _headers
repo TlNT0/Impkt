@@ -34,6 +34,14 @@
   # anywhere else, which is the point: the one thing a compromised page most wants to do
   # is post what it has read somewhere else, and this is the header that stops it. A new
   # destination goes here, by name.
+  #
+  # Something is already testing that line. Netlify appends its own Real User Metrics
+  # script to every HTML response it serves, after this repo's bytes, so it is on the
+  # live pages and in no commit. It reads protocol, hostname, pathname and user agent,
+  # not the query string, and POSTs them to ingesteer.services-prod.nsvcs.net, which is
+  # not named above, so the report is refused and nothing leaves the browser. connect-src
+  # is the only reason that is true, which is worth knowing before widening it. The
+  # injection itself is a Netlify site setting and switching it off is the real fix.
   Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https://formspree.io https://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
   # HTTPS only, for two years, on every subdomain.
@@ -67,6 +75,25 @@
   # refused here rather than at a prompt, so a page that starts asking is a page that has
   # been changed.
   Permissions-Policy: accelerometer=(self), bluetooth=(self), camera=(), display-capture=(), geolocation=(), gyroscope=(self), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=()
+
+# The pilot page, and it gets its own rule because it is the one page here that tells a
+# person what it sends: "that is the only thing we send", about the drill record. A script
+# that arrived in the response and was not written here makes that sentence false, and
+# refusing the destination is not the same as refusing the script.
+#
+# So: the policy above with one directive changed. script-src loses 'self', which leaves
+# 'unsafe-inline' and means no <script src> can load at all, same origin or not. Nothing
+# breaks, because this page carries its script inline in one block and loads no script
+# from anywhere; the only page here that does is /lab/pcb.html, through an importmap,
+# which is why this is a rule for one path and not a tightening of /*.
+#
+# The whole policy is repeated rather than just the directive that differs. Two rules
+# setting one header could either replace or both be sent, and a complete repeat is right
+# either way: replaced, it is this policy; both sent, a browser enforces each and the
+# answer is the stricter of the two. The cost is that the two copies have to change
+# together, so treat the line above and the line below as one line.
+/test/*
+  Content-Security-Policy: default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https://formspree.io https://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
 # The pilot records. Encrypted, one per pilot, and useless without a code, which is why
 # they can sit in a public file at all. Kept out of search results anyway: there is no
