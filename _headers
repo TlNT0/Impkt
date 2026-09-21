@@ -87,11 +87,12 @@
 # from anywhere; the only page here that does is /lab/pcb.html, through an importmap,
 # which is why this is a rule for one path and not a tightening of /*.
 #
-# The whole policy is repeated rather than just the directive that differs. Two rules
-# setting one header could either replace or both be sent, and a complete repeat is right
-# either way: replaced, it is this policy; both sent, a browser enforces each and the
-# answer is the stricter of the two. The cost is that the two copies have to change
-# together, so treat the line above and the line below as one line.
+# The whole policy is repeated rather than just the directive that differs, and that is
+# not belt and braces: measured on the live site, Netlify sends one header here and it is
+# this one, so a rule carrying only script-src would have quietly dropped connect-src,
+# frame-ancestors and the rest on the page that needs them most. A path rule replaces,
+# it does not add. The cost is that the two copies have to change together, so treat the
+# line above and the line below as one line.
 /test/*
   Content-Security-Policy: default-src 'self'; script-src 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https://formspree.io https://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
 
