@@ -1,0 +1,77 @@
+# Response headers for impktband.com, applied by Netlify at the edge.
+#
+# A file and not a netlify.toml on purpose: _headers only ever ADDS headers, so it
+# cannot change which directory gets published or what gets built. A netlify.toml
+# declares those too, and declaring them in a repo that has been publishing from the
+# site settings since the first deploy is a way to move the whole site by accident.
+#
+# What this is for: the site has no third party runtime at all. The fonts are ours and
+# served from /fonts, the images are ours, three.js is vendored in /lab/vendor, and the
+# only host any page talks to is Formspree, from two forms. That is unusual and it is
+# worth locking in, because a policy this tight is only writable while it is still true:
+# with it in place, an injected <script src> cannot load, an injected fetch cannot reach
+# a host we did not name, and the pages cannot be framed by anyone.
+
+/*
+  # Nothing loads from anywhere we did not name, and nothing frames us.
+  #
+  # 'unsafe-inline' for scripts, and it is deliberate rather than a shortcut. Every page
+  # here carries its script inline, in one block per page, and the two alternatives both
+  # fail in this repo: a nonce needs a server generating it per request and these are
+  # static files on a CDN, and a hash per block would have to be recomputed on every edit
+  # to a page. index.html and test/index.html are edited by hand and copied into the app,
+  # so a hash list would go stale silently and the site would go blank on a deploy that
+  # looked fine. What matters is what is NOT in script-src: no host, anywhere, so no
+  # injected <script src> can load and no CDN can be swapped under us.
+  #
+  # There is no 'unsafe-eval' because nothing here evals: no eval, no new Function, and
+  # no inline event handlers on any element of any page. That was checked rather than
+  # assumed, and it is the line to hold the next time something is added.
+  #
+  # connect-src names Formspree, which is where the waitlist and the survey post, and
+  # Supabase, which is where a pilot session goes when a project is configured. The
+  # pilot page's ?sink= override still works for anything on those hosts and is refused
+  # anywhere else, which is the point: the one thing a compromised page most wants to do
+  # is post what it has read somewhere else, and this is the header that stops it. A new
+  # destination goes here, by name.
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https://formspree.io https://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+
+  # HTTPS only, for two years, on every subdomain.
+  #
+  # No `preload`. That one submits the domain to a list compiled into every browser,
+  # which is slow to get onto and slower to get off, and it commits every future
+  # subdomain to HTTPS before there is one. Worth doing deliberately, not as part of a
+  # headers file.
+  Strict-Transport-Security: max-age=63072000; includeSubDomains
+
+  # frame-ancestors above is the modern half of this and every browser we care about
+  # honours it. This is here for the ones that do not, and both say the same thing: the
+  # pages are not to be loaded inside anyone else's, which is what makes a click on our
+  # button a click on our button.
+  X-Frame-Options: DENY
+
+  # A .json served as JSON and a .js served as JavaScript, whatever a browser would
+  # rather guess from the bytes.
+  X-Content-Type-Options: nosniff
+
+  # The path never leaves with the referrer. Pilot pages carry an activation code in the
+  # query string, so a full referrer would hand that code to every host a pilot's browser
+  # touched next.
+  Referrer-Policy: strict-origin-when-cross-origin
+
+  # A window we open cannot reach back into ours, and one that opened us cannot reach in.
+  Cross-Origin-Opener-Policy: same-origin
+
+  # Only the two things the site actually asks a phone for: Bluetooth, on the pilot page,
+  # and the accelerometer that page reads when there is no band. Everything else is
+  # refused here rather than at a prompt, so a page that starts asking is a page that has
+  # been changed.
+  Permissions-Policy: accelerometer=(self), bluetooth=(self), camera=(), display-capture=(), geolocation=(), gyroscope=(self), hid=(), idle-detection=(), magnetometer=(), microphone=(), midi=(), payment=(), serial=(), usb=()
+
+# The pilot records. Encrypted, one per pilot, and useless without a code, which is why
+# they can sit in a public file at all. Kept out of search results anyway: there is no
+# reason for a crawler to hold a copy, and an indexed copy is a copy that outlives any
+# fix to this one.
+/pilots.json
+  X-Robots-Tag: noindex, nofollow
+  Cache-Control: public, max-age=0, must-revalidate
