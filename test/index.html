@@ -1338,6 +1338,34 @@
       pointer-events: none;
     }
 
+    /* ── THE APP, FROM THE WEBSITE ──────────────────────────────
+       The one block on this screen that is not about the drills. It is here
+       because this is where a pilot already is, and the app is the half of the
+       pilot a browser is not allowed to give them: firmware onto the wraps over
+       Bluetooth with no cable, and a leaderboard for a room with one band in it.
+
+       Website only, hidden in the app for the same reason the wraps panel is.
+       An invitation to install the thing you are reading it inside is not an
+       invitation, it is a dead end. */
+    .getapp { margin-top: 18px; padding: 18px 18px 16px; border-radius: 26px; }
+    .getapp-h {
+      font-size: var(--text-subheading); font-weight: 500;
+      letter-spacing: var(--tracking-subheading);
+    }
+    .getapp-b {
+      margin-top: 8px; max-width: 64ch;
+      font-size: var(--text-body-sm); letter-spacing: var(--tracking-body-sm);
+      color: var(--ash);
+    }
+    .getapp-act {
+      display: flex; flex-wrap: wrap; align-items: center;
+      gap: 12px 16px; margin-top: 15px;
+    }
+    .getapp-note {
+      font-size: var(--text-caption); letter-spacing: var(--tracking-caption);
+      color: var(--ash);
+    }
+
     /* ── THE WRAPS PANEL ────────────────────────────────────────
        One pane, sticky, holding the only two objects this site talks to. Both
        wraps get a row of their own because they connect one at a time and a
@@ -1849,6 +1877,7 @@
        width, and 580px of card around a 46px diagram and two lines of text is a
        card that has stopped being a card. */
     html.in-app .connect { display: none; }
+    html.in-app .getapp { display: none; }
     html.in-app #drills .setup-note { display: none; }
     html.in-app .prog { grid-template-columns: minmax(0, 1fr); max-width: 820px; }
     html.in-app .prog-main { grid-column: 1; grid-row: 1; }
@@ -2157,6 +2186,38 @@
             the only thing we send. Clear the stored data and you will be asked
             for the profile again.
           </p>
+
+          <!-- The app. Under the drills rather than above them, because a pilot
+               on this screen has wraps on and eight drills to do, and the app is
+               a better way to do the same eight rather than a different thing to
+               do. Hidden in the app: see the in-app rules in the stylesheet.
+
+               The build line is the one thing in this block that goes stale, so
+               it is one line, in one place, and it names the build and the wrap
+               firmware that build carries. -->
+          <aside class="glass getapp" aria-label="The IMPKT app">
+            <h2 class="getapp-h">The same page, as an app</h2>
+            <p class="getapp-b">
+              Your drills, your code and your wraps, plus the two things a
+              browser is not allowed to do. It puts new firmware on your wraps
+              over Bluetooth, with no cable and no laptop in the room. And it has
+              a leaderboard: one band goes round the gym, a name goes up for
+              whoever is holding it, and their hardest punch stays on the board,
+              with the difference between their two hands as a percentage and the
+              speed of the hand that threw it.
+            </p>
+            <div class="getapp-act">
+              <!-- The outline button and not the crimson slab. The thing to press
+                   on this screen is a drill, and eight of them are directly above
+                   this. An app that shouts louder than the work is an app that
+                   gets installed instead of the session being done. -->
+              <a class="btn-plain" href="https://testflight.apple.com/join/P6t2UjQg"
+                 target="_blank" rel="noopener">Get it on TestFlight</a>
+              <span class="getapp-note" id="getapp-build">Build 40, carrying wrap
+                firmware 2.21. iPhone, iOS 16 or newer. Your activation code
+                opens it the same way it opens this page.</span>
+            </div>
+          </aside>
         </div>
 
         <!-- The wraps. Real Web Bluetooth against the BOXING-01 punch service,
@@ -2315,6 +2376,15 @@
           <div><b id="run-count">0</b><span>punches logged</span></div>
           <div><b id="run-reps">0 of 0</b><span>asked for and counted</span></div>
           <div><b id="run-rt">Not yet</b><span>last reaction</span></div>
+          <!-- The three the app shows, said the same way here so a pilot who has
+               both does not have to hold two ideas of the same punch. Power is
+               the wrap's own number and it is the hardest of the drill rather
+               than the last one, hand speed is the speed of that punch, and the
+               split waits for both hands: one wrap with punches on it is a hand
+               that has not thrown yet, not a boxer with one arm. -->
+          <div><b id="run-power">Not yet</b><span>hardest punch</span></div>
+          <div><b id="run-speed">Not yet</b><span>hand speed</span></div>
+          <div><b id="run-hands">Not yet</b><span>left against right</span></div>
         </div>
 
         <!-- Where a finished drill goes. It appears when there is a recording to
@@ -4525,11 +4595,30 @@
     wrapUI(side, 'live', w.rich === false ? 'Connected, older firmware' : 'Connected');
   }
 
+  /* A punch, and the two numbers off it worth saying out loud.
+
+     Power is the wrap's own score at offset 2, which is its blend of how hard
+     the hand was accelerating and how fast it was moving. It is called power
+     everywhere it is shown, here and in the app, because it is not a weight and
+     a kilogram would be claiming a conversion to force at the glove that nothing
+     in this system measures.
+
+     Hand speed is at offset 8 in millimetres per second, and it is the one
+     figure in the record that is a plain physical measurement in its own units,
+     which is why it gets shown next to the number rather than buried.
+
+     The short form is the score characteristic on its own, which is all a wrap
+     older than v2.2 offers. One float and no speed, so the speed stays null and
+     every screen that shows it checks first. */
   function onWrapPunch(side, dv, rich) {
-    let score = null;
+    let hit = null;
     try {
-      score = rich && dv.byteLength >= 20 ? dv.getUint16(2, true) / 10
-            : dv.byteLength >= 4 ? dv.getFloat32(0, true) : null;
+      if (rich && dv.byteLength >= 20) {
+        hit = { power: dv.getUint16(2, true) / 10,
+                speed: dv.getUint16(8, true) / 1000 };
+      } else if (dv.byteLength >= 4) {
+        hit = { power: dv.getFloat32(0, true), speed: null };
+      }
     } catch (err) { return; }
     const w = WRAPS[side];
     w.punches = (w.punches || 0) + 1;
@@ -4539,8 +4628,9 @@
     const last = $('connect-last');
     last.hidden = false;
     last.textContent = (side === 'left' ? 'Left' : 'Right') + ' wrap'
-      + (score == null ? '' : ' · score ' + score.toFixed(1));
-    if (RUN.live) logPunch(side, score);
+      + (hit == null ? '' : ' · ' + Math.round(hit.power) + ' power')
+      + (hit && hit.speed ? ' · ' + hit.speed.toFixed(1) + ' m/s' : '');
+    if (RUN.live) logPunch(side, hit);
   }
 
   document.querySelectorAll('.wrap-btn').forEach(b =>
@@ -4739,6 +4829,7 @@
        a zero that looks like a fault. */
     $('run-reps').textContent = asksRead(0);
     $('run-rt').textContent = 'Not yet';
+    paintStrength([]);
     setMark('', '');
     show(runPane);
   }
@@ -5111,6 +5202,7 @@
     RUN.id = newId();
     $('run-send').hidden = true;
     paintRings(null);
+    paintStrength(RUN.log);
     $('run-count').textContent = '0';
     $('run-go').textContent = 'Stop';
     /* 100ms rather than a frame: nothing here is animated, the clock reads in
@@ -5280,9 +5372,26 @@
           + (RUN.stats.rejected ? ', ' + RUN.stats.rejected + ' unlabelled' : '')
           + '. '
         : '';
+      /* The hardest punch of the drill, and which hand it was against the other
+         one. Only when a wrap was on: with no wraps in the room every punch came
+         from the circle, has no number and no hand, and a sentence about power
+         would be a sentence about nothing. The same three figures the app puts on
+         its leaderboard, so a pilot who has both sees the same drill twice rather
+         than two disagreeing accounts of it. */
+      const best = strength(RUN.log);
+      /* Nothing between the hands is a real answer and worth a sentence of its
+         own, rather than "left is 0% harder", which reads as a broken number. */
+      const split = !best.strong ? ''
+        : best.percent === 0 ? 'Left and right came out level. '
+        : best.strong + ' is ' + best.percent + '% harder than the '
+          + (best.strong === 'Left' ? 'right' : 'left') + '. ';
+      const hardest = !best.best ? ''
+        : 'Hardest punch ' + Math.round(best.best) + ' power'
+          + (best.speed ? ' at ' + best.speed.toFixed(1) + ' m/s' : '')
+          + '. ' + split;
       $('run-cue').innerHTML = asked + RUN.punches
         + (RUN.punches === 1 ? ' punch' : ' punches') + ' logged'
-        + (tally ? ': ' + tally : '') + '. '
+        + (tally ? ': ' + tally : '') + '. ' + hardest
         /* Which of the two actually happens, rather than the one that used to be
            assumed: with no project in this copy of the page the recording is kept
            here, and saying it goes now would be a sentence the pilot could not
@@ -5301,11 +5410,55 @@
     }
   }
 
+  /* How hard the drill has been, read off the recording itself rather than kept
+     as a running tally. One place a number can come from, and nothing to reset
+     between drills, because an empty list answers with zeros.
+
+     The hardest punch rather than the last one: the last one is a fact about the
+     last two seconds and the hardest is the fact about the drill.
+
+     The split says nothing until both hands have landed something. One wrap with
+     punches on it is a hand that has not thrown yet, and "your left is 100%
+     harder" about a right hand that never threw would be this page reporting its
+     own gap as the boxer's. A punch from the circle or the space bar has no hand
+     and no number, so it is counted by the drill and left out of both. */
+  function strength(rows) {
+    const s = { best: 0, speed: 0, left: 0, right: 0, hands: 0,
+                strong: '', percent: 0 };
+    for (const r of rows) {
+      if (r.event !== 'punch' || r.score == null) continue;
+      if (r.score > s.best) { s.best = r.score; s.speed = r.speed || 0; }
+      if (r.src === 'left'  && r.score > s.left)  s.left  = r.score;
+      if (r.src === 'right' && r.score > s.right) s.right = r.score;
+    }
+    s.hands = (s.left > 0 ? 1 : 0) + (s.right > 0 ? 1 : 0);
+    if (s.hands === 2) {
+      const high = Math.max(s.left, s.right), low = Math.min(s.left, s.right);
+      s.strong = s.left >= s.right ? 'Left' : 'Right';
+      s.percent = Math.round((high / low - 1) * 100);
+    }
+    return s;
+  }
+
+  /* The three cells at the bottom of the run screen. Given the recording after
+     every punch, and an empty list when a drill opens, so what is on screen is
+     never the last drill's numbers waiting to be overwritten. */
+  function paintStrength(rows) {
+    const s = strength(rows);
+    $('run-power').textContent = s.best ? String(Math.round(s.best)) : 'Not yet';
+    $('run-speed').textContent = s.speed ? s.speed.toFixed(1) + ' m/s' : 'Not yet';
+    /* "Left +0%" is a number that looks like a fault. Two hands that came out
+       equal is a real answer and gets a word instead. */
+    $('run-hands').textContent = !s.strong ? (s.hands ? 'One hand so far' : 'Not yet')
+                               : s.percent === 0 ? 'Level'
+                               : s.strong + ' +' + s.percent + '%';
+  }
+
   /* Every punch, whatever it came from: a connected wrap, the pad, or the space
      bar. Whether there is an open ask when it arrives is the useful part of it,
      because an ask is the only thing on this page that can turn a measurement
      into a labelled one. */
-  function logPunch(src, score) {
+  function logPunch(src, hit) {
     if (!RUN.live) return;
     /* Paused means nothing is being recorded against a rep, which the screen
        says, so a punch thrown while paused is not recorded at all. Logging it
@@ -5398,7 +5551,14 @@
       rep: w ? w.r.n + 1 : null,
       reaction: reaction,
       outcome: outcome, reason: reason,
-      score: score == null ? null : score
+      /* `score` keeps its name because the sink has a column called score and
+         one that has held this number since the first upload. It is the same
+         number the screens call power. `speed` is new and the sink has no column
+         for it, so it rides in the document and is dropped on the way in, which
+         is what ingest_session does with every key it does not name: the
+         recording downloaded by hand has it either way. */
+      score: hit == null ? null : hit.power,
+      speed: hit && hit.speed ? hit.speed : null
     });
 
     /* The circle takes the knock, whatever the punch came from. It is the only
@@ -5412,6 +5572,10 @@
        two lines of type sitting between the circle and the rings, so the first
        punch of the drill retires it and the rings come up the screen. */
     $('run-hint').hidden = true;
+
+    /* Last, and from the recording rather than from `hit`, so a punch thrown with
+       no wrap on it still moves the count and leaves the three numbers alone. */
+    paintStrength(RUN.log);
   }
 
   /* ── 9b. THE RECORDING LEAVES ─────────────────────────
