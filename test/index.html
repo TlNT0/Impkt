@@ -3408,7 +3408,7 @@
   });
 
   /* ── 6. THE PROGRAMME ─────────────────────────────────
-     Eight drills as data rather than markup, because that is what they are: a
+     Eighteen drills as data rather than markup, because that is what they are: a
      collection protocol, with a label on every block and a running clock. It
      renders from the profile, so a southpaw reads "right hook" where an
      orthodox fighter reads "left hook" and nobody has to translate mid-round.
@@ -3419,6 +3419,42 @@
      and `neg` is a block of things that must never be counted as a punch. A
      dataset without the third kind produces a pair of wraps that count
      scratching your nose. */
+  /* The hundreds. The ten punches that matter most, one per drill and a hundred
+     of each: two sets of 25 in the air and two into the bag, a working set and
+     a flat-out set of each, with a still guard between every set. The same
+     punch with and without contact and at two speeds, labelled on every rep, is
+     the most useful thing a pilot can give us, and the guard blocks between the
+     sets are negatives for free.
+
+     A set is exactly 25 reps because a block's reps are its length over its
+     tempo, rounded down: 50 s at 2 s and 75 s at 3 s. The straight punches go at
+     two seconds in the air, everything that bends, lowers or loops goes at
+     three, and everything goes at three into the bag. */
+  function hundred(n, t, label, name, hand, air, why) {
+    const at = [];
+    let clock = 0;
+    const put = (secs, row) => {
+      const s = Math.round(clock);
+      at.push([Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0')].concat(row));
+      clock += secs;
+    };
+    const every = air === 2 ? 'two' : 'three';
+    put(20, ['Guard. Stand still. Do not throw anything yet.', 'idle', 'neg']);
+    put(25 * air, ['<b>' + name + '</b>' + (hand ? ', ' + hand + ' hand,' : '') + ' in the air. 25 of them, one every '
+      + every + ' seconds, at about two thirds of your power.', label, '', air]);
+    put(20, ['Guard. Still.', 'idle', 'neg']);
+    put(25 * air, ['<b>' + name + '</b> in the air again. 25 more, same tempo, flat out.',
+      label, '', air]);
+    put(30, ['Walk to the bag and rest both hands on it. No punches.', 'idle', 'neg']);
+    put(75, ['<b>' + name + '</b> into the bag. 25, one every three seconds, at about two '
+      + 'thirds. Back to guard between each one.', label, 'hit', 3]);
+    put(20, ['Guard in front of the bag. Do not touch it.', 'idle', 'neg']);
+    put(75, ['<b>' + name + '</b> into the bag. The last 25, flat out.', label, 'hit', 3]);
+    put(20, ['Guard. Still. Drill ends.', 'idle', 'neg']);
+    return { n, t, where: 'Shadow and bag · ' + Math.round(clock / 60) + ' min',
+             guided: true, secs: clock, why: why, blocks: at };
+  }
+
   const DRILLS = [
     {
       /* The one-minute drill. It exists to test the whole chain end to end, in a
@@ -3430,8 +3466,8 @@
       n: '00', t: 'One minute, jab and cross', where: 'Shadow · 1 min',
       test: true, guided: true, secs: 60,
       why: 'The short one. Ten jabs and ten crosses, on a tempo, in the air, so '
-         + 'you can see the whole thing work end to end before committing twelve '
-         + 'minutes to it: the wraps connected, the punches arriving, the rings '
+         + 'you can see the whole thing work end to end before committing a whole '
+         + 'drill to it: the wraps connected, the punches arriving, the rings '
          + 'filling, and the recording leaving at the end.',
       blocks: [
         ['0:00', 'Guard. Stand still. Do not throw anything yet.', 'idle', 'neg'],
@@ -3479,8 +3515,41 @@
         ['11:30', 'Guard. Still. Drill ends.', 'idle', 'neg']
       ]
     },
+    hundred('03', '100 jabs', 'jab', 'Jab', '{l}', 2,
+      'The punch everything else is built on, and the one thrown most in any round. '
+      + 'A hundred of it: fifty in the air and fifty into the bag, half of each flat '
+      + 'out, so the wraps see the jab with and without contact and at every speed you have.'),
+    hundred('04', '100 crosses', 'cross', 'Cross', '{r}', 2,
+      'The straight punch from the {r} hand, and the one most fights are won with. '
+      + 'The same hundred as the jab: fifty in the air, fifty into the bag, half of each flat out.'),
+    hundred('05', '100 {l} hooks', 'hook_lead', '{L} hook', '', 3,
+      'The {l} hook comes round rather than straight, and it is the punch a classifier '
+      + 'most often mistakes for another. Every three seconds, so each one is a whole '
+      + 'hook and not half of one.'),
+    hundred('06', '100 {r} hooks', 'hook_rear', '{R} hook', '', 3,
+      'The {r} hook, the same hundred. Next to the {l} hook it is the pair the wraps '
+      + 'have to tell apart by the hand and the turn alone.'),
+    hundred('07', '100 {l} uppercuts', 'upper_lead', '{L} uppercut', '', 3,
+      'The {l} uppercut travels up, not out or round. Drop the shoulder and bend the '
+      + 'knees, and do not lean back.'),
+    hundred('08', '100 {r} uppercuts', 'upper_rear', '{R} uppercut', '', 3,
+      'The {r} uppercut, the same hundred. Drive it up from the legs rather than '
+      + 'swinging it from the shoulder.'),
+    hundred('09', '100 {l} hooks to the body', 'body_hook_lead', '{L} hook to the body', '', 3,
+      'The {l} hook to the body. Bend the knees and dig it in under the ribs: the level '
+      + 'changes and the fist does not. From the wrist it looks like a hook to the head '
+      + 'until the wraps have seen a hundred of each.'),
+    hundred('10', '100 {r} hooks to the body', 'body_hook_rear', '{R} hook to the body', '', 3,
+      'The {r} hook to the body, the same hundred. Change levels with the legs, not by '
+      + 'dropping the hands.'),
+    hundred('11', '100 jabs to the body', 'body_jab', 'Jab to the body', '{l}', 3,
+      'The jab to the body. Bend the knees and put the jab through the stomach, eyes up. '
+      + 'Straight like the jab, but lower and from a different stance, and the wraps need both.'),
+    hundred('12', '100 {r} overhands', 'overhand_rear', '{R} overhand', '', 3,
+      'The {r} overhand loops over the top and comes down, which no other punch here '
+      + 'does. On the bag, aim where the head would be.'),
     {
-      n: '03', t: 'The same six, into the bag', where: 'Heavy bag · 12 min',
+      n: '13', t: 'The same six, into the bag', where: 'Heavy bag · 12 min',
       guided: true, secs: 720,
       why: 'Every punch from the first two drills again, this time hitting something. '
          + 'The deceleration at contact is the loudest thing in the whole signal, and a '
@@ -3498,7 +3567,7 @@
       ]
     },
     {
-      n: '04', t: 'Combinations', where: 'Shadow and bag · 12 min',
+      n: '14', t: 'Combinations', where: 'Shadow and bag · 12 min',
       guided: true, secs: 720,
       why: 'Punches do not arrive one at a time with three seconds of quiet around '
          + 'them. This drill is where the wraps learn what a second punch looks like '
@@ -3519,7 +3588,7 @@
       ]
     },
     {
-      n: '05', t: 'Everything that is not a punch', where: 'Shadow and rope · 12 min',
+      n: '15', t: 'Everything that is not a punch', where: 'Shadow and rope · 12 min',
       /* Guided, with no rep windows anywhere in it, and that is not an omission:
          nothing in this drill should be prompted, because a prompt is a request
          for a punch and every block in here is twelve minutes of asking for
@@ -3545,7 +3614,7 @@
       ]
     },
     {
-      n: '06', t: 'Open rounds, held back', where: 'Heavy bag · 12 min',
+      n: '16', t: 'Open rounds, held back', where: 'Heavy bag · 12 min',
       /* rounds turns the three work blocks into rounds proper: a bell at each
          end of them and the ten-second warning inside them, which is the one
          set of cues every boxer already knows and does not have to be taught by
@@ -3554,7 +3623,7 @@
       guided: true, secs: 720, rounds: true,
       why: 'Three normal rounds on the bag, nothing called, no tempo. This one is '
          + 'never used to train anything: it is kept aside and used to check whether '
-         + 'what the other six drills taught actually works on a real round. A score '
+         + 'what the other drills taught actually works on a real round. A score '
          + 'measured on data a model was trained on is not a score.',
       blocks: [
         ['0:00', 'Guard. Still. Start the recording before you start the round.', 'idle', 'neg'],
@@ -3566,7 +3635,7 @@
       ]
     },
     {
-      n: '07', t: 'The same punches, tired', where: 'Heavy bag · 12 min',
+      n: '17', t: 'The same punches, tired', where: 'Heavy bag · 12 min',
       /* The one drill whose work blocks are not the point. The three flat-out
          blocks are collected, because they are punches into a bag and there is no
          reason to throw data away, but they are labelled free: nothing in them is
@@ -3578,7 +3647,7 @@
          out of breath with their hands down is a negative no other drill in here
          collects, because nobody in the other seven is out of breath. */
       guided: true, secs: 720,
-      why: 'Every punch in the other seven drills is thrown by somebody rested, '
+      why: 'Every punch in the other drills is thrown by somebody rested, '
          + 'because each one starts from zero and has a guard block whenever it '
          + 'needs one. Almost nothing in a gym is. A tired jab is shorter, slower '
          + 'and arrives without the snap at the end, and wraps that have only seen '
@@ -3599,6 +3668,7 @@
         ['11:40', 'Hands down. Stand still and get your breath back. Drill ends.', 'idle', 'neg']
       ]
     }
+
   ];
 
   const drills = document.getElementById('drills');
@@ -3607,6 +3677,18 @@
      does and grey for what stays still or gets hit. They are not illustrations,
      they are a shape you recognise before you have read the title. */
   const ICONS = {
+    /* The hundreds: lead punches start on the left, rear ones on the right, and a
+       grey line at head height marks the ones that go to the body. */
+    '03': '<path d="M3 9h15"/><path d="M15 6l3 3-3 3"/><path class="g" d="M3 16h7"/>',
+    '04': '<path class="g" d="M3 8h7"/><path d="M3 15h15"/><path d="M15 12l3 3-3 3"/>',
+    '05': '<path d="M4 6a9 9 0 0 1 9 9"/><path d="M10 13l3 2 1-3"/>',
+    '06': '<path d="M20 6a9 9 0 0 0-9 9"/><path d="M14 13l-3 2-1-3"/>',
+    '07': '<path d="M5 20a8 8 0 0 0 8-8"/><path d="M10 13l3-1 1 3"/>',
+    '08': '<path d="M19 20a8 8 0 0 1-8-8"/><path d="M14 13l-3-1-1 3"/>',
+    '09': '<path class="g" d="M3 5h18"/><path d="M3 10a9 9 0 0 1 9 9"/><path d="M9 17l3 2 1-3"/>',
+    '10': '<path class="g" d="M3 5h18"/><path d="M21 10a9 9 0 0 0-9 9"/><path d="M15 17l-3 2-1-3"/>',
+    '11': '<path class="g" d="M3 6h18"/><path d="M3 16h15"/><path d="M15 13l3 3-3 3"/>',
+    '12': '<path d="M3 17q8-18 16-1"/><path d="M15.5 14.5l3.5 1.5 0-3.8"/><path class="g" d="M3 21h6"/>',
     /* A minute on a clock, and the two straights inside it. */
     '00': '<circle class="g" cx="12" cy="12" r="9"/>'
         + '<path d="M12 12l0-6"/><path d="M12 12l5 3"/>',
@@ -3617,21 +3699,21 @@
     '02': '<path d="M4 5a9 9 0 0 1 9 9"/><path d="M10 12l3 2 1-3"/>'
         + '<path class="g" d="M5 20a8 8 0 0 0 8-8"/><path class="g" d="M10 13l3-1 1 3"/>',
     /* The bag, and a straight punch into it. */
-    '03': '<path d="M3 12h9"/><path d="M9 9l3 3-3 3"/>'
+    '13': '<path d="M3 12h9"/><path d="M9 9l3 3-3 3"/>'
         + '<path class="g" d="M18 3v3"/><rect class="g" x="14" y="6" width="8" height="14" rx="4"/>',
     /* Three punches, staggered, one pair overlapping. */
-    '04': '<path d="M3 7h11"/><path d="M11 4l3 3-3 3"/><path d="M3 13h14"/><path d="M14 10l3 3-3 3"/>'
+    '14': '<path d="M3 7h11"/><path d="M11 4l3 3-3 3"/><path d="M3 13h14"/><path d="M14 10l3 3-3 3"/>'
         + '<path class="g" d="M3 19h8"/><path class="g" d="M8 16l3 3-3 3"/>',
     /* An arm going out and coming straight back, with nothing behind it. */
-    '05': '<path d="M4 9h12"/><path d="M13 6l3 3-3 3"/>'
+    '15': '<path d="M4 9h12"/><path d="M13 6l3 3-3 3"/>'
         + '<path class="g" d="M16 17H4"/><path class="g" d="M7 14l-3 3 3 3"/>',
     /* Three rounds on a clock, nothing called. */
-    '06': '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/>'
+    '16': '<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2"/>'
         + '<path class="g" d="M9 3h6"/>',
     /* The bag again, and a punch arriving at it with nothing left in it: the same
        two strokes as 03 with the arm sagging on the way, which is the difference
        between the two drills. */
-    '07': '<path d="M3 7q5 2 9 7"/><path d="M8.5 12.5l3.5 1.5-1.5-3.5"/>'
+    '17': '<path d="M3 7q5 2 9 7"/><path d="M8.5 12.5l3.5 1.5-1.5-3.5"/>'
         + '<path class="g" d="M18 3v3"/><rect class="g" x="14" y="6" width="8" height="14" rx="4"/>'
   };
 
@@ -5712,6 +5794,8 @@
     jab: 'Jab', cross: 'Cross',
     hook_lead: '{L} hook', hook_rear: '{R} hook',
     upper_lead: '{L} uppercut', upper_rear: '{R} uppercut',
+    body_hook_lead: '{L} hook to the body', body_hook_rear: '{R} hook to the body',
+    body_jab: 'Jab to the body', overhand_rear: '{R} overhand',
     combo_1_2: '1-2', combo_1_2_3: '1-2-3', combo_4_5: '4-5'
   };
 
@@ -5849,7 +5933,7 @@
     $('run-cue').innerHTML = say(d.why) + swap + (d.guided
       ? ' If you throw the wrong punch or lose the tempo, carry on rather than '
         + 'starting again: five mislabelled seconds cost us nothing and a '
-        + 'restarted drill costs twelve minutes.'
+        + 'restarted drill costs the whole drill.'
       : '');
     $('run-send').hidden = true;
     $('run-count').textContent = '0';
@@ -6288,7 +6372,7 @@
         $('run-head').textContent = String(n);
         $('run-cue').innerHTML = RUN.d.test
           ? 'One minute. Hands up.'
-          : 'Twelve minutes. Hands up.';
+          : Math.round(RUN.total / 60) + ' minutes. Hands up.';
         if (n <= 3) click(0.18);
       }
       return;
