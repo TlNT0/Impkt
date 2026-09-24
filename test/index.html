@@ -4586,6 +4586,7 @@
     CTRL:    '6e2a0004-b5a3-f393-e0a9-e50e24dcca9e',
     IMU:     '6e2a0005-b5a3-f393-e0a9-e50e24dcca9e',
     ORIENT:  '6e2a0006-b5a3-f393-e0a9-e50e24dcca9e',
+    TRACE:   '6e2a000a-b5a3-f393-e0a9-e50e24dcca9e',
     BATT:    '6e2a0007-b5a3-f393-e0a9-e50e24dcca9e',
     IDENT:   '6e2a0009-b5a3-f393-e0a9-e50e24dcca9e'
   };
@@ -4793,7 +4794,8 @@
         const v = await (await dis.getCharacteristic('firmware_revision_string')).readValue();
         w.fw = new TextDecoder().decode(v).replace(/\0+$/, '').trim() || null;
       } catch (err) { w.fw = null; }
-      w.imu = w.ori = null;
+      w.imu = w.ori = w.trace = null;
+      w.tr = null;
       w.moOn = false;
       const ver = /^(\d+)\.(\d+)/.exec(w.fw || '');
       if (!ver || +ver[1] > 2 || (+ver[1] === 2 && +ver[2] >= 18)) {
@@ -4805,6 +4807,14 @@
             w[key] = c;
           } catch (err) { w[key] = null; }
         }
+        /* Every sample of every punch, firmware 2.22 on. Older firmware has no
+           such characteristic and this just finds nothing. */
+        try {
+          const c = await svc.getCharacteristic(BLE.TRACE);
+          c.addEventListener('characteristicvaluechanged',
+            e => moTrace(sideOf(device) || side, e.target.value));
+          w.trace = c;
+        } catch (err) { w.trace = null; }
         if (MOTION.rec) moListen(side, true);
       }
 
@@ -5602,12 +5612,24 @@
      hits:     t, seq, score, spin, ms, flags, peakG, rawG, speed, railed,
                builtPeak, late: the whole punch record, one per punch as it arrived
      t is milliseconds from the start of the recording, on one clock for all
-     three, and the recording's start is epoch milliseconds. */
+     three, and the recording's start is epoch milliseconds.
+
+     traces, firmware 2.22 on: every 833 Hz sample the wrap took from about 58 ms
+     before a punch triggered to the end of its window, sent after the punch on
+     characteristic 0x0A. One object per punch: t (when it finished arriving),
+     seq (the punch record's, so it joins hits), pre (how many samples precede
+     the trigger), flags (1 = truncated at 380 samples), period (mean sample
+     interval, 0.1 us), lost (traces the wrap could not keep since the last one),
+     grav (gravity at the trigger, milli-g), and s, one [ax, ay, az, gx, gy, gz]
+     per sample, accel in milli-g with gravity in it and gyro in 0.1 dps. The
+     recording stays open MO_TAIL_MS after it ends, because the last punches'
+     traces are still on their way when the drill stops. */
   const MO_OUT = 'impkt.motion.outbox.v1';
   const MO_CHUNK_MS = 5000;
   const MO_ROWS = 1000;
   const MO_KEEP_BYTES = 1500000;
-  const MOTION = { rec: null, timer: null, queue: [], busy: false };
+  const MO_TAIL_MS = 4000;
+  const MOTION = { rec: null, timer: null, queue: [], busy: false, tail: null };
 
   (function moLoad() {
     try {
@@ -5631,12 +5653,13 @@
     catch (err) { /* private browsing or full: it lasts as long as the tab */ }
   }
 
-  const moSide = () => ({ imu: [], ori: [], hits: [] });
+  const moSide = () => ({ imu: [], ori: [], hits: [], traces: [] });
 
   function moStart(kind, ref) {
     moStop();
     MOTION.rec = { kind, ref, start: Date.now(), p0: performance.now(), n: 0,
-                   left: moSide(), right: moSide() };
+                   left: moSide(), right: moSide(),
+                   seen: { left: new Set(), right: new Set() } };
     moListen('left', true);
     moListen('right', true);
     MOTION.timer = setInterval(moCut, MO_CHUNK_MS);
@@ -5646,11 +5669,28 @@
     if (!MOTION.rec) return;
     clearInterval(MOTION.timer);
     MOTION.timer = null;
-    moCut();
+    const r = MOTION.rec;
+    moCut(r);
     MOTION.rec = null;
-    moListen('left', false);
-    moListen('right', false);
     moSend();
+    /* The tail: traces of this recording's last punches, still arriving. They
+       go into one more chunk of their own, and the streams stay on until then
+       unless the next recording has already claimed them. */
+    if (MOTION.tail) moTailEnd();
+    MOTION.tail = { r, timer: setTimeout(moTailEnd, MO_TAIL_MS) };
+  }
+
+  function moTailEnd() {
+    const t = MOTION.tail;
+    if (!t) return;
+    clearTimeout(t.timer);
+    MOTION.tail = null;
+    moCut(t.r);
+    if (!MOTION.rec) {
+      moListen('left', false);
+      moListen('right', false);
+      moSend();
+    }
   }
 
   /* On only while recording, because a subscribed wrap sends 50 packets a second
@@ -5660,14 +5700,14 @@
      beginning) are run one after the other, and only the last wish counts. */
   function moListen(side, on) {
     const w = WRAPS[side];
-    if (!w || (!w.imu && !w.ori)) return;
+    if (!w || (!w.imu && !w.ori && !w.trace)) return;
     w.moWant = on;
     if (w.moBusy) return;
     w.moBusy = true;
     (async () => {
       while (w.moOn !== w.moWant) {
         const want = w.moWant;
-        for (const c of [w.imu, w.ori]) {
+        for (const c of [w.imu, w.ori, w.trace]) {
           if (!c) continue;
           try { await (want ? c.startNotifications() : c.stopNotifications()); }
           catch (err) { /* gone mid-call: nothing left to switch */ }
@@ -5693,10 +5733,50 @@
     rows.push(row);
   }
 
+  /* One 20-byte packet of a punch trace. Packet 0 is the header, then 18 bytes
+     of samples a packet in index order; the trace is whole when every packet
+     it promised is in. A header arriving over a half-built trace means the rest
+     of that one is not coming. */
+  function moTrace(side, dv) {
+    const w = WRAPS[side];
+    if (!w || dv.byteLength < 20) return;
+    const id = dv.getUint8(0), idx = dv.getUint8(1);
+    if (idx === 0) {
+      const count = dv.getUint16(4, true);
+      const n = Math.ceil(count * 12 / 18);
+      w.tr = { id, seq: dv.getUint16(2, true), count, pre: dv.getUint8(6),
+               flags: dv.getUint8(7), period: dv.getUint16(8, true),
+               grav: [dv.getInt16(10, true), dv.getInt16(12, true), dv.getInt16(14, true)],
+               lost: dv.getUint8(16), ver: dv.getUint8(17),
+               n, got: 0, have: new Uint8Array(n + 1), buf: new Uint8Array(n * 18) };
+      if (n === 0) w.tr = null;
+      return;
+    }
+    const tr = w.tr;
+    if (!tr || tr.id !== id || idx > tr.n || tr.have[idx]) return;
+    tr.have[idx] = 1;
+    tr.buf.set(new Uint8Array(dv.buffer, dv.byteOffset + 2, 18), (idx - 1) * 18);
+    if (++tr.got < tr.n) return;
+    w.tr = null;
+    const v = new DataView(tr.buf.buffer), samples = [];
+    for (let i = 0; i < tr.count; i++) {
+      const row = [];
+      for (let k = 0; k < 6; k++) row.push(v.getInt16(i * 12 + k * 2, true));
+      samples.push(row);
+    }
+    const tail = MOTION.tail && MOTION.tail.r.seen[side].has(tr.seq) ? MOTION.tail.r : null;
+    const r = tail || MOTION.rec || (MOTION.tail && MOTION.tail.r);
+    if (!r || !r[side] || r[side].traces.length >= 200) return;
+    r[side].traces.push({ t: Math.round(performance.now() - r.p0), seq: tr.seq,
+                          pre: tr.pre, flags: tr.flags, period: tr.period,
+                          lost: tr.lost, ver: tr.ver, grav: tr.grav, s: samples });
+  }
+
   function moHit(side, hit) {
     const r = MOTION.rec;
     if (!r || !r[side]) return;
     const w = hit && hit.wrap;
+    if (w && w.seq != null) r.seen[side].add(w.seq);
     r[side].hits.push([Math.round(performance.now() - r.p0), w ? w.seq : null,
                        hit ? hit.power : null, w ? w.spin : null, w ? w.ms : null,
                        w ? w.flags : null, w ? w.peakG : null, w ? w.rawG : null,
@@ -5704,19 +5784,19 @@
                        w ? w.late : null]);
   }
 
-  function moCut() {
-    const r = MOTION.rec;
+  function moCut(rec) {
+    const r = rec || MOTION.rec;
     if (!r) return;
     for (const side of ['left', 'right']) {
       const b = r[side];
-      if (!b.imu.length && !b.ori.length && !b.hits.length) continue;
+      if (!b.imu.length && !b.ori.length && !b.hits.length && !b.traces.length) continue;
       const w = WRAPS[side];
       MOTION.queue.push({
         id: r.ref + side[0].toUpperCase() + r.n, kind: r.kind, ref: r.ref,
         side, n: r.n, start: r.start,
         serial: PILOT ? PILOT.serial : null, gym: PILOT ? PILOT.gym : null,
         fw: w.fw || null, unit: w.ident ? w.ident.unitId : null,
-        imu: b.imu, ori: b.ori, hits: b.hits
+        imu: b.imu, ori: b.ori, hits: b.hits, traces: b.traces
       });
       r[side] = moSide();
     }
@@ -5749,6 +5829,7 @@
   setTimeout(moSend, 2000);
   setInterval(moSend, 20000);
   addEventListener('pagehide', () => {
+    if (MOTION.tail) moTailEnd();
     if (!MOTION.rec) return;
     moCut();
   });
