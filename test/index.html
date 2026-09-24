@@ -2381,7 +2381,8 @@
               it over. Left against right waits until both hands have landed
               something. The board is saved to IMPKT under your code, so every
               screen opened with the same code shows the same board. It keeps the
-              name typed and the punches, and nothing else about anybody.
+              name typed, the punches and how the wraps moved during the go, and
+              nothing else about anybody.
             </p>
           </section>
 
@@ -4408,7 +4409,7 @@
     try {
       device = await navigator.bluetooth.requestDevice({
         filters: [{ services: [BLE.SERVICE] }],
-        optionalServices: [BLE.SERVICE]
+        optionalServices: [BLE.SERVICE, 'device_information']
       });
     } catch (err) {
       if (err && (err.name === 'NotFoundError' || err.name === 'AbortError')) {
@@ -4487,7 +4488,7 @@
      Connecting is local and nothing here streams anywhere: the link is between
      this page and the wrap, and no punch leaves while it is open. What does leave
      is the finished drill, once, when it ends, and section 9b is where that
-     happens. Both halves of that are said on the panel rather than only in a
+     happens, with the movement recorded during it right behind it (8d). Both halves of that are said on the panel rather than only in a
      comment, since "connect your device to a website" reads as telemetry to
      anyone who has met a fitness app, and a page that then quietly uploaded
      would have earned the suspicion. */
@@ -4501,6 +4502,8 @@
     PUNCH:   '6e2a0002-b5a3-f393-e0a9-e50e24dcca9e',
     SCORE:   '6e2a0003-b5a3-f393-e0a9-e50e24dcca9e',
     CTRL:    '6e2a0004-b5a3-f393-e0a9-e50e24dcca9e',
+    IMU:     '6e2a0005-b5a3-f393-e0a9-e50e24dcca9e',
+    ORIENT:  '6e2a0006-b5a3-f393-e0a9-e50e24dcca9e',
     BATT:    '6e2a0007-b5a3-f393-e0a9-e50e24dcca9e',
     IDENT:   '6e2a0009-b5a3-f393-e0a9-e50e24dcca9e'
   };
@@ -4590,7 +4593,7 @@
     }
     connectNote('The connection is between this page and the wrap, and nothing '
       + 'streams out of it while you train. The finished drill is uploaded once, '
-      + 'at the end.');
+      + 'at the end, with how each wrap moved through it.');
     return true;
   }
 
@@ -4695,6 +4698,33 @@
         try { await w.batt.startNotifications(); } catch (err) { /* read-only build */ }
         onWrapBatt(side, await w.batt.readValue());
       } catch (err) { w.batt = null; }
+
+      /* The movement streams, 0x05 (gravity, accel and gyro) and 0x06 (the fused
+         orientation). Listened to here and only switched on while something is
+         being recorded, see 8d. Firmware older than 2.18 could park its sampler
+         for 100 ms on a busy link, so a wrap that says it is older is left alone.
+         One that cannot say (a wrap this browser met before it asked for device
+         information) is streamed: every pilot wrap is newer than that. */
+      w.fw = null;
+      try {
+        const dis = await server.getPrimaryService('device_information');
+        const v = await (await dis.getCharacteristic('firmware_revision_string')).readValue();
+        w.fw = new TextDecoder().decode(v).replace(/\0+$/, '').trim() || null;
+      } catch (err) { w.fw = null; }
+      w.imu = w.ori = null;
+      w.moOn = false;
+      const ver = /^(\d+)\.(\d+)/.exec(w.fw || '');
+      if (!ver || +ver[1] > 2 || (+ver[1] === 2 && +ver[2] >= 18)) {
+        for (const [key, uuid] of [['imu', BLE.IMU], ['ori', BLE.ORIENT]]) {
+          try {
+            const c = await svc.getCharacteristic(uuid);
+            c.addEventListener('characteristicvaluechanged',
+              e => moFrame(sideOf(device) || side, key, e.target.value));
+            w[key] = c;
+          } catch (err) { w[key] = null; }
+        }
+        if (MOTION.rec) moListen(side, true);
+      }
 
       /* Identity, straight from the wrap, and the only authority on which hand it
          is: the letter in a name is a convention, and the name is a label somebody
@@ -4831,12 +4861,14 @@
     try {
       if (rich && dv.byteLength >= 20) {
         hit = { power: dv.getUint16(2, true) / 10,
-                speed: dv.getUint16(8, true) / 1000 };
+                speed: dv.getUint16(8, true) / 1000,
+                wrap: wrapSummary(dv) };
       } else if (dv.byteLength >= 4) {
         hit = { power: dv.getFloat32(0, true), speed: null };
       }
     } catch (err) { return; }
     const w = WRAPS[side];
+    moHit(side, hit);
     w.punches = (w.punches || 0) + 1;
     w.lastPunch = performance.now();
     w.heard = w.lastPunch;
@@ -4850,6 +4882,19 @@
        between drills, and a punch thrown to a cue is not somebody's go. */
     if (RUN.live) logPunch(side, hit);
     else lbPunch(side, dv, rich);
+  }
+
+  /* Everything in the 20-byte punch record, not just the two numbers on screen.
+     spin is the peak rotation rate inside the punch in degrees per second, the
+     one rotation figure measured at the wrap's full 833 Hz, because the live
+     streams pause for the length of a punch. ms is that punch's length. Bytes
+     18-19 were a punch count up to 2.20, so builtPeak only means a peak when
+     flag 0x08 is set. */
+  function wrapSummary(dv) {
+    const u16 = at => dv.getUint16(at, true);
+    return { seq: u16(0), peakG: u16(4) / 1000, rawG: u16(6) / 1000, speed: u16(8) / 1000,
+             spin: u16(10), ms: u16(12), railed: u16(14), flags: dv.getUint8(16),
+             late: dv.getUint8(17), builtPeak: u16(18) / 1000 };
   }
 
   /* ── 8b. THE LEADERBOARD ──────────────────────────────
@@ -4924,7 +4969,8 @@
       }
     } catch (err) { return; }
     if (!p) return;
-    lbRecord({ power: lbPower(p), speed: p.speed, hand: side, at: Date.now() });
+    lbRecord({ power: lbPower(p), speed: p.speed, hand: side, at: Date.now(),
+               wrap: rich && dv.byteLength >= 20 ? wrapSummary(dv) : null });
   }
 
   /* Trimmed, collapsed and capped at 24, by characters rather than by UTF-16
@@ -4962,7 +5008,8 @@
     }
     const beat = p.power > t.best;
     if (beat) { t.best = p.power; t.bestSpeed = p.speed; }
-    if (t.log.length < 5000) t.log.push({ power: p.power, speed: p.speed, hand: p.hand, at: p.at });
+    if (t.log.length < 5000) t.log.push({ power: p.power, speed: p.speed, hand: p.hand, at: p.at,
+                                          wrap: p.wrap || null });
     LB.last = p;
     /* The phone reacts once, to the biggest of the three things a punch can
        be: taking the lead, a personal best, or just a punch. */
@@ -4982,13 +5029,14 @@
     if (!clean) return;
     if (LB.turn) lbFinish();
     const had = LB.board.find(b => lbId(b.name) === lbId(clean));
-    LB.turn = { name: clean, best: 0, punches: 0, previous: had ? had.best : 0,
+    LB.turn = { id: newId(), name: clean, best: 0, punches: 0, previous: had ? had.best : 0,
                 bestLeft: 0, bestRight: 0, punchesLeft: 0, punchesRight: 0, bestSpeed: 0,
                 startedAt: Date.now(), log: [] };
     LB.last = null;
     const waiting = LB.held;
     LB.held = null;
     $('lb-name').value = '';
+    if (!RUN.live) moStart('go', LB.turn.id);
     if (waiting && Date.now() - waiting.at < LB_HOLD) lbRecord(waiting);
     else lbPaint();
   }
@@ -5001,8 +5049,9 @@
     if (!t) return;
     LB.turn = null;
     LB.last = null;
+    if (MOTION.rec && MOTION.rec.ref === t.id) moStop();
     if (t.punches > 0) {
-      const done = { id: newId(), name: t.name, best: t.best, bestSpeed: t.bestSpeed,
+      const done = { id: t.id, name: t.name, best: t.best, bestSpeed: t.bestSpeed,
                      bestLeft: t.bestLeft, bestRight: t.bestRight, punches: t.punches,
                      punchesLeft: t.punchesLeft, punchesRight: t.punchesRight,
                      startedAt: t.startedAt, finishedAt: Date.now(),
@@ -5440,6 +5489,187 @@
 
   document.querySelectorAll('.wrap-btn').forEach(b =>
     b.addEventListener('click', () => pair(b.dataset.side)));
+
+  /* ── 8d. THE MOVEMENT ─────────────────────────────────
+     The wrap's two live streams, recorded for as long as a drill runs or
+     somebody is up, and at no other time. No change to the firmware: both
+     streams have been in it since the dashboard needed them, and the only thing
+     this page ever asks of them is to start and to stop.
+
+     What it is and what it is not. The wrap samples at 833 Hz and sends at most
+     50 frames a second shared between the two, so 25 of each on a good link and
+     fewer on a thin one. And it sends none during a punch: the firmware holds
+     both for the 20 to 400 ms a punch lasts, so the radio cannot cost the punch
+     a sample. What survives is still the rotation a classifier wants. The
+     orientation is fused on the wrap at full rate straight through the pause, so
+     the frame before a punch and the frame after it are the whole of its
+     rotation; the gyro frames either side are the wind-up and the recovery; and
+     the peak rotation rate inside it comes with the punch itself (spin, above).
+
+     Held here while the recording lasts, in five-second chunks per hand, and
+     sent when it ends, which keeps the promise on the connect panel that nothing
+     streams out while somebody trains. Each chunk's id is made from the
+     recording, the hand and its number, so a chunk sent twice is stored once,
+     and one that cannot be sent waits in this browser, up to a budget, for the
+     next chance.
+
+     imu rows: t, seq, flags, gravity x y z (milli-g), accel x y z (milli-g),
+               gyro x y z (0.1 dps)
+     ori rows: t, seq, flags, quaternion w x y z (Q14, 16384 = 1), die
+               temperature (0.01 C), gyro bias x y z (0.01 dps), sample rate (Hz)
+     hits:     t, seq, score, spin, ms, flags, peakG, rawG, speed, railed,
+               builtPeak, late: the whole punch record, one per punch as it arrived
+     t is milliseconds from the start of the recording, on one clock for all
+     three, and the recording's start is epoch milliseconds. */
+  const MO_OUT = 'impkt.motion.outbox.v1';
+  const MO_CHUNK_MS = 5000;
+  const MO_ROWS = 1000;
+  const MO_KEEP_BYTES = 1500000;
+  const MOTION = { rec: null, timer: null, queue: [], busy: false };
+
+  (function moLoad() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(MO_OUT) || '[]');
+      if (Array.isArray(saved)) MOTION.queue = saved.filter(c => c && c.id);
+    } catch (err) { /* an unreadable outbox is an empty one */ }
+  })();
+
+  /* The newest chunks that fit the budget, so a long spell offline costs the
+     oldest movement rather than every write this page makes after the storage
+     fills. The queue itself keeps an hour of chunks for as long as the tab lives. */
+  function moKeep() {
+    let size = 2, from = MOTION.queue.length;
+    while (from > 0) {
+      const next = JSON.stringify(MOTION.queue[from - 1]).length + 1;
+      if (size + next > MO_KEEP_BYTES) break;
+      size += next;
+      from--;
+    }
+    try { localStorage.setItem(MO_OUT, JSON.stringify(MOTION.queue.slice(from))); }
+    catch (err) { /* private browsing or full: it lasts as long as the tab */ }
+  }
+
+  const moSide = () => ({ imu: [], ori: [], hits: [] });
+
+  function moStart(kind, ref) {
+    moStop();
+    MOTION.rec = { kind, ref, start: Date.now(), p0: performance.now(), n: 0,
+                   left: moSide(), right: moSide() };
+    moListen('left', true);
+    moListen('right', true);
+    MOTION.timer = setInterval(moCut, MO_CHUNK_MS);
+  }
+
+  function moStop() {
+    if (!MOTION.rec) return;
+    clearInterval(MOTION.timer);
+    MOTION.timer = null;
+    moCut();
+    MOTION.rec = null;
+    moListen('left', false);
+    moListen('right', false);
+    moSend();
+  }
+
+  /* On only while recording, because a subscribed wrap sends 50 packets a second
+     whether anybody keeps them or not, and that is battery and air. Web
+     Bluetooth refuses a second operation on a characteristic while one is in
+     flight, so a stop and a start in quick succession (one go ending, the next
+     beginning) are run one after the other, and only the last wish counts. */
+  function moListen(side, on) {
+    const w = WRAPS[side];
+    if (!w || (!w.imu && !w.ori)) return;
+    w.moWant = on;
+    if (w.moBusy) return;
+    w.moBusy = true;
+    (async () => {
+      while (w.moOn !== w.moWant) {
+        const want = w.moWant;
+        for (const c of [w.imu, w.ori]) {
+          if (!c) continue;
+          try { await (want ? c.startNotifications() : c.stopNotifications()); }
+          catch (err) { /* gone mid-call: nothing left to switch */ }
+        }
+        w.moOn = want;
+      }
+      w.moBusy = false;
+    })();
+  }
+
+  function moFrame(side, key, dv) {
+    const r = MOTION.rec;
+    if (!r || !r[side] || dv.byteLength < 20) return;
+    const rows = r[side][key];
+    if (rows.length >= MO_ROWS) return;
+    const row = [Math.round(performance.now() - r.p0), dv.getUint8(0), dv.getUint8(1)];
+    if (key === 'imu') {
+      for (let at = 2; at < 20; at += 2) row.push(dv.getInt16(at, true));
+    } else {
+      for (let at = 2; at < 18; at += 2) row.push(dv.getInt16(at, true));
+      row.push(dv.getUint16(18, true));
+    }
+    rows.push(row);
+  }
+
+  function moHit(side, hit) {
+    const r = MOTION.rec;
+    if (!r || !r[side]) return;
+    const w = hit && hit.wrap;
+    r[side].hits.push([Math.round(performance.now() - r.p0), w ? w.seq : null,
+                       hit ? hit.power : null, w ? w.spin : null, w ? w.ms : null,
+                       w ? w.flags : null, w ? w.peakG : null, w ? w.rawG : null,
+                       w ? w.speed : null, w ? w.railed : null, w ? w.builtPeak : null,
+                       w ? w.late : null]);
+  }
+
+  function moCut() {
+    const r = MOTION.rec;
+    if (!r) return;
+    for (const side of ['left', 'right']) {
+      const b = r[side];
+      if (!b.imu.length && !b.ori.length && !b.hits.length) continue;
+      const w = WRAPS[side];
+      MOTION.queue.push({
+        id: r.ref + side[0].toUpperCase() + r.n, kind: r.kind, ref: r.ref,
+        side, n: r.n, start: r.start,
+        serial: PILOT ? PILOT.serial : null, gym: PILOT ? PILOT.gym : null,
+        fw: w.fw || null, unit: w.ident ? w.ident.unitId : null,
+        imu: b.imu, ori: b.ori, hits: b.hits
+      });
+      r[side] = moSide();
+    }
+    r.n++;
+    if (MOTION.queue.length > 720) MOTION.queue = MOTION.queue.slice(-720);
+    moKeep();
+  }
+
+  /* Oldest first, one chunk a call. A refusal (400) is dropped, since sending
+     the same chunk again gets the same answer; anything else, a project that
+     has not had the SQL pasted included, leaves it queued for next time. */
+  async function moSend() {
+    if (MOTION.busy || MOTION.rec || !MOTION.queue.length) return;
+    MOTION.busy = true;
+    let moved = false;
+    try {
+      while (MOTION.queue.length && !MOTION.rec) {
+        const doc = MOTION.queue[0];
+        try { await lbCall('motion_put', { doc }); }
+        catch (err) { if (err.status !== 400) break; }
+        MOTION.queue = MOTION.queue.filter(c => c !== doc);
+        moved = true;
+      }
+    } finally {
+      MOTION.busy = false;
+      if (moved) moKeep();
+    }
+  }
+
+  setTimeout(moSend, 2000);
+  setInterval(moSend, 20000);
+  addEventListener('pagehide', () => {
+    if (!MOTION.rec) return;
+    moCut();
+  });
 
   /* ── 9. THE GUIDED RUN ────────────────────────────────
      One drill on a clock. The blocks are the drill's own data with their start
@@ -6005,6 +6235,7 @@
     RUN.log = [];
     RUN.startedAt = new Date().toISOString();
     RUN.id = newId();
+    moStart('drill', RUN.id);
     $('run-send').hidden = true;
     paintRings(null);
     paintStrength(RUN.log);
@@ -6019,6 +6250,10 @@
 
   function endRun() {
     closeRep('stopped');
+    if (RUN.live) {
+      moStop();
+      if (LB.turn) moStart('go', LB.turn.id);
+    }
     RUN.live = false;
     RUN.paused = false;
     clearInterval(RUN.timer);
@@ -6364,7 +6599,11 @@
          ingest_session does with every key it does not name, so the recording is
          complete either way. */
       score: hit == null ? null : hit.power,
-      speed: hit && hit.speed ? hit.speed : null
+      speed: hit && hit.speed ? hit.speed : null,
+      /* The rest of the wrap's record, spin included, and the wall clock it
+         arrived at, which is the clock the movement streams in 8d run on. */
+      at: Date.now(),
+      wrap: hit && hit.wrap ? hit.wrap : null
     });
 
     /* The circle takes the knock, whatever the punch came from. It is the only
@@ -6528,6 +6767,8 @@
         connected: !!(WRAPS[side].device && WRAPS[side].device.gatt
                    && WRAPS[side].device.gatt.connected),
         rich: WRAPS[side].rich === undefined ? null : WRAPS[side].rich,
+        fw: WRAPS[side].fw || null,
+        motion: !!(WRAPS[side].imu || WRAPS[side].ori),
         battery: WRAPS[side].battTxt || null,
         punches: WRAPS[side].punches || 0
       })),
