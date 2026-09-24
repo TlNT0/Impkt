@@ -1069,7 +1069,7 @@
     .connect { grid-column: 1; grid-row: 1; }
     /* There is no heading rule and no body rule for this column. The screen is
        the cards, with the pilot's name above them as its heading and nothing
-       under them but the privacy note. */
+       under them but the leaderboard and the privacy note. */
 
     /* Eight cards, two across. A card rather than a row because each one is a
        thing you are going to do once, on its own, on a different day: a row in
@@ -1338,11 +1338,179 @@
       pointer-events: none;
     }
 
+    /* ── THE LEADERBOARD ────────────────────────────────────────
+       The app's Leaderboard tab, on the website. One band goes down a line of
+       people, a name goes up for whoever is holding it, and the hardest punch
+       each of them landed stays on the board. Only the best one counts, which is
+       the gym's own rule and the reason the panel can stay this simple.
+
+       Under the drills and on the same glass, because the wraps it needs are the
+       ones connected in the panel beside them. The rules are the app's rules,
+       ported rather than reinvented, so a gym with both is not holding two ideas
+       of one board: see Leaderboard.swift in the app.
+
+       Hidden in the app, which has the native tab: see the in-app rules. */
+    .lb { margin-top: 18px; padding: 18px 18px 16px; border-radius: 26px; }
+    .lb-top { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 4px 12px; }
+    .lb-since { white-space: nowrap; }
+    .lb-h {
+      font-size: var(--text-subheading); font-weight: 500;
+      letter-spacing: var(--tracking-subheading);
+    }
+    .lb-since, .lb-count {
+      font-size: var(--text-caption); letter-spacing: var(--tracking-caption);
+      color: var(--ash); font-variant-numeric: tabular-nums;
+    }
+    .lb-band {
+      margin-top: 12px; padding: 10px 12px;
+      border: 1px solid rgba(196,30,58,0.28); border-radius: 14px;
+      font-size: var(--text-body-sm); letter-spacing: var(--tracking-body-sm);
+      color: var(--red-deep);
+    }
+    .lb-stage { margin-top: 16px; text-align: center; }
+    .lb-who { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; text-align: left; }
+    .lb-who-n {
+      min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-size: var(--text-body); font-weight: 600; letter-spacing: var(--tracking-body);
+    }
+    .lb-q { font-size: var(--text-body); font-weight: 600; letter-spacing: var(--tracking-body); }
+    .lb-eyebrow {
+      font-size: var(--text-caption); font-weight: 600;
+      letter-spacing: 0.14em; text-transform: uppercase; color: var(--ash);
+    }
+    /* The big figure. One number and the word power, nothing that qualifies
+       it. Carbon ink rather than the red: the red on this page is a fill for
+       things to press, and the number is read, not pressed. */
+    .lb-fig {
+      display: inline-flex; align-items: baseline; gap: 8px; margin-top: 8px;
+      transition: transform 0.28s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .lb-num {
+      font-size: clamp(64px, 9vw, 88px); font-weight: 600; line-height: 1;
+      letter-spacing: -0.03em; font-variant-numeric: tabular-nums;
+      color: var(--carbon);
+    }
+    .lb-num.quiet { color: rgba(10,10,12,0.2); }
+    .lb-unit { font-size: var(--text-subheading); font-weight: 500; color: var(--ash); }
+    .lb-speed, .lb-hint, .lb-chase-t {
+      font-size: var(--text-caption); letter-spacing: var(--tracking-caption);
+      color: var(--ash); font-variant-numeric: tabular-nums;
+    }
+    .lb-speed { margin-top: 4px; }
+    .lb-hint { margin: 10px auto 0; max-width: 46ch; }
+    .lb-crown {
+      margin-top: 10px; font-size: var(--text-body-sm); font-weight: 600;
+      letter-spacing: var(--tracking-body-sm); color: var(--red-deep);
+    }
+    .lb-turn-best {
+      margin-top: 14px; font-size: var(--text-body-sm); font-weight: 500;
+      letter-spacing: var(--tracking-body-sm); font-variant-numeric: tabular-nums;
+    }
+    .lb-chase, .lb-hands { margin: 10px auto 0; max-width: 420px; }
+    .lb-track { height: 6px; border-radius: 3px; background: rgba(196,30,58,0.16); overflow: hidden; }
+    .lb-track i { display: block; height: 100%; border-radius: 3px; background: var(--red); }
+    .lb-chase-t { margin-top: 5px; }
+    /* Left against right: a bar split at the share of the two bests, the
+       harder hand filled. Nothing at all until both hands have landed one. */
+    .lb-split { display: flex; gap: 2px; height: 8px; }
+    .lb-split i { display: block; min-width: 3px; border-radius: 3px; background: rgba(196,30,58,0.28); }
+    .lb-split i:last-child { flex: 1 1 auto; }
+    .lb-split i.strong { background: var(--red); }
+    .lb-hands-t {
+      display: flex; justify-content: space-between; gap: 8px; margin-top: 6px;
+      font-size: var(--text-caption); letter-spacing: var(--tracking-caption);
+      color: var(--ash); font-variant-numeric: tabular-nums;
+    }
+    .lb-hands-t em { font-style: normal; font-weight: 600; color: var(--red-deep); }
+    .lb-done { width: 100%; margin-top: 18px; }
+    .lb-entry { margin-top: 18px; }
+    .lb-form { display: flex; gap: 8px; }
+    .lb-form .field {
+      flex: 1 1 auto; min-height: 44px; padding: 0 14px;
+      border-radius: 12px; background: rgba(255,255,255,0.9);
+    }
+    .lb-form .btn-plain { flex: none; min-height: 44px; padding: 0 20px; font-size: var(--text-body-sm); }
+    .lb-form .btn-plain:disabled { opacity: 0.4; cursor: default; background: transparent; color: var(--red-deep); }
+    /* The names already on the board, as taps, most recent first. Typing a
+       name at a bag with a glove half off is the slow part of a session, and
+       after the first round every name in the room is already here. */
+    .lb-chips {
+      display: flex; gap: 8px; margin-top: 10px; padding-bottom: 2px;
+      overflow-x: auto; scrollbar-width: none;
+    }
+    .lb-chips::-webkit-scrollbar { display: none; }
+    .lb-chips button {
+      flex: none; max-width: 18ch; min-height: 32px; padding: 0 13px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      border-radius: var(--radius-pill); border: 1px solid rgba(10,10,12,0.12);
+      background: rgba(255,255,255,0.85); color: var(--carbon); cursor: pointer;
+      font-family: var(--font); font-size: var(--text-body-sm);
+      letter-spacing: var(--tracking-body-sm);
+      transition: border-color 0.2s, color 0.2s;
+    }
+    .lb-chips button:hover { border-color: var(--red-deep); color: var(--red-deep); }
+    .lb-drop, .lb-link {
+      border: 0; background: none; padding: 4px 0; cursor: pointer;
+      font-family: var(--font); font-size: var(--text-caption);
+      letter-spacing: var(--tracking-caption); color: var(--ash);
+    }
+    .lb-drop { margin-top: 12px; }
+    .lb-drop:hover, .lb-link:hover { color: var(--red-deep); }
+    .lb-link:disabled { opacity: 0.4; cursor: default; color: var(--ash); }
+    .lb-table { margin-top: 20px; padding-top: 14px; border-top: 1px solid rgba(10,10,12,0.07); }
+    .lb-table-h { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    .lb-table-t { font-size: var(--text-body-sm); font-weight: 600; letter-spacing: var(--tracking-body-sm); }
+    .lb-list { list-style: none; margin-top: 4px; }
+    .lb-row {
+      display: grid; grid-template-columns: 26px minmax(0, 1fr) auto 24px;
+      align-items: center; column-gap: 12px; padding: 9px 0;
+    }
+    .lb-row + .lb-row { border-top: 1px solid rgba(10,10,12,0.07); }
+    /* The top three get a filled disc and the rest get their number. Third is
+       pebble with dark ink rather than a pale grey with white on it, which is
+       the app's version and a number nobody can read from four feet away. */
+    .lb-medal {
+      width: 26px; height: 26px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: var(--text-caption); font-weight: 600; font-variant-numeric: tabular-nums;
+      color: var(--ash); box-shadow: inset 0 0 0 1px rgba(10,10,12,0.18);
+    }
+    .lb-medal.p1 { background: var(--red); color: var(--white); box-shadow: none; }
+    .lb-medal.p2 { background: var(--ash); color: var(--white); box-shadow: none; }
+    .lb-medal.p3 { background: var(--pebble); color: var(--carbon); box-shadow: none; }
+    .lb-name {
+      display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-size: var(--text-body-sm); letter-spacing: var(--tracking-body-sm);
+    }
+    .lb-row.p1 .lb-name { font-weight: 600; }
+    .lb-note {
+      display: block; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+      font-size: var(--text-caption); letter-spacing: var(--tracking-caption);
+      color: var(--ash); font-variant-numeric: tabular-nums;
+    }
+    .lb-best { font-size: 20px; font-weight: 600; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .lb-x {
+      width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%;
+      background: transparent; color: var(--ash); cursor: pointer;
+      opacity: 0.45; transition: opacity 0.2s, color 0.2s, background 0.2s;
+    }
+    .lb-row:hover .lb-x, .lb-x:focus-visible { opacity: 1; }
+    .lb-x:hover { color: var(--red-deep); background: rgba(10,10,12,0.06); }
+    .lb-x svg { display: block; margin: auto; width: 10px; height: 10px; }
+    .lb-acts { display: flex; flex-wrap: wrap; gap: 4px 18px; margin-top: 10px; }
+    .lb-say { margin-top: 6px; font-size: var(--text-caption); color: var(--red-deep); }
+    .lb-foot {
+      margin-top: 14px; max-width: 64ch;
+      font-size: var(--text-caption); letter-spacing: var(--tracking-caption);
+      color: var(--ash);
+    }
+
     /* ── THE APP, FROM THE WEBSITE ──────────────────────────────
-       The one block on this screen that is not about the drills. It is here
-       because this is where a pilot already is, and the app is the half of the
-       pilot a browser is not allowed to give them: firmware onto the wraps over
-       Bluetooth with no cable, and a leaderboard for a room with one band in it.
+       The one block on this screen that is not about the drills or the board.
+       It is here because this is where a pilot already is, and the app is the
+       half of the pilot a browser is not allowed to give them: firmware onto the
+       wraps over Bluetooth with no cable, and the wraps at all from an iPhone,
+       where Safari has no Bluetooth.
 
        Website only, hidden in the app for the same reason the wraps panel is.
        An invitation to install the thing you are reading it inside is not an
@@ -1878,6 +2046,9 @@
        card that has stopped being a card. */
     html.in-app .connect { display: none; }
     html.in-app .getapp { display: none; }
+    /* The app has a Leaderboard tab of its own, native, reading the same
+       punches. The same board twice, one tab apart, is two boards. */
+    html.in-app .lb { display: none; }
     html.in-app #drills .setup-note { display: none; }
     html.in-app .prog { grid-template-columns: minmax(0, 1fr); max-width: 820px; }
     html.in-app .prog-main { grid-column: 1; grid-row: 1; }
@@ -2167,7 +2338,54 @@
           <p class="drill-lock" id="drill-lock" hidden></p>
           <div class="drill-grid" id="drill-grid"></div>
 
-          <!-- Nothing under the grid but the privacy note. There was a paragraph
+          <!-- The leaderboard. The app's tab, on the website: one band down a
+               line of people, a name up for whoever is holding it, and the
+               hardest punch each of them landed. The middle of it is drawn by
+               lbPaint, because it is one of three things depending on whether
+               somebody is up, a punch is waiting for a name, or neither. The
+               name field is here rather than drawn, so what is being typed
+               survives a punch landing mid-word. Hidden in the app, which has
+               the same board as a native tab. -->
+          <section class="glass lb" id="lb" aria-labelledby="lb-h">
+            <div class="lb-top">
+              <h2 class="lb-h" id="lb-h">Leaderboard</h2>
+              <span class="lb-since" id="lb-since"></span>
+            </div>
+            <p class="lb-band" id="lb-band" hidden></p>
+            <div class="lb-stage" id="lb-stage"></div>
+            <div class="lb-entry" id="lb-entry">
+              <form class="lb-form" id="lb-form" autocomplete="off">
+                <input class="field" id="lb-name" type="text" maxlength="24"
+                       placeholder="Name" aria-label="Name" spellcheck="false"
+                       autocapitalize="words" enterkeyhint="go">
+                <button class="btn-plain" id="lb-up" type="submit" disabled>Put them up</button>
+              </form>
+              <div class="lb-chips" id="lb-chips"></div>
+              <button class="lb-drop" id="lb-drop" type="button" hidden>Nobody, drop it</button>
+            </div>
+            <div class="lb-table" id="lb-table" hidden>
+              <div class="lb-table-h">
+                <span class="lb-table-t">Standings</span>
+                <span class="lb-count" id="lb-count"></span>
+              </div>
+              <ol class="lb-list" id="lb-list"></ol>
+              <div class="lb-acts">
+                <button class="lb-link" id="lb-share" type="button">Share the standings</button>
+                <button class="lb-link" id="lb-clear" type="button">Start a new board</button>
+              </div>
+              <p class="lb-say" id="lb-say" role="status"></p>
+            </div>
+            <p class="lb-foot">
+              Power, measured at the wrap on the hand that threw it, with hand
+              speed under it. One band is enough: put the next name up and hand
+              it over. Left against right waits until both hands have landed
+              something. The board is saved to IMPKT under your code, so every
+              screen opened with the same code shows the same board. It keeps the
+              name typed and the punches, and nothing else about anybody.
+            </p>
+          </section>
+
+          <!-- Nothing under the board but the privacy note. There was a paragraph
                about wearing a wrap on each hand and a pair of buttons, one asking
                us anything and one back to the profile. The paragraph explained
                why the drills keep asking for a hand that does nothing, which is
@@ -2198,13 +2416,11 @@
           <aside class="glass getapp" aria-label="The IMPKT app">
             <h2 class="getapp-h">The same page, as an app</h2>
             <p class="getapp-b">
-              Your drills, your code and your wraps, plus the two things a
-              browser is not allowed to do. It puts new firmware on your wraps
-              over Bluetooth, with no cable and no laptop in the room. And it has
-              a leaderboard: one band goes round the gym, a name goes up for
-              whoever is holding it, and their hardest punch stays on the board,
-              with the difference between their two hands as a percentage and the
-              speed of the hand that threw it.
+              Your drills, your code, your wraps and the leaderboard, plus the
+              two things a browser is not allowed to do. It puts new firmware on
+              your wraps over Bluetooth, with no cable and no laptop in the room.
+              And it reaches the wraps from an iPhone, where Safari cannot, so
+              the phone in the gym can run the board.
             </p>
             <div class="getapp-act">
               <!-- The outline button and not the crimson slab. The thing to press
@@ -4630,8 +4846,597 @@
     last.textContent = (side === 'left' ? 'Left' : 'Right') + ' wrap'
       + (hit == null ? '' : ' · ' + Math.round(hit.power) + ' power')
       + (hit && hit.speed ? ' · ' + hit.speed.toFixed(1) + ' m/s' : '');
+    /* A drill's punches are the drill's. The board is for the line at the bag
+       between drills, and a punch thrown to a cue is not somebody's go. */
     if (RUN.live) logPunch(side, hit);
+    else lbPunch(side, dv, rich);
   }
+
+  /* ── 8b. THE LEADERBOARD ──────────────────────────────
+     The app's Leaderboard tab, ported rule for rule from Leaderboard.swift so a
+     gym that has both does not get two answers about one punch.
+
+     Two halves, and only the first is written down. The standings outlive the
+     tab being closed, because a session runs over an hour and a laptop sleeps
+     halfway through it. Whose turn it is does not: a turn is somebody standing
+     at a bag, and if the page was closed they are not standing there any more.
+
+     The best punch and nothing else is what ranks. A punch that lands with
+     nobody up is held with the question attached rather than dropped, because
+     somebody always hits the bag before a name has been typed, and the answer
+     is one tap on a name that is already there. It is held for 45 seconds, the
+     walk from the bag to the screen and back; past that, a name typed against
+     it would credit whoever was nearest rather than whoever threw it. */
+  const LB_KEY = 'impkt.leaderboard.v1';
+  const LB_SINCE = 'impkt.leaderboard.since';
+  const LB_HOLD = 45000;
+  const LB = { board: [], since: Date.now(), turn: null, last: null, held: null };
+
+  (function lbLoad() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LB_KEY) || '[]');
+      if (Array.isArray(saved)) {
+        LB.board = saved.filter(b => b && typeof b.name === 'string' && b.best > 0);
+      }
+      const since = +localStorage.getItem(LB_SINCE);
+      if (since > 0) LB.since = since;
+    } catch (err) { /* an unreadable board is an empty one */ }
+  })();
+
+  function lbSave() {
+    try {
+      localStorage.setItem(LB_KEY, JSON.stringify(LB.board));
+      localStorage.setItem(LB_SINCE, String(LB.since));
+    } catch (err) { /* private browsing: the board lasts as long as the tab */ }
+  }
+
+  /* Power, the number on the board. The wrap's own score, except for one case
+     worth second-guessing it about: a punch that went off the top of the
+     accelerometer on firmware older than 2.21, whose score was built from a
+     peak pinned at 16 g. That peak is put back from how long the curve sat on
+     the rail and how fast the hand was going, on the firmware's own weights, so
+     old and new wraps rank on one scale. Punch.swift is the long version. */
+  function lbPower(p) {
+    if (p.rebuilt || p.railed === 0) return Math.round(p.score);
+    const base = Math.max(p.peakG, p.rawG - 1);
+    const scale = Math.min(Math.max(p.speed / 6, 0.6), 1.8);
+    const peak = Math.max(base, 16) + 3200 * scale * (p.railed / 833) / 2;
+    return Math.round(4 * peak + 6 * p.speed);
+  }
+
+  function lbPunch(side, dv, rich) {
+    let p = null;
+    try {
+      if (rich && dv.byteLength >= 20) {
+        const u16 = at => dv.getUint16(at, true);
+        const flags = dv.getUint8(16);
+        /* Replayed after a dropped link, thrown a minute ago in somebody else's
+           go. Credited to whoever is up now would be a name that did not earn
+           its number, and a count one short is the smaller wrong. */
+        if (flags & 0x04) return;
+        p = { score: u16(2) / 10, peakG: u16(4) / 1000, rawG: u16(6) / 1000,
+              speed: u16(8) / 1000, railed: u16(14), builtPeak: u16(18) / 1000,
+              rebuilt: !!(flags & 0x08) };
+      } else if (dv.byteLength >= 4) {
+        const score = dv.getFloat32(0, true);
+        if (!isFinite(score) || score <= 0) return;
+        p = { score, peakG: 0, rawG: 0, speed: 0, railed: 0, builtPeak: 0, rebuilt: false };
+      }
+    } catch (err) { return; }
+    if (!p) return;
+    lbRecord({ power: lbPower(p), speed: p.speed, hand: side, at: Date.now() });
+  }
+
+  /* Trimmed, collapsed and capped at 24, by characters rather than by UTF-16
+     units so a name is never cut through the middle of one. */
+  const lbTidy = s => Array.from(String(s).trim().split(/\s+/).join(' ')).slice(0, 24).join('');
+  const lbId = s => s.toLowerCase();
+  const lbIsLeader = name => !!LB.board[0] && LB.board[0].name.toLowerCase() === lbId(name);
+
+  /* How the two hands compare, as a percentage of the weaker one. Nothing unless
+     both have landed something: one hand on the board is a hand that has not
+     had its turn, not a hundred percent imbalance. */
+  function lbBalance(left, right) {
+    if (!(left > 0 && right > 0)) return null;
+    const high = Math.max(left, right), low = Math.min(left, right);
+    return { strong: left >= right ? 'Left' : 'Right',
+             percent: Math.floor((high / low - 1) * 100),
+             left, right, share: left / (left + right) };
+  }
+
+  function lbRecord(p) {
+    const t = LB.turn;
+    if (!t) {
+      LB.held = p;
+      lbPaint();
+      lbPulse('punch');
+      return;
+    }
+    t.punches += 1;
+    if (p.hand === 'left') {
+      t.punchesLeft += 1;
+      if (p.power > t.bestLeft) t.bestLeft = p.power;
+    } else if (p.hand === 'right') {
+      t.punchesRight += 1;
+      if (p.power > t.bestRight) t.bestRight = p.power;
+    }
+    const beat = p.power > t.best;
+    if (beat) { t.best = p.power; t.bestSpeed = p.speed; }
+    if (t.log.length < 5000) t.log.push({ power: p.power, speed: p.speed, hand: p.hand, at: p.at });
+    LB.last = p;
+    /* The phone reacts once, to the biggest of the three things a punch can
+       be: taking the lead, a personal best, or just a punch. */
+    const leader = LB.board[0] ? LB.board[0].best : 0;
+    const kind = beat && p.power > leader && !lbIsLeader(t.name) ? 'lead'
+               : beat && t.previous > 0 && p.power > t.previous ? 'best'
+               : 'punch';
+    lbPaint();
+    lbPulse(kind);
+  }
+
+  /* Puts somebody up. Their old best is remembered rather than cleared: a
+     second go is a chance to beat it, not a reset. A punch already waiting is
+     folded into the go, which is the point of holding it. */
+  function lbPutUp(name) {
+    const clean = lbTidy(name);
+    if (!clean) return;
+    if (LB.turn) lbFinish();
+    const had = LB.board.find(b => lbId(b.name) === lbId(clean));
+    LB.turn = { name: clean, best: 0, punches: 0, previous: had ? had.best : 0,
+                bestLeft: 0, bestRight: 0, punchesLeft: 0, punchesRight: 0, bestSpeed: 0,
+                startedAt: Date.now(), log: [] };
+    LB.last = null;
+    const waiting = LB.held;
+    LB.held = null;
+    $('lb-name').value = '';
+    if (waiting && Date.now() - waiting.at < LB_HOLD) lbRecord(waiting);
+    else lbPaint();
+  }
+
+  /* Ends the go and writes the best of it onto the board. A go with nothing in
+     it leaves no row: a name on zero reads as a punch too weak to register,
+     which is a worse thing to say about somebody than nothing. */
+  function lbFinish() {
+    const t = LB.turn;
+    if (!t) return;
+    LB.turn = null;
+    LB.last = null;
+    if (t.punches > 0) {
+      const done = { id: newId(), name: t.name, best: t.best, bestSpeed: t.bestSpeed,
+                     bestLeft: t.bestLeft, bestRight: t.bestRight, punches: t.punches,
+                     punchesLeft: t.punchesLeft, punchesRight: t.punchesRight,
+                     startedAt: t.startedAt, finishedAt: Date.now(),
+                     serial: PILOT ? PILOT.serial : null, gym: PILOT ? PILOT.gym : null,
+                     log: t.log };
+      lbMerge(LB.board, done, done.finishedAt);
+      lbSave();
+      lbSetOutbox(lbOutbox().concat([done]));
+      lbSync();
+    }
+    lbPaint();
+  }
+
+  /* Everything is a running maximum except the counts, which add, and each of
+     the bests improves on its own: a second go can beat a left that was already
+     on the board with a right. Into whichever list it is given, because the
+     same rule folds a go that has not reached the project yet into the
+     standings that came back from it. */
+  function lbMerge(list, t, now) {
+    const b = list.find(x => lbId(x.name) === lbId(t.name));
+    if (b) {
+      b.punches += t.punches;
+      b.punchesLeft += t.punchesLeft;
+      b.punchesRight += t.punchesRight;
+      if (t.bestLeft > b.bestLeft) b.bestLeft = t.bestLeft;
+      if (t.bestRight > b.bestRight) b.bestRight = t.bestRight;
+      if (t.best > b.best) { b.best = t.best; b.bestSpeed = t.bestSpeed; b.at = now; }
+      b.used = now;
+    } else {
+      list.push({ name: t.name, best: t.best, punches: t.punches, at: now, used: now,
+                  bestLeft: t.bestLeft, bestRight: t.bestRight,
+                  punchesLeft: t.punchesLeft, punchesRight: t.punchesRight,
+                  bestSpeed: t.bestSpeed });
+    }
+    lbSort(list);
+  }
+
+  /* Best first, and the earlier of two equal bests ahead: the person who set
+     the number is in front of the person who matched it. */
+  const lbSort = list => list.sort((a, c) => a.best === c.best ? a.at - c.at : c.best - a.best);
+
+  function lbText() {
+    const lines = ['IMPKT, hardest punch'];
+    LB.board.forEach((b, i) => {
+      const bal = lbBalance(b.bestLeft, b.bestRight);
+      lines.push((i + 1) + '. ' + b.name + '  ' + b.best + ' power'
+        + (bal ? '  (' + (bal.percent === 0 ? 'level'
+                          : bal.strong.toLowerCase() + ' ' + bal.percent + '% harder') + ')' : ''));
+    });
+    return lines.join('\n');
+  }
+
+  function lbFigure(power, speed, quiet) {
+    return `<div class="lb-fig"><span class="lb-num${quiet ? ' quiet' : ''}">${power || 0}</span>`
+      + `<span class="lb-unit">power</span></div>`
+      + (speed > 0 ? `<p class="lb-speed">${speed.toFixed(1)} m/s at the hand</p>` : '');
+  }
+
+  function lbHands(bal) {
+    if (!bal) return '';
+    const w = Math.round(bal.share * 1000) / 10;
+    return `<div class="lb-hands"><div class="lb-split" aria-hidden="true">`
+      + `<i class="${bal.strong === 'Left' ? 'strong' : ''}" style="width: calc(${w}% - 1px)"></i>`
+      + `<i class="${bal.strong === 'Right' ? 'strong' : ''}"></i></div>`
+      + `<div class="lb-hands-t"><span>Left ${bal.left}</span>`
+      + `<em>${bal.percent === 0 ? 'Level' : bal.strong + ' ' + bal.percent + '% harder'}</em>`
+      + `<span>Right ${bal.right}</span></div></div>`;
+  }
+
+  /* How far off the thing worth beating: the leader's number, unless the
+     leader is the one throwing, in which case it is their own. */
+  function lbChase(t) {
+    const own = lbIsLeader(t.name);
+    const target = own ? t.previous : (LB.board[0] ? LB.board[0].best : 0);
+    if (!(target > 0)) return '';
+    const who = own ? 'your own best' : esc(LB.board[0].name);
+    if (t.best > target) {
+      return `<p class="lb-crown">${own ? 'Past your own best' : 'Top of the board'}</p>`;
+    }
+    if (t.best === target) return `<p class="lb-chase-t lb-chase">Level with ${who}</p>`;
+    const pct = Math.round(t.best / target * 1000) / 10;
+    return `<div class="lb-chase"><div class="lb-track"><i style="width: ${pct}%"></i></div>`
+      + `<p class="lb-chase-t">${target - t.best} off ${who}</p></div>`;
+  }
+
+  function lbNote(b) {
+    const parts = [b.punches === 1 ? '1 punch' : b.punches + ' punches'];
+    const bal = lbBalance(b.bestLeft, b.bestRight);
+    if (bal) parts.push(bal.percent === 0 ? 'level' : bal.strong.toLowerCase() + ' +' + bal.percent + '%');
+    if (b.bestSpeed > 0) parts.push(b.bestSpeed.toFixed(1) + ' m/s');
+    return parts.join(' · ');
+  }
+
+  const LB_X = '<svg viewBox="0 0 10 10" aria-hidden="true"><path d="M1 1l8 8M9 1l-8 8" '
+    + 'stroke="currentColor" stroke-width="1.6" stroke-linecap="round" fill="none"/></svg>';
+
+  function lbPaint() {
+    const stage = $('lb-stage');
+    if (!stage) return;
+    const t = LB.turn, held = LB.held, top = LB.board[0];
+    if (t) {
+      stage.innerHTML = `<div class="lb-who"><span class="lb-who-n">${esc(t.name)}</span>`
+        + `<span class="lb-count">${t.punches} thrown</span></div>`
+        + lbFigure(LB.last && LB.last.power, LB.last && LB.last.speed, !LB.last)
+        + (t.best > 0
+          ? `<p class="lb-turn-best">Best of this go, ${t.best}</p>` + lbChase(t)
+            + lbHands(lbBalance(t.bestLeft, t.bestRight))
+          : `<p class="lb-hint">Hit the bag. Every punch shows up here and the hardest `
+            + `one is the one that goes on the board.</p>`)
+        + `<button class="btn-glass lb-done" id="lb-done" type="button">`
+        + (t.best > 0 ? `Done, put ${t.best} on the board` : 'Done') + `</button>`;
+    } else if (held) {
+      stage.innerHTML = `<p class="lb-q">Who threw that?</p>`
+        + lbFigure(held.power, held.speed, false)
+        + `<p class="lb-hint">Tap a name and it counts for them, and they stay up for `
+        + `the rest of their go.</p>`;
+    } else if (top) {
+      stage.innerHTML = `<p class="lb-eyebrow">Hardest so far</p>`
+        + lbFigure(top.best, top.bestSpeed, false)
+        + `<p class="lb-crown">${esc(top.name)}</p>`;
+    } else {
+      stage.innerHTML = `<p class="lb-q">Nobody has hit it yet</p>`
+        + `<p class="lb-hint">Put a name up and hand them the band. Their hardest punch `
+        + `goes on the board.</p>`;
+    }
+
+    $('lb-entry').hidden = !!t;
+    $('lb-up').textContent = held ? 'Count it' : 'Put them up';
+    $('lb-up').disabled = !lbTidy($('lb-name').value);
+    $('lb-drop').hidden = !held;
+    /* Most recently on the board first: whoever just finished is usually the
+       one handing the band on, and they are somewhere in the middle of the
+       standings. */
+    $('lb-chips').innerHTML = LB.board.slice()
+      .sort((a, c) => (c.used || c.at) - (a.used || a.at))
+      .map(b => `<button type="button" data-name="${esc(b.name)}">${esc(b.name)}</button>`).join('');
+
+    $('lb-table').hidden = !LB.board.length;
+    $('lb-count').textContent = LB.board.length === 1 ? '1 boxer' : LB.board.length + ' boxers';
+    $('lb-list').innerHTML = LB.board.map((b, i) => {
+      const place = i + 1, cls = place <= 3 ? ' p' + place : '';
+      return `<li class="lb-row${cls}"><span class="lb-medal${cls}">${place}</span>`
+        + `<span><span class="lb-name">${esc(b.name)}</span>`
+        + `<span class="lb-note">${esc(lbNote(b))}</span></span>`
+        + `<span class="lb-best">${b.best}</span>`
+        + `<button class="lb-x" type="button" data-name="${esc(b.name)}" `
+        + `aria-label="Take ${esc(b.name)} off the board">${LB_X}</button></li>`;
+    }).join('');
+
+    const since = new Date(LB.since), today = since.toDateString() === new Date().toDateString();
+    /* Whether the board on screen is the saved one, said in the corner rather
+       than left to be assumed. Goes that could not be sent are counted only
+       once a send has failed, so a go in flight does not flash up as a problem. */
+    const waiting = LB_NET.failed ? lbOutbox().length : 0;
+    $('lb-since').textContent = 'Since ' + (today ? '' : since.toLocaleDateString([],
+      { day: 'numeric', month: 'short' }) + ', ')
+      + since.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      + (waiting ? ' · ' + waiting + (waiting === 1 ? ' go' : ' goes') + ' not saved yet'
+         : LB_NET.shared ? ' · saved online' : '');
+  }
+
+  /* The number jumps when a punch lands, because a figure that changes silently
+     on a screen across the room is a figure nobody sees arrive. How far it
+     jumps is the difference between a punch, a personal best and the lead. */
+  function lbPulse(kind) {
+    buzz(kind === 'lead' ? [30, 50, 60] : kind === 'best' ? [30, 50, 30] : [16]);
+    const fig = document.querySelector('#lb-stage .lb-fig');
+    if (!fig || reduced) return;
+    fig.style.transform = 'scale(' + (kind === 'lead' ? 1.22 : kind === 'best' ? 1.14 : 1.08) + ')';
+    setTimeout(() => { fig.style.transform = ''; }, 220);
+  }
+
+  /* Whether there is a band to punch with, said instead of the board sitting
+     there looking broken. Asked once a second, like the drill lock. */
+  function lbBand() {
+    const note = $('lb-band');
+    if (!note) return;
+    let text = '';
+    if (!canPair()) {
+      text = 'This browser cannot connect a wrap, so no punch will land here. Chrome on '
+        + 'a computer or an Android phone can, and on an iPhone the app can.';
+    } else if (!liveWraps()) {
+      text = 'No band connected. Connect one under Your wraps on this screen. Names can '
+        + 'be put up and the standings read with nothing connected, but no punch will '
+        + 'land until one is.';
+    }
+    note.hidden = !text;
+    if (note.textContent !== text) note.textContent = text;
+  }
+
+  function lbSay(text) {
+    $('lb-say').textContent = text;
+    clearTimeout(lbSay.t);
+    lbSay.t = setTimeout(() => { $('lb-say').textContent = ''; }, 4000);
+  }
+
+  $('lb-form').addEventListener('submit', e => {
+    e.preventDefault();
+    lbPutUp($('lb-name').value);
+  });
+  $('lb-name').addEventListener('input', () => {
+    $('lb-up').disabled = !lbTidy($('lb-name').value);
+  });
+  $('lb-chips').addEventListener('click', e => {
+    const b = e.target.closest('button[data-name]');
+    if (b) lbPutUp(b.dataset.name);
+  });
+  $('lb-stage').addEventListener('click', e => {
+    if (e.target.closest('#lb-done')) lbFinish();
+  });
+  $('lb-drop').addEventListener('click', () => { LB.held = null; lbPaint(); });
+  $('lb-list').addEventListener('click', e => {
+    const b = e.target.closest('.lb-x');
+    if (!b || !confirm('Take ' + b.dataset.name + ' off the board?')) return;
+    lbTakeOff(b.dataset.name);
+  });
+  $('lb-share').addEventListener('click', async () => {
+    const text = lbText();
+    try {
+      if (navigator.share) { await navigator.share({ text }); return; }
+      await navigator.clipboard.writeText(text);
+      lbSay('Copied. Paste it wherever the gym talks.');
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      lbSay('This browser would not share or copy it.');
+    }
+  });
+  $('lb-clear').addEventListener('click', () => {
+    if (!confirm('Start a new board? Every name and every number comes off it, on '
+      + 'every screen opened with this code. Sharing the standings first keeps a '
+      + 'copy.')) return;
+    lbStartAgain();
+  });
+
+  /* ── 8c. THE BOARD, SAVED ─────────────────────────────
+     The same board on every screen opened with the same code, kept in the
+     project rather than in one browser. Everything above still runs on the copy
+     in this browser, so a punch never waits on the network. What this adds is
+     that a finished go is sent, and the standings are read back and put in
+     place of the local copy after every send and every fifteen seconds.
+
+     The board is named by a key worked out from the activation code, not by
+     the serial: a serial is printed on the box, and whoever can name a board
+     can read it and start it again. PBKDF2, so the key does not give the code
+     back. With no code in this browser, or no project in the page, it is the
+     local board it always was.
+
+     A go that could not be sent waits in its own outbox and goes with the next
+     read, and until then it is folded into what the project said, so a dropped
+     connection never takes somebody's number off the screen. Every board
+     starts empty: nothing is on it that nobody threw. */
+  const LB_OUT = 'impkt.leaderboard.outbox.v1';
+  const LB_NET = { code: null, keyP: null, busy: false, again: false,
+                   shared: false, failed: false };
+
+  function lbOutbox() {
+    try {
+      const list = JSON.parse(localStorage.getItem(LB_OUT) || '[]');
+      return Array.isArray(list) ? list : [];
+    } catch (err) { return []; }
+  }
+
+  function lbSetOutbox(list) {
+    try { localStorage.setItem(LB_OUT, JSON.stringify(list.slice(-200))); }
+    catch (err) { /* full or private: the go is still on this screen's board */ }
+  }
+
+  /* The promise is what is kept, so two sends in the same second wait on one
+     derivation rather than each starting their own. */
+  function lbKey() {
+    let code = '';
+    try { code = localStorage.getItem(CODE_KEY) || ''; } catch (err) { code = ''; }
+    if (code !== LB_NET.code) {
+      LB_NET.code = code;
+      LB_NET.keyP = !code || !(window.crypto && crypto.subtle) ? Promise.resolve('')
+        : (async () => {
+            const enc = new TextEncoder();
+            const base = await crypto.subtle.importKey('raw', enc.encode(code),
+              'PBKDF2', false, ['deriveBits']);
+            const bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256',
+              salt: enc.encode('impkt.leaderboard.v1'), iterations: 150000 }, base, 256);
+            return Array.from(new Uint8Array(bits),
+              b => b.toString(16).padStart(2, '0')).join('');
+          })().catch(() => '');
+    }
+    return LB_NET.keyP;
+  }
+
+  /* One call to one of the four board functions. The status travels with the
+     error because the outbox treats the two kinds of failure differently: a
+     refusal is final, anything else is worth trying again. */
+  async function lbCall(fn, args) {
+    const s = supaConfig();
+    if (!s.url || !s.anon) throw new Error('nowhere to send it');
+    const res = await fetch(s.url + '/rest/v1/rpc/' + fn, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json',
+                 apikey: s.anon, Authorization: 'Bearer ' + s.anon },
+      body: JSON.stringify(args)
+    });
+    if (!res.ok) {
+      let why = 'HTTP ' + res.status;
+      try {
+        const said = await res.json();
+        const msg = said && (said.message || said.hint);
+        if (msg) why += ', ' + msg;
+      } catch (err) { /* the status is all there is */ }
+      const e = new Error(why);
+      e.status = res.status;
+      throw e;
+    }
+    return res.json();
+  }
+
+  /* The standings as the project has them, with anything still in the outbox
+     folded on top. */
+  function lbApply(said) {
+    if (!said || !Array.isArray(said.rows)) return;
+    const list = said.rows.filter(b => b && typeof b.name === 'string' && b.best > 0)
+      .map(b => ({ name: b.name, best: +b.best, punches: +b.punches || 0,
+                   at: +b.at || 0, used: +b.used || 0,
+                   bestLeft: +b.bestLeft || 0, bestRight: +b.bestRight || 0,
+                   punchesLeft: +b.punchesLeft || 0, punchesRight: +b.punchesRight || 0,
+                   bestSpeed: +b.bestSpeed || 0 }));
+    lbOutbox().forEach(t => lbMerge(list, t, t.finishedAt));
+    lbSort(list);
+    const was = JSON.stringify([LB.board, LB.since, LB_NET.shared, LB_NET.failed]);
+    LB.board = list;
+    if (said.since > 0) LB.since = said.since;
+    LB_NET.shared = true;
+    LB_NET.failed = false;
+    lbSave();
+    if (JSON.stringify([LB.board, LB.since, true, false]) !== was) lbPaint();
+  }
+
+  /* Sends whatever is waiting, oldest first, and reads the board back. Asked
+     for while already running, it runs once more at the end rather than twice
+     at once, so a go finished mid-send is not left for the next tick. */
+  async function lbSync() {
+    if (document.documentElement.classList.contains('in-app')) return;
+    if (LB_NET.busy) { LB_NET.again = true; return; }
+    const s = supaConfig();
+    if (!s.url || !s.anon) return;
+    LB_NET.busy = true;
+    try {
+      const board = await lbKey();
+      if (!board) return;
+      let said = null;
+      const sent = new Set();
+      for (const t of lbOutbox()) {
+        try {
+          said = await lbCall('lb_turn', { doc: Object.assign({}, t, { board }) });
+        } catch (err) {
+          /* Refused on its merits: it will be refused every time, and left at
+             the front it would hold every go behind it. */
+          if (err.status !== 400) throw err;
+        }
+        sent.add(t.id);
+        lbSetOutbox(lbOutbox().filter(x => !sent.has(x.id)));
+      }
+      lbApply(said || await lbCall('lb_board', { p_board: board }));
+    } catch (err) {
+      LB_NET.failed = true;
+      lbPaint();
+    } finally {
+      LB_NET.busy = false;
+      if (LB_NET.again) { LB_NET.again = false; setTimeout(lbSync, 0); }
+    }
+  }
+
+  /* Taking a name off and starting again go to the project first once the
+     board is the saved one, and change nothing here if it cannot be reached:
+     done only on this screen, the next read would put it all back. */
+  async function lbTakeOff(name) {
+    const drop = () => lbSetOutbox(lbOutbox().filter(t => lbId(t.name) !== lbId(name)));
+    const board = LB_NET.shared ? await lbKey() : '';
+    if (!board) {
+      drop();
+      LB.board = LB.board.filter(x => lbId(x.name) !== lbId(name));
+      lbSave();
+      lbPaint();
+      return;
+    }
+    try {
+      const said = await lbCall('lb_remove', { p_board: board, p_name: name });
+      drop();
+      lbApply(said);
+      lbPaint();
+    } catch (err) {
+      lbSay('The saved board could not be reached, so ' + name + ' is still on it. '
+        + 'Try again in a moment.');
+    }
+  }
+
+  async function lbStartAgain() {
+    const fresh = () => {
+      lbSetOutbox([]);
+      LB.turn = null;
+      LB.last = null;
+      LB.held = null;
+    };
+    const board = LB_NET.shared ? await lbKey() : '';
+    if (!board) {
+      fresh();
+      LB.board = [];
+      LB.since = Date.now();
+      lbSave();
+      lbPaint();
+      return;
+    }
+    try {
+      const said = await lbCall('lb_reset', { p_board: board });
+      fresh();
+      lbApply(said);
+      lbPaint();
+    } catch (err) {
+      lbSay('The saved board could not be reached, so nothing was taken off it. '
+        + 'Try again in a moment.');
+    }
+  }
+
+  /* Read on a clock while the drills screen is showing, and straight away when
+     the tab comes back. Started on a timer because the project settings further
+     down the script do not exist yet at this point in it. */
+  setTimeout(lbSync, 600);
+  setInterval(() => { if (!document.hidden && !drills.hidden) lbSync(); }, 15000);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) lbSync(); });
+
+  setInterval(() => {
+    lbBand();
+    if (LB.held && Date.now() - LB.held.at >= LB_HOLD) { LB.held = null; lbPaint(); }
+  }, 1000);
+  lbPaint();
+  lbBand();
 
   document.querySelectorAll('.wrap-btn').forEach(b =>
     b.addEventListener('click', () => pair(b.dataset.side)));
