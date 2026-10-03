@@ -42,7 +42,7 @@
   # not named above, so the report is refused and nothing leaves the browser. connect-src
   # is the only reason that is true, which is worth knowing before widening it. The
   # injection itself is a Netlify site setting and switching it off is the real fix.
-  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https://formspree.io https://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-src 'none'; frame-ancestors 'none'; upgrade-insecure-requests
+  Content-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self'; media-src 'self' blob:; connect-src 'self' https://formspree.io https://*.supabase.co; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self' https://formspree.io; frame-src 'self'; frame-ancestors 'self'; upgrade-insecure-requests
 
   # HTTPS only, for two years, on every subdomain.
   #
@@ -56,7 +56,7 @@
   # honours it. This is here for the ones that do not, and both say the same thing: the
   # pages are not to be loaded inside anyone else's, which is what makes a click on our
   # button a click on our button.
-  X-Frame-Options: DENY
+  X-Frame-Options: SAMEORIGIN
 
   # A .json served as JSON and a .js served as JavaScript, whatever a browser would
   # rather guess from the bytes.
