@@ -50,6 +50,7 @@
          ?terry=1.4     scale the band's terry normal map
          ?tin=2a2b33    override the band interior's colour
          ?band=dark     charcoal terry inside and out
+         ?band=outline  use the original technical outline treatment
          ?still=1       drop the beats too; used to render the poster
          ?ink=dark      invert the outline: Carbon edges instead of white ones,
                         for compositing onto a light page
@@ -635,7 +636,8 @@
      because the 29 material definitions are still read from pcb.mtl — see
      loadPacked(). */
   import { MTLLoader } from 'three/addons/MTLLoader.js';
-  import { RoomEnvironment } from 'three/addons/RoomEnvironment.js';
+  import { RGBELoader } from 'three/addons/RGBELoader.js';
+  import { cottonPile, knitMaps, finishGrain, satinThreads, smoothBevelNormals, pouchBody, packageMark } from './surface-detail.js';
 
   const params  = new URLSearchParams(location.search);
   const forcedP = params.has('p') ? parseFloat(params.get('p')) : null;
@@ -709,7 +711,9 @@
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
   renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 1.0;
+  renderer.toneMappingExposure = 0.90;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   const scene  = new THREE.Scene();
   /* near 8 / far 400, not the usual 1 / 1000. Depth precision falls off
@@ -721,91 +725,53 @@
      to what the shot actually occupies. */
   const camera = new THREE.PerspectiveCamera(28, 1, 8, 400);
 
-  /* An indirect environment, not a lamp. Gold pads and the metal cans
-     read as metal only if there is something around them to reflect;
-     with direct lights alone they go black.
-
-     This used to be three.js's RoomEnvironment, and that room cost three
-     separate bugs across this build — all the same bug. A room is bright
-     overhead and black underfoot, so the value a dark surface renders at
-     depends on which way it happens to be pointing. Measured through the
-     flip: the direct lamps vary by 2.3× from end to end, and the board
-     varied by 26×. At 68% the underside sits 58° face-down, takes 0.089 of
-     the key, and is lit by essentially nothing but the floor of a room that
-     has no floor — a median of 3 against a page of 29, the product darker
-     than the background it is presented on.
-
-     No lamp fixes that, because nothing that scales with albedo can rescue
-     a 29/255 surface without destroying a white one: lifting the mask by a
-     tenth of a stop takes the connectors past white. So the room goes
-     instead. A product photograph is shot on a sweep or in a lightbox,
-     where the floor is *brighter* than the walls, and that is what this
-     ramp is — bright above, nearly as bright below, a darker band at the
-     horizon so metal still has something with structure to reflect. It is
-     the environment the shot was always pretending to have. */
+  // Three rectangular HDR softboxes with a low, neutral fill. Distinct light
+  // sources give metal moving reflections rather than a flat white wash.
   const pmrem = new THREE.PMREMGenerator(renderer);
-  scene.environment = pmrem.fromEquirectangular(sweep()).texture;
+  const studioSource = sweep();
+  scene.environment = pmrem.fromEquirectangular(studioSource).texture;
+  studioSource.dispose();
+  pmrem.dispose();
 
-  /* A 256 × 128 equirectangular ramp, built rather than loaded. Rows run
-     from +y at the top to -y at the bottom, which is the equirect
-     convention.
+  // Start alongside the geometry download. Keep the procedural lightbox as a
+  // working fallback, including on slow connections and partial deployments.
+  const studioReady = new RGBELoader().setDataType(THREE.FloatType)
+    .loadAsync('./textures/studio-small-09.hdr').then(texture => {
+      const { data, width, height } = texture.image;
+      let energy = 0, weight = 0;
+      for (let y = 0; y < height; y++) {
+        const solidAngle = Math.sin(Math.PI * (y + 0.5) / height);
+        for (let x = 0; x < width; x++) {
+          const i = (y * width + x) * 4;
+          energy += (data[i] * 0.2126 + data[i + 1] * 0.7152 + data[i + 2] * 0.0722) * solidAngle;
+          weight += solidAngle;
+        }
+      }
+      const gain = 1.0 / Math.max(0.001, energy / weight);
+      for (let i = 0; i < data.length; i += 4) {
+        for (let channel = 0; channel < 3; channel++) data[i + channel] = Math.min(32, data[i + channel] * gain);
+      }
+      texture.needsUpdate = true;
+      const generator = new THREE.PMREMGenerator(renderer);
+      const previous = scene.environment;
+      scene.environment = generator.fromEquirectangular(texture).texture;
+      texture.dispose(); generator.dispose(); previous.dispose();
+      request();
+    }).catch(() => { /* The lightbox remains usable without the HDR asset. */ });
 
-     Which makes 256 columns look like more than a sweep needs, and the
-     first
-     version was 4 columns wide for that reason. PMREM sizes its output from
-     its input, so a 4 × 64 source produced a 336 × 4 cube-UV map — one
-     texel per face, no usable irradiance, and an environment that measured
-     byte-identical whether it was written bright or dark. The columns are
-     not for the content. They are for the mip chain.
-
-     Float, and linear, and deliberately above 1.0. The first attempt at
-     this was an 8-bit sRGB ramp and it came out a stop and a half darker
-     than the room it replaced, which is the obvious thing in hindsight: a
-     softbox is an emitter, RoomEnvironment models it as one, and 255 is
-     nowhere near a lamp. Nothing in an 8-bit texture can be brighter than
-     white, so a light source cannot be written into one at all. */
   function sweep() {
-    /* Mean of sin⁸ over a full turn. Inline rather than a const at module
-       scope: sweep() is called on the line that builds the environment,
-       which is above this function, and a hoisted declaration can run
-       before a `const` below it has left the temporal dead zone. */
-    const SIN8_MEAN = 35 / 128;
-    const H = 128, W = 256, data = new Float32Array(W * H * 4);
+    const H = 256, W = 512, data = new Float32Array(W * H * 4);
+    const wrap = a => Math.atan2(Math.sin(a), Math.cos(a));
+    const panel = (az, up, angle, elevation, width, height, power) => power *
+      Math.exp(-Math.pow(wrap(az - angle) / width, 8) - Math.pow((up - elevation) / height, 8));
     for (let y = 0; y < H; y++) {
-      /* -1 straight down, +1 straight up. */
       const up = 1 - 2 * (y + 0.5) / H;
-      /* Two emitters off a dim horizon: the softbox above, the sweep below.
-         The floor is not as bright as the ceiling — a lightbox still has a
-         key, and a board with no top-to-bottom gradient at all looks like a
-         diagram — but it is nowhere near black, which is the whole point. */
-      const base = 0.55 + (up > 0 ? 2.6 * up : 1.7 * -up);
-      /* Two narrow softboxes, one either side, and nothing in front or
-         behind. A smooth ramp fixed the board and ruined the metal: with
-         nothing in the environment that has an edge, a flat face reflects a
-         constant, and both connectors came back as blank white panels —
-         which is exactly what untextured placeholder geometry looks like.
-         Steel needs something with a shape in it to be steel.
-
-         At ±90°, deliberately. The board tumbles about x, which moves a
-         face normal within the y-z plane, so both faces of the slab spend
-         the entire animation pointing front or back — azimuth 0 or 180 —
-         and never at the sides. Putting the structure where the mask never
-         looks buys the connectors their highlight without handing the board
-         back the pose dependence that all of this was to get rid of.
-
-         Subtracting the panels' own mean is what keeps them free. Diffuse
-         irradiance integrates the whole hemisphere, so anything added
-         anywhere lands on everything: the first version of these panels
-         brightened the board by 40% and put the mask back up at 47 from a
-         Carbon of 29, having been added purely for the benefit of two
-         connectors. Taking the mean of sin⁸ back out of the base makes the
-         panels redistribute the light already in the room rather than bring
-         more of it — bright at the sides, correspondingly dimmer front and
-         back, same total. Structure for free. */
+      const base = 0.28 + 0.48 * Math.abs(up);
       for (let x = 0; x < W; x++) {
         const az = 2 * Math.PI * (x + 0.5) / W;
-        const panel = Math.pow(Math.abs(Math.sin(az)), 8);
-        const val = Math.max(0.08, base + 2.4 * (panel - SIN8_MEAN));
+        const val = base + panel(az, up, 1.15, 0.42, 0.40, 0.46, 6.5)
+                         + panel(az, up, 4.5, 0.1, 0.16, 0.66, 4.0)
+                         + panel(az, up, 3.1, -0.5, 0.65, 0.24, 1.8);
         const i = (y * W + x) * 4;
         data[i] = data[i + 1] = data[i + 2] = val;
         data[i + 3] = 1;
@@ -824,10 +790,19 @@
      nothing but the environment. Rigging them to the camera is what a
      turntable shoot does with its lamps: whichever face is being shown
      is the face being lit. */
-  const key = new THREE.DirectionalLight(0xffffff, 2.1);
-  key.position.set(-5, 5, 11);
+  const key = new THREE.DirectionalLight(0xfff6ed, 2.6);
+  key.position.set(-9, 8, 7);
+  // Millimetre-scale contact shadows seat the components on their substrate.
+  key.castShadow = true;
+  key.shadow.mapSize.set(2048, 2048);
+  Object.assign(key.shadow.camera, {
+    left: -60, right: 60, top: 60, bottom: -60, near: 1, far: 400
+  });
+  key.shadow.normalBias = 0.008;
+  key.shadow.bias = -0.00002;
+  key.shadow.camera.updateProjectionMatrix();
   camera.add(key);
-  const fill = new THREE.DirectionalLight(0xffffff, 0.6);
+  const fill = new THREE.DirectionalLight(0xe4edff, 1.05);
   fill.position.set(7, -4, 3);
   camera.add(fill);
 
@@ -855,9 +830,13 @@
      was briefly at 2.2, trying to brute-force the 68% hole; that was the
      wrong tool — the hole was the environment, not the rig — and this is
      back to being a floor rather than a lamp. */
-  const axis = new THREE.DirectionalLight(0xffffff, 0.9);
+  const axis = new THREE.DirectionalLight(0xffffff, 0.38);
   axis.position.set(0, 0, 10);
   camera.add(axis);
+  const rim = new THREE.DirectionalLight(0xe4ecff, 1.35);
+  rim.position.set(4, 6, -8);
+  rim.target = camera;
+  camera.add(rim);
   scene.add(camera);
 
   /* Aiming both lights at the camera, not at the origin, is what makes
@@ -908,8 +887,8 @@
      component material is 5.50 mm. Now there is real daylight. */
   const MASK_COVERAGE = 0.9;
   const MASK_THICKNESS = 0.4;
-  const MASK_CARBON = 0x131316;
-  const MASK_CARBON_DEEP = 0x0a0a0c;
+  const MASK_CARBON = 0x202327;
+  const MASK_CARBON_DEEP = 0x121416;
 
   /* How much lighter mask over copper is than mask over bare laminate. A
      colour map multiplies, and a multiplier cannot exceed one, so the ratio has
@@ -931,7 +910,7 @@
      know where to look; 1.90 makes them a surface you can follow, which is the
      whole of the complaint. Further than this and the mask starts reading as
      grey paint over silver rather than green-black over copper. */
-  const TINT_GAIN = 1.90;
+  const TINT_GAIN = 1.45;
   const TINT_BASE = 255 / TINT_GAIN;
 
   let maskMode = params.get('mask') === 'blue' ? 'blue' : 'black';
@@ -1468,7 +1447,7 @@
     const lo = Math.min(rgb.r, rgb.g, rgb.b);
     const spread = Math.max(rgb.r, rgb.g, rgb.b) - lo;
 
-    const std = new THREE.MeshStandardMaterial({ color: colour, name: src.name });
+    const std = new THREE.MeshPhysicalMaterial({ color: colour, name: src.name });
     upgraded.set(src.name, std);
 
     if (maskNames.has(src.name)) {
@@ -1493,8 +1472,10 @@
          that mattered and 0.5 was tuned against the poses where it was.
          A sweep contributes at every angle, which is the point of it, and
          that meant 0.5 took the board from Carbon up to a median of 81. */
-      std.roughness = 0.62;
-      std.envMapIntensity = 0.34;
+      std.roughness = 0.48;
+      std.clearcoat = 0.22;
+      std.clearcoatRoughness = 0.30;
+      std.envMapIntensity = 0.40;
       std.metalness = 0.0;
       maskMats.push(std);
     } else if (lo > 0.8) {
@@ -2105,8 +2086,8 @@
      do it. Both numbers moved together because roughness alone spreads the
      highlight without dimming it. */
   const PACKAGE = new THREE.MeshStandardMaterial({
-    name: 'package', color: 0x2b2b31, metalness: 0.10, roughness: 0.58,
-    envMapIntensity: 0.34
+    name: 'package', color: 0x17191d, metalness: 0.0, roughness: 0.48,
+    envMapIntensity: 0.46
   });
   /* The inside of a connector: matte, and reflecting almost nothing. This
      is the one material here that has to be darker than everything around
@@ -2202,9 +2183,9 @@
      pouch is a smooth object with a little form in it, and that is now what it
      renders as. `?foil=` still overrides, so the old look is one query string
      away if this reads too flat on a bigger screen. */
-  const FOIL = new THREE.MeshStandardMaterial({
-    name: 'foil', color: 0x46464c, metalness: 0.45, roughness: 0.62,
-    envMapIntensity: 0.22
+  const FOIL = new THREE.MeshPhysicalMaterial({
+    name: 'foil', color: 0xb2b5ba, metalness: 1.0, roughness: 0.34,
+    envMapIntensity: 0.55, clearcoat: 0.18, clearcoatRoughness: 0.22
   });
 
   /* The tape over the tab end. Real kapton is amber, and amber is not
@@ -2264,7 +2245,7 @@
      mid-tone at p90 151, and these pins have to be the same metal as the
      pads they are notionally mating with. */
   const PIN = new THREE.MeshStandardMaterial({
-    name: 'pin', color: 0x7d6a2e, metalness: 0.92, roughness: 0.30,
+    name: 'pin', color: 0xc1a05a, metalness: 0.92, roughness: 0.30,
     envMapIntensity: 0.42
   });
 
@@ -2303,8 +2284,13 @@
      scale, and a blown highlight on a hand joint is the one thing that reads as
      plastic. */
   const SOLDER = new THREE.MeshStandardMaterial({
-    name: 'solder', color: 0x4a4c54, metalness: 0.86, roughness: 0.54,
-    envMapIntensity: 0.18
+    name: 'solder', color: 0xa1a5ac, metalness: 1.0, roughness: 0.34,
+    envMapIntensity: 0.55
+  });
+
+  const TERMINAL = new THREE.MeshStandardMaterial({
+    name: 'tin-plated-termination', color: 0x7d838c,
+    metalness: 1, roughness: 0.42, envMapIntensity: 0.45
   });
 
   /* The connector's moulded body. Darker than the board's nylon housing —
@@ -2390,12 +2376,13 @@
 
      `?band=dark` for charcoal throughout, which is what the ladder alone would
      have chosen. */
-  const TERRY_OUT = new THREE.MeshStandardMaterial({
-    name: 'terryOut', color: bandDark ? 0x3c3c42 : 0xcfcfd4,
+  const TERRY_OUT = new THREE.MeshPhysicalMaterial({
+    name: 'terryOut', color: bandDark ? 0x303035 : 0xd5d0c7,
     /* 1.0, so the roughnessMap is the whole answer rather than a modulation of
        a second number that also has an opinion — three.js multiplies the two,
        and a scalar under 1 here silently rescales the map's whole range. */
     metalness: 0.0, roughness: 1.0, envMapIntensity: 0.55,
+    sheen: 0.30, sheenColor: 0xc8c3b9, sheenRoughness: 0.92,
     transparent: true, opacity: 1
   });
   /* Darker than the outside, and by more than looks reasonable written down.
@@ -2431,10 +2418,11 @@
      Guessing at this from two points was a waste of a pass — the response is
      shallow at the bottom and then steepens, so an estimate landed twice in a
      row on a value indistinguishable from the background. */
-  const TERRY_IN = new THREE.MeshStandardMaterial({
+  const TERRY_IN = new THREE.MeshPhysicalMaterial({
     name: 'terryIn',
     color: params.has('tin') ? parseInt(params.get('tin'), 16) : 0x2a2b33,
     metalness: 0.0, roughness: 1.0, envMapIntensity: 0.22,
+    sheen: 0.25, sheenColor: 0x777984, sheenRoughness: 1.0,
     side: THREE.BackSide,
     /* Transparent as of rev 7, when "make sure the band dissapear completely"
        overruled the rule this material was written under. See bandFade(). */
@@ -2475,11 +2463,23 @@
      stays put when the light moves. This one appears and disappears round the
      band as the key sweeps across it, because that is what a shiny line on a
      matte surface does. */
+  const PILE = new THREE.MeshPhysicalMaterial({
+    name: 'cotton-pile', color: bandDark ? 0x35363d : 0xd1cbc0,
+    roughness: 0.94, metalness: 0, sheen: 0.4,
+    sheenColor: 0xbab5ac, sheenRoughness: 0.95, envMapIntensity: 0.6,
+    transparent: true
+  });
+  let pileMesh = null;
   const STITCH = new THREE.MeshStandardMaterial({
     name: 'stitch', color: 0xdcdcdf, metalness: 0.0, roughness: 0.42,
     envMapIntensity: 0.30, transparent: true, opacity: 1
   });
 
+  const EMBROIDERY = new THREE.MeshPhysicalMaterial({
+    name: 'embroidered-yarn', color: 0xa4162a, metalness: 0,
+    roughness: 0.58, sheen: 0.65, sheenColor: 0x9b2639,
+    sheenRoughness: 0.6, envMapIntensity: 0.55, transparent: true
+  });
   const THREAD = new THREE.MeshStandardMaterial({
     name: 'thread', color: 0x9A1A2C, metalness: 0.0, roughness: 1.0,
     envMapIntensity: 0.34, transparent: true, opacity: 1,
@@ -2527,7 +2527,8 @@
      depthWrite is off permanently and that is not the usual transparency
      bookkeeping — a 10% shell that wrote depth would hide the internals behind
      something you can see through. bandFade() knows about this. */
-  const bandOutline = params.get('band') !== 'terry';
+  // The product is fabric by default; keep the technical outline as a debug view.
+  const bandOutline = params.get('band') === 'outline';
 
   /* ?ink=dark — the same drawing, inverted, for a page that is not dark.
      Everything above is written for white edges on Carbon, and white edges on a
@@ -2645,6 +2646,40 @@
     const g = new THREE.Group();
     const body = slab(roundRect(7.0, 7.0, 0.35), 0.90, 0.07, PACKAGE);
     g.add(body);
+    const marking = packageMark();
+    marking.position.set(0, 0, 0.452);
+    g.add(marking);
+    // Exposed QFN terminations sit under the moulding, on all four edges.
+    const contactGeometry = new THREE.BoxGeometry(0.24, 0.42, 0.10);
+    const contacts = new THREE.InstancedMesh(contactGeometry, TERMINAL, 48);
+    const contact = new THREE.Object3D();
+    for (let side = 0; side < 4; side++) for (let pin = 0; pin < 12; pin++) {
+      const offset = (pin - 5.5) * 0.5;
+      const angle = side * Math.PI / 2;
+      contact.position.set(offset * Math.cos(angle) - 3.46 * Math.sin(angle),
+                           offset * Math.sin(angle) + 3.46 * Math.cos(angle), -0.40);
+      contact.rotation.z = angle;
+      contact.updateMatrix();
+      contacts.setMatrixAt(side * 12 + pin, contact.matrix);
+    }
+    // flex() processes vertex geometry, so bake the instances into one mesh.
+    const cp = [], cn = [], cu = [];
+    const cm = new THREE.Matrix4(), cv = new THREE.Vector3();
+    const cg = contactGeometry.toNonIndexed();
+    for (let i = 0; i < 48; i++) {
+      contacts.getMatrixAt(i, cm);
+      for (let j = 0; j < cg.attributes.position.count; j++) {
+        cv.fromBufferAttribute(cg.attributes.position, j).applyMatrix4(cm).toArray(cp, cp.length);
+        cv.fromBufferAttribute(cg.attributes.normal, j).transformDirection(cm).toArray(cn, cn.length);
+        cu.push(cg.attributes.uv.getX(j), cg.attributes.uv.getY(j));
+      }
+    }
+    const baked = new THREE.BufferGeometry();
+    baked.setAttribute('position', new THREE.Float32BufferAttribute(cp, 3));
+    baked.setAttribute('normal', new THREE.Float32BufferAttribute(cn, 3));
+    baked.setAttribute('uv', new THREE.Float32BufferAttribute(cu, 2));
+    g.add(new THREE.Mesh(baked, TERMINAL));
+    cg.dispose(); contactGeometry.dispose(); contacts.dispose();
     /* 0.55 mm across, laid flush into the lid — top face a thousandth proud so
        it does not z-fight — in the matte material the connector cavities are
        lined with. Flush and dark rather than modelled as a pit, because a pit
@@ -2673,7 +2708,7 @@
      anyway — it is close to Lambertian with a very slight sheen, which is what
      roughness 0.66 at a low env term describes. */
   const CERAMIC = new THREE.MeshStandardMaterial({
-    name: 'ceramic', color: 0x55555a, metalness: 0.0, roughness: 0.66,
+    name: 'ceramic', color: 0xada696, metalness: 0.0, roughness: 0.66,
     envMapIntensity: 0.30
   });
 
@@ -2700,7 +2735,7 @@
        its terminations and not by its body, and the terminations are tin, not
        the pads' gold. */
     for (const d of [-1, 1]) {
-      const e = new THREE.Mesh(new THREE.BoxGeometry(0.5, W + 0.02, T + 0.02), SOLDER);
+      const e = new THREE.Mesh(new THREE.BoxGeometry(0.5, W + 0.02, T + 0.02), TERMINAL);
       e.position.set(d * (L / 2 - 0.25), 0, 0);
       g.add(e);
     }
@@ -2944,7 +2979,8 @@
          below it. -BOARD_T and not thin(-1.62): these are built parts and skip
          thin() entirely, which is what the `built` flag below is for. */
       const z = -BOARD_T - c.t / 2;
-      bake(body, new THREE.BoxGeometry(c.l, c.w, c.t), c.x, c.y, z, c.r);
+      bake(body, slab(roundRect(c.l - 0.04, c.w - 0.04, 0.045),
+                      c.t, 0.02, PACKAGE).geometry, c.x, c.y, z, c.r);
       /* Metallised ends, a fifth of the length each and a hair proud of the
          body on the other two axes so the wrap is a visible band rather than a
          coplanar seam. A chip resistor and a chip capacitor are the same shape
@@ -2963,7 +2999,8 @@
       const e = c.l * 0.20;
       for (const d of [-1, 1]) {
         const o = d * (c.l - e) / 2;
-        bake(term, new THREE.BoxGeometry(e, c.w + 0.03, c.t + 0.03),
+        bake(term, slab(roundRect(e - 0.02, c.w + 0.01, 0.025),
+                        c.t + 0.03, 0.012, TERMINAL).geometry,
              c.x + o * Math.cos(c.r), c.y + o * Math.sin(c.r), z, c.r);
       }
     }
@@ -2984,7 +3021,7 @@
       return g;
     };
     const g = new THREE.Group();
-    for (const [bucket, mat] of [[body, PACKAGE], [term, SOLDER], [dots, PIN]]) {
+    for (const [bucket, mat] of [[body, PACKAGE], [term, TERMINAL], [dots, PIN]]) {
       const m = new THREE.Mesh(mesh(bucket), mat);
       m.userData.built = true;   // already thin — see flex()
       g.add(m);
@@ -3016,10 +3053,11 @@
   function slab(shape, thick, bevel, mat) {
     const g = new THREE.ExtrudeGeometry(shape, {
       depth: thick - 2 * bevel, bevelEnabled: bevel > 0,
-      bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3, curveSegments: 12
+      bevelThickness: bevel, bevelSize: bevel, bevelSegments: 5, curveSegments: 12
     });
     g.translate(0, 0, -(thick / 2 - bevel));
     g.computeVertexNormals();
+    if (bevel > 0) smoothBevelNormals(g);
     return new THREE.Mesh(g, mat);
   }
 
@@ -3295,7 +3333,7 @@
      pixel and would read as noise, which is the mistake terryMaps() made in rev
      5 and this is not repeating. */
   function satinMaps() {
-    const N = 512, TILE = 4.0, PITCH = 0.5, H0 = 0.15;
+    const N = 512, TILE = 4.0, PITCH = 0.25, H0 = 0.07;
     const NS = Math.round(TILE / PITCH);
     const rnd = rng(910273);
     /* ±7%, down from ±14% in the first version of this. At ±14% the low
@@ -3625,7 +3663,7 @@
        anyway — the weld needs area and the body cannot give it, so 1.5 to 2 mm
        all round is ordinary. 1.0 mm on each long side and 1.4 at the ends is
        inside that and is four times more silhouette than it had. */
-    g.add(slab(roundRect(W - 2.0, L - 2.4, 1.0), T, 0.26, FOIL));
+    g.add(pouchBody(W - 2.0, L - 2.4, T, FOIL));
 
     /* The seal flange. 0.18 mm thick, and the body above is what sets how far it
        stands out. Thin enough that it is a lip and not a shelf: 0.18 on a 1.0 mm
@@ -3633,6 +3671,19 @@
        read as a weld, it reads as a rim. */
     const flange = slab(roundRect(W, L + 0.4, 1.2), 0.18, 0, FOIL);
     g.add(flange);
+    // The welded perimeter has a fine compression pattern, distinct from the pouch.
+    for (const side of [-1, 1]) for (const face of [-1, 1]) {
+      const weld = new THREE.PlaneGeometry(0.70, L - 2.0, 3, 220);
+      const position = weld.attributes.position;
+      for (let i = 0; i < position.count; i++) {
+        const x = position.getX(i), y = position.getY(i);
+        const ridge = 0.016 * (0.5 + 0.5 * Math.sin(y * Math.PI * 2 / 0.18));
+        position.setXYZ(i, side * (W / 2 - 0.47) + x, y, 0.097 + ridge);
+      }
+      if (face < 0) weld.rotateY(Math.PI);
+      weld.computeVertexNormals();
+      g.add(new THREE.Mesh(weld, FOIL));
+    }
 
     /* The two tabs, at the -x end, and the tape over them. Real cells bring
        the tabs out through the seal, so they sit at flange height, and the
@@ -4076,7 +4127,8 @@
      a sagitta of 8 mm — and the board is 15 mm, which is 34°. Neither can be
      flat. The cell is bent, and the board is 0.4 mm of flexible substrate and
      is bent too. See `bendGroup()` and `flex()`. */
-  const BAND = { RI: 27, RO: 27.8, W: 24, cx: 9.1, cy: 10.3, cz: -24.0 };
+  // Restore a padded, rolled fabric edge; the outline only needs a thin shell.
+  const BAND = { RI: 27, RO: bandOutline ? 27.8 : 29.2, W: 24, cx: 9.1, cy: 10.3, cz: -24.0 };
 
   /* ── UNROLLED SPACE ────────────────────────────────────────────
      Everything inside the band is authored flat and bent afterwards, and this
@@ -4218,7 +4270,8 @@
     root.traverse(c => { if (c.isMesh) meshes.push(c); });
     const out = new THREE.Group();
     for (const m of meshes) {
-      const g = subdivide(m.geometry.clone().applyMatrix4(m.matrixWorld), maxEdge);
+      const transformed = m.geometry.clone().applyMatrix4(m.matrixWorld);
+      const g = m.userData.curvedReady ? transformed : subdivide(transformed, maxEdge);
       const p = g.attributes.position, n = g.attributes.normal;
       for (let i = 0; i < p.count; i++) {
         const a = (p.getY(i) - BAND.cy) / BEND_R;
@@ -4571,7 +4624,10 @@
     g.setIndex(idx);
     g.computeVertexNormals();
     g.computeTangents?.();
-    return new THREE.Mesh(g, THREAD);
+    const mark = new THREE.Group();
+    mark.add(new THREE.Mesh(g, THREAD));
+    mark.add(satinThreads(SVG, onBand, EMBROIDERY));
+    return mark;
   }
 
   /* The silhouette, and it is the one part of "make the fabric look real" that
@@ -4635,7 +4691,7 @@
      that have to agree rather than one.
 
      `?band=terry` restores it with the cloth. */
-  const WOB = bandOutline ? 0.0 : 1.70;
+  const WOB = bandOutline ? 0.0 : 0.90;
 
   function wobble(th, ax) {
     return WOB * (
@@ -4718,6 +4774,26 @@
   let copper = null;
 
   function dressLate() {
+    if (!PACKAGE.bumpMap) {
+      const grain = finishGrain();
+      grain.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      for (const material of [PACKAGE, MOULD, TAPE, WIRE_RED, WIRE_BLACK]) {
+        material.bumpMap = grain;
+        material.bumpScale = material === PACKAGE ? 0.005 : 0.003;
+        material.needsUpdate = true;
+      }
+      for (const material of upgraded.values()) {
+        if (material.userData.branch !== 'epoxy') continue;
+        material.bumpMap = grain;
+        material.bumpScale = 0.009;
+        material.needsUpdate = true;
+      }
+      const brushed = finishGrain(true);
+      brushed.anisotropy = renderer.capabilities.getMaxAnisotropy();
+      NICKEL.bumpMap = TAB.bumpMap = brushed;
+      NICKEL.bumpScale = TAB.bumpScale = 0.008;
+      NICKEL.needsUpdate = TAB.needsUpdate = true;
+    }
     if (copper) {
       const maps = copperMaps(copper.pads, copper.bounds);
       const face = copper.face;
@@ -4760,7 +4836,7 @@
          showed the cell flat at p50 142 with sd 5.2, which proved the map was
          responsible for all of the mottling and sent the search to the map's
          construction instead of to its scale. */
-      const fs = params.has('foil') ? parseFloat(params.get('foil')) : 0.35;
+      const fs = params.has('foil') ? parseFloat(params.get('foil')) : 0.46;
       FOIL.normalScale.set(fs, fs);
       FOIL.needsUpdate = true;
     }
@@ -4771,7 +4847,7 @@
        is exactly the case anisotropic filtering exists for: without it the far
        side of the tube turns into moiré. */
     if (!bandOutline && !TERRY_OUT.normalMap) {
-      const { normal: n, tint, rough } = terryMaps();
+      const { normal: n, tint, rough } = knitMaps();
       const aniso = renderer.capabilities.getMaxAnisotropy();
       n.anisotropy = tint.anisotropy = rough.anisotropy = aniso;
       const s = params.has('terry') ? parseFloat(params.get('terry')) : 1.0;
@@ -4792,7 +4868,14 @@
          read as cloth at all and halving it on the largest surface in the
          frame would put the foam back, whereas the normal map is the one that
          competes with the board's own detail. */
-      TERRY_OUT.map = TERRY_IN.map = tint;
+      // The outer ground weave and the raised yarn share one albedo range;
+      // dark gaps under white loops made the previous fabric look speckled.
+      const outerMaps = knitMaps(0.10);
+      outerMaps.tint.anisotropy = aniso;
+      TERRY_OUT.map = outerMaps.tint;
+      outerMaps.normal.dispose();
+      outerMaps.rough.dispose();
+      TERRY_IN.map = tint;
       TERRY_OUT.roughnessMap = TERRY_IN.roughnessMap = rough;
       TERRY_OUT.needsUpdate = TERRY_IN.needsUpdate = true;
 
@@ -4855,6 +4938,20 @@
          the map by a quarter of a percent and loses the seam. */
       mmUV(geo, Math.round(2 * Math.PI * r / TERRY_TILE) * TERRY_TILE, BAND.W);
       slouchTube(geo);
+      if (mat === TERRY_IN) {
+        const pos = geo.attributes.position;
+        for (let i = 0; i < pos.count; i++) {
+          const x = pos.getX(i), y = pos.getY(i), z = pos.getZ(i);
+          const theta = Math.atan2(y, z);
+          const distance = Math.atan2(Math.sin(theta - 0.30), Math.cos(theta - 0.30));
+          const edge = Math.pow(Math.cos(Math.PI * x / BAND.W), 2);
+          const pocket = 5.2 * Math.exp(-Math.pow(distance / 1.3, 6)) * Math.min(1, edge * 4);
+          const radius = Math.hypot(y, z);
+          pos.setXYZ(i, x, y * (1 - pocket / radius), z * (1 - pocket / radius));
+        }
+        pos.needsUpdate = true;
+        geo.computeVertexNormals();
+      }
       const m = new THREE.Mesh(geo, mat);
       m.position.set(BAND.cx, BAND.cy, BAND.cz);
       return m;
@@ -5021,6 +5118,10 @@
       g.add(stitches);
     }
 
+    if (!bandOutline) {
+      pileMesh = cottonPile(BAND, wobble, PILE, bandDark);
+      g.add(pileMesh);
+    }
     g.add(buildBolt());
     return g;
   }
@@ -5070,11 +5171,18 @@
       m.visible = o > 0.004;
     };
     set(BAND_OUT, 1 - k);
+    set(PILE, 1 - k);
+    if (pileMesh) {
+      pileMesh.visible = k < 0.996;
+      pileMesh.castShadow = k < 0.04;
+      pileMesh.receiveShadow = true;
+    }
     /* On the skin's schedule, not the mark's. The stitching is *in* the outer
        cloth, so if it outlived it the fly-through would end with two floating
        rings of thread round a board. The mark has its own schedule because it
        sits proud of the skin and reads for slightly longer. */
     set(STITCH, 1 - k);
+    set(EMBROIDERY, markKeep ? 1 : 1 - (kMark === undefined ? k : kMark));
     set(THREAD, markKeep ? 1 : 1 - (kMark === undefined ? k : kMark));
     set(BAND_IN, 1 - (kIn === undefined ? k : kIn));
   }
@@ -5221,7 +5329,8 @@
   new MTLLoader().setPath('./model/').load('pcb.mtl', materials => {
     materials.preload();
     mark('mtl');
-    loadPacked('./model/pcb.bin', materials).then(obj => {
+    loadPacked('./model/pcb.bin', materials).then(async obj => {
+      await Promise.race([studioReady, new Promise(resolve => setTimeout(resolve, 2500))]);
       mark('obj');
       /* Measure first: upgrade() needs to know which materials are the
          board before it can decide what any of them should look like. */
@@ -5751,6 +5860,14 @@
 
       board = obj;
       pivot.add(obj);
+      pivot.traverse(mesh => {
+        if (!mesh.isMesh) return;
+        const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+        // Fading cloth must not leave an invisible shadow over the reveal.
+        const opaque = materials.every(material => !material.transparent);
+        mesh.castShadow = opaque;
+        mesh.receiveShadow = opaque || materials.includes(TERRY_OUT) || materials.includes(PILE);
+      });
       applyMask();
       /* After applyMask, not before — the table is there to say what the
          board actually looks like, and the mask colour is the one thing
@@ -5777,7 +5894,7 @@
            needs to see both numbers. */
         perfDump();
       });
-    }, loadFailed);
+    }).catch(loadFailed);
   });
 
   /* ── 4. THE CAMERA PATH ────────────────────────────────────────
@@ -6537,10 +6654,12 @@
 
   const rc  = new THREE.Vector3();
   const tgt = new THREE.Vector3();
+  const shadowCentre = new THREE.Vector3();
 
-  function draw() {
+  let renderedP = null;
+  function draw(pp = progress()) {
     /* Page clock and sequence clock. See SEQ_END. */
-    const pp = progress();
+    renderedP = pp;
     const p  = pp / SEQ_END;
     /* The coda's own 0..1, linear — eased at each use rather than here, because
        the explode wants a different curve from the camera. */
@@ -6939,6 +7058,18 @@
     camera.position.set(tgt.x, tgt.y, tgt.z + dist);
     camera.lookAt(tgt);
 
+    // Centre the light's shadow frustum on the subject, not on the camera.
+    // A camera-mounted lamp otherwise misses the band during the wide shots.
+    scene.updateMatrixWorld(true);
+    key.shadow.updateMatrices(key);
+    shadowCentre.copy(tgt).applyMatrix4(key.shadow.camera.matrixWorldInverse);
+    const shadowExtent = Math.max(20, Math.min(48, dist * 0.30));
+    Object.assign(key.shadow.camera, {
+      left: shadowCentre.x - shadowExtent, right: shadowCentre.x + shadowExtent,
+      bottom: shadowCentre.y - shadowExtent, top: shadowCentre.y + shadowExtent,
+      near: Math.max(0.1, -shadowCentre.z - 65), far: Math.max(80, -shadowCentre.z + 65)
+    });
+    key.shadow.camera.updateProjectionMatrix();
     renderer.render(scene, camera);
 
     if (params.has('lights')) reportLights(p, tilt, spin);
@@ -6971,12 +7102,25 @@
       p >= parseFloat(b.dataset.from) && p < parseFloat(b.dataset.to)));
   }
 
-  /* One render per frame, and only while the stage is on screen. */
+  /* Ease wheel/touch steps for 85 ms, then stop rendering when settled.
+     Time-based damping gives the same response at different refresh rates. */
   let ticking = false;
+  let lastFrame = 0;
   function request() {
     if (ticking || !board) return;
     ticking = true;
-    requestAnimationFrame(() => { ticking = false; draw(); });
+    requestAnimationFrame(now => {
+      ticking = false;
+      const target = progress();
+      const dt = lastFrame ? Math.min(now - lastFrame, 50) : 16.7;
+      lastFrame = now;
+      const snap = reduced || forcedP !== null || renderedP === null;
+      const next = snap ? target : renderedP + (target - renderedP) * (1 - Math.exp(-dt / 85));
+      const settled = Math.abs(target - next) < 0.0001;
+      draw(settled ? target : next);
+      if (!settled) request();
+      else lastFrame = 0;
+    });
   }
 
   addEventListener('scroll', request, { passive: true });

@@ -714,7 +714,7 @@
       margin: -1px; padding: 0; overflow: hidden;
       clip-path: inset(50%); white-space: nowrap;
     }
-    .teardown.is-live .teardown-still { display: none; }
+    .teardown.is-ready .teardown-still { display: none; }
 
     /* No sequence, no scroll budget. Left at 550svh the static path would be
        five and a half screens of thumb against one unchanging image, which
@@ -1628,7 +1628,8 @@
       warm.disconnect();
       for (const [rel, href, as] of [
         ['modulepreload', 'lab/vendor/three.module.js', null],
-        ['preload', 'lab/model/pcb.bin', 'fetch']
+        ['preload', 'lab/model/pcb.bin', 'fetch'],
+        ['preload', 'lab/textures/studio-small-09.hdr', 'fetch']
       ]) {
         const l = document.createElement('link');
         l.rel = rel;
